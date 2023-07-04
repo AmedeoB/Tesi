@@ -7,10 +7,10 @@ MODEL VARIABLES DICTIONARY
     L           int         number of links (graph links)
 
     Cs          1D list     capacity of each server
+    Cl          1D list     capacity of each link
     pi_idle     1D list     idle power consumption fo each node
     pi_dyn      1D list     maximum dynamic power of each node 
     adj_node    2D list     node's adjancy list
-    C           1D list     capacity of each link
     src_dst     2D list     list of server communicating through a path
 
     si          1D list     server status, 1 on, 0 off
@@ -19,8 +19,8 @@ MODEL VARIABLES DICTIONARY
     u_v         2D array    CPU utilization of each VM
     d           2D array    data rate of flow f on link l
 
-    rho         dictionary  
-    on          dictionary
+    rho         dictionary  ???
+    on          dictionary  ???
 """
 
 """
