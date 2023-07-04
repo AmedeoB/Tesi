@@ -381,10 +381,21 @@ for depth in range(2, 6):
     # Print Energy consumption 
     print("Energia: " + str(best_sol[1]))
     
+    #-----------------------------------------------------------------
+    import dimod
+    from hybrid.decomposers import ComponentDecomposer
+    from hybrid.core import State
+    from hybrid.utils import random_sample
 
+    bqm = dimod.BinaryQuadraticModel({'a': 1, 'b': -1, 'c': 1, 'd': 2}, {'ab': 1, 'bc': 1}, 0, dimod.SPIN)
+    state0 = State.from_sample(random_sample(bqm), bqm)
 
+    decomposer = ComponentDecomposer(key=len)
+    state1 = decomposer.next(state0).result()
+    state2 = decomposer.next(state1).result()
+    #-----------------------------------------------------------------
 
-    print("####################### BQM ###########################")
+    print("####################### BQM Model ###########################")
     # Convert model from CQM to BQM
     bqm, invert = cqm_to_bqm(cqm)
 
@@ -422,7 +433,7 @@ for depth in range(2, 6):
 
 
 
-    print("####################### ising ###########################")
+    print("####################### Ising Model ###########################")
     # Convert from BQM to ising
     h, j, offset = bqm.to_ising()
 
