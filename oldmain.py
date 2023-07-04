@@ -324,7 +324,7 @@ for depth in range(2, 6):
     #   solution cost (energy consumption)
     #   satisfied and unsatisfied constraints
     #   if the solution is feasible
-    res = sampler.sample_cqm(cqm, label='hpc-project')
+    res = sampler.sample_cqm(cqm)
     
     #print(res)
     #inspector.show(res)
@@ -381,19 +381,6 @@ for depth in range(2, 6):
     # Print Energy consumption 
     print("Energia: " + str(best_sol[1]))
     
-    #-----------------------------------------------------------------
-    import dimod
-    from hybrid.decomposers import ComponentDecomposer
-    from hybrid.core import State
-    from hybrid.utils import random_sample
-
-    bqm = dimod.BinaryQuadraticModel({'a': 1, 'b': -1, 'c': 1, 'd': 2}, {'ab': 1, 'bc': 1}, 0, dimod.SPIN)
-    state0 = State.from_sample(random_sample(bqm), bqm)
-
-    decomposer = ComponentDecomposer(key=len)
-    state1 = decomposer.next(state0).result()
-    state2 = decomposer.next(state1).result()
-    #-----------------------------------------------------------------
 
     print("####################### BQM Model ###########################")
     # Convert model from CQM to BQM
