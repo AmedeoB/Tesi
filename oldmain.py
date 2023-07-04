@@ -82,7 +82,7 @@ while(i < L):
 """
 
 # Tests various depths [2, 3, 4, 5]
-for depth in range(2, 6):
+for depth in range(3, 6):
     print("PROFONDITA': " + str(depth))
     print("###########################################")
     

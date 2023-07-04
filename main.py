@@ -47,25 +47,33 @@ import re
 # Init random seed
 seed()
 DEBUG = True
-
-u = []      # CPU utilization of VM j on server i
-d = []      # Data rate of flow f on link l
-
-depth = 3   # Define constant depth
+DEPTH = 3   # Define constant depth
 
 
-M = pow(2, depth)                       # Server number
+
+
+M = pow(2, DEPTH)                       # Server number
 N = M                                   # VM number per server
-K = sum(pow(2,i) for i in range(depth)) # Switch number
+K = sum(pow(2,i) for i in range(DEPTH)) # Switch number
 F = M//2 if M%2==0 else M//2+1          # Flow number
-
-Cs = [10 for i in range(M)]             # Capacity of each server
-pi_idle = [10 for i in range(M + K)]    # Idle power consumption of each node
-pi_dyn = [1 for i in range(M + K)]      # Maximum dynamic power of each node
 L = 2*K                                 # Link number
 
-# Binary list of adjacent nodes (0 non-andj, 1 adj)
-adj_node = [[0 for j in range(M + K)] for i in range(M + K)]    
+Cs = [10 for i in range(M)]             # Capacity of each server
+Cl = [10 for i in range (L)]            # Capacity of each Link
+pi_idle = [10 for i in range(M + K)]    # Idle power consumption of each node
+pi_dyn = [1 for i in range(M + K)]      # Maximum dynamic power of each node
+
+
+adj_node = [[0 for j in range(M + K)] for i in range(M + K)]    # Binary list of adjacent nodes (0 non-andj, 1 adj)
+
+si = [Binary("s" + str(i)) for i in range(M)]                   # Binary value for each server, 1 ON, 0 OFF
+swk = [Binary("sw" + str(i)) for i in range(K)]                 # Binary value for each switch, 1 ON, 0 OFF
+v = [[Binary("v" + str(j) + "-" + str(i)) 
+        for i in range(M)] for j in range(N)]                   # Binary value for each VM on each server, 1 ON, 0 OFF
+
+u_v = (np.random.normal(8, 1, (M, N))).astype(int)              # CPU utilization of each VM on each server
+d = (np.random.normal(4, 1, (F, L))).astype(int)                # Data rate of flow f on link l 
+
 # Calculate adjancy list:
 #   > M                     index 0 of switches
 #   > i*2 + 1               first son
@@ -85,12 +93,12 @@ for i in range(K):
         adj_node[i + M][tmp + 1 - (M + K)] = 1
         adj_node[tmp + 1 - (M + K)][i + M] = 1
 
-Cl = [10 for i in range (L)]                     # Capacity of each Link
 
 
-# Fill src_dst with all possible server ids to couple
-src_dst = [[0 for j in range(2)] for i in range(F)] # list of commmunicating servers
+
+src_dst = [[0 for j in range(2)] for i in range(F)]         # list of commmunicating servers
 randoms = []                                                # list of generated random values
+# Fill src_dst with all possible server ids to couple
 for i in range(F):
     for j in range(2):
         while True:
@@ -105,17 +113,9 @@ for i in range(F):
                 randoms.append(ran)
                 
                 break
-# Print Paths
 print("Paths")
 print(src_dst)
 
-
-si = [Binary("s" + str(i)) for i in range(M)]       # Binary value for each server, 1 means on, 0 off
-swk = [Binary("sw" + str(i)) for i in range(K)]     # Binary value for each switch, 1 means on, 0 off
-
-v = [[Binary("v" + str(j) + "-" + str(i)) for i in range(M)] for j in range(N)]  # Binary value for each VM on each server, 1 means on, 0 off
-u_v = np.random.normal(8, 1, (M, N))                # CPU utilization of each VM on each server
-u_v = u_v.astype(int)
 
 # Initialize rho dictionary for each adjacent node
 # rho[f, [n1,n2]] = 1 if part of flow f goes from n1 to n2
@@ -125,10 +125,6 @@ for f in range(F):
         for k in range(K + M):
             if adj_node[i][k]:
                 rho['rho' + str(f) + '-' + str(i) + '-' + str(k)] = Binary("rho" + str(f) + "-" + str(i) + "-" + str(k))
-
-
-d = np.random.normal(4, 1, (F, L))          # Data rate of flow f on link l 
-d = d.astype(int)
 
 # Initialize dictionary for each adjacent node
 on = {}
