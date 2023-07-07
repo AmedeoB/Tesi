@@ -1,26 +1,27 @@
 """
-MODEL VARIABLES DICTIONARY
-    M           int         number of servers
-    N           int         number of VM
-    K           int         number of switches
-    F           int         number of flows (server-server paths, = M/2)
-    L           int         number of links (graph links)
+####### MODEL VARIABLES DICTIONARY #######
+__________________________________________________________________________________________________
+Variable         |  Type         |  Model        |  Description
+_________________|_______________|_______________|_________________________________________________
+SERVERS             int             M               number of servers
+VMS                 int             N               number of VM
+SWITCHES            int             K               number of switches
+FLOWS               int             F               number of flows (server-server paths, = M/2)
+LINKS               int             L               number of links (graph links)
+server_capacity     1D list         C(s)            capacity of each server
+idle_powcons        1D list         p(idle_i)       idle power consumption fo each node
+dyn_powcons         1D list         p(dyn_i)        maximum dynamic power of each node 
+adjancy_list        2D list         ---             node's adjancy list
+link_capacity       1D list         C(l)            capacity of each link
+src_dst             2D list         ---             list of server communicating through a path
+server_status       1D list         ---             server status, 1 on, 0 off
+switch_status       1D list         ---             switch status, 1 on, 0 off
+vm_status           2D list         v(ji)           VM (j) status per server (i), 1 on, 0 off
+cpu_util            2D array        u(v(ji)         CPU utilization of each VM v(ji)
+data_rate           2D array        d(fl)           data rate of flow (f) on link (l)
 
-    Cs          1D list     capacity of each server
-    Cl          1D list     capacity of each link
-    pi_idle     1D list     idle power consumption fo each node
-    pi_dyn      1D list     maximum dynamic power of each node 
-    adj_node    2D list     node's adjancy list
-    src_dst     2D list     list of server communicating through a path
-
-    si          1D list     server status, 1 on, 0 off
-    swk         1D list     switch status, 1 on, 0 off
-    v           2D list     VM status per server, 1 on, 0 off
-    u_v         2D array    CPU utilization of each VM
-    d           2D array    data rate of flow f on link l
-
-    rho         dictionary  ???
-    on          dictionary  ???
+flow_path           bin dictionary  ρ(f,(k,i))      se parte del flow (f) va da k a i (nodi), allora 1, 0 altrimenti
+on                  bin dictionary
 """
 
 """
@@ -52,27 +53,28 @@ DEPTH = 3   # Define constant depth
 
 
 
-M = pow(2, DEPTH)                       # Server number
-N = M                                   # VM number per server
-K = sum(pow(2,i) for i in range(DEPTH)) # Switch number
-F = M//2 if M%2==0 else M//2+1          # Flow number
-L = 2*K                                 # Link number
+SERVERS = pow(2, DEPTH)                                 # Server number
+VMS = SERVERS                                           # VM number per server
+SWITCHES = sum(pow(2,i) for i in range(DEPTH))          # Switch number
+FLOWS = SERVERS//2 if SERVERS%2==0 else SERVERS//2+1    # Flow number
+LINKS = 2*SWITCHES                                      # Link number
 
-Cs = [10 for i in range(M)]             # Capacity of each server
-Cl = [10 for i in range (L)]            # Capacity of each Link
-pi_idle = [10 for i in range(M + K)]    # Idle power consumption of each node
-pi_dyn = [1 for i in range(M + K)]      # Maximum dynamic power of each node
+server_capacity = [10 for i in range(SERVERS)]           # Capacity of each server
+link_capacity = [10 for i in range (LINKS)]              # Capacity of each Link
+idle_powcons = [10 for i in range(SERVERS + SWITCHES)]   # Idle power consumption of each node
+dyn_powcons = [1 for i in range(SERVERS + SWITCHES)]     # Maximum dynamic power of each node
 
 
-adj_node = [[0 for j in range(M + K)] for i in range(M + K)]    # Binary list of adjacent nodes (0 non-andj, 1 adj)
+adjancy_list = [[0 for j in range(SERVERS + SWITCHES)] 
+        for i in range(SERVERS + SWITCHES)]              # Binary list of adjacent nodes (0 non-andj, 1 adj)
 
-si = [Binary("s" + str(i)) for i in range(M)]                   # Binary value for each server, 1 ON, 0 OFF
-swk = [Binary("sw" + str(i)) for i in range(K)]                 # Binary value for each switch, 1 ON, 0 OFF
-v = [[Binary("v" + str(j) + "-" + str(i)) 
-        for i in range(M)] for j in range(N)]                   # Binary value for each VM on each server, 1 ON, 0 OFF
+server_status = [Binary("s" + str(i)) for i in range(SERVERS)]          # Binary value for each server, 1 ON, 0 OFF
+switch_status = [Binary("sw" + str(i)) for i in range(SWITCHES)]        # Binary value for each switch, 1 ON, 0 OFF
+vm_status = [[Binary("v" + str(j) + "-" + str(i)) 
+        for i in range(SERVERS)] for j in range(VMS)]                   # Binary value for each VM on each server, 1 ON, 0 OFF
 
-u_v = (np.random.normal(8, 1, (M, N))).astype(int)              # CPU utilization of each VM on each server
-d = (np.random.normal(4, 1, (F, L))).astype(int)                # Data rate of flow f on link l 
+cpu_util = (np.random.normal(8, 1, (SERVERS, VMS))).astype(int)         # CPU utilization of each VM on each server
+data_rate = (np.random.normal(4, 1, (FLOWS, LINKS))).astype(int)        # Data rate of flow f on link l 
 
 # Calculate adjancy list:
 #   > M                     index 0 of switches
@@ -80,57 +82,69 @@ d = (np.random.normal(4, 1, (F, L))).astype(int)                # Data rate of f
 #   > tmp & tmp + 1         both sons
 #   > if                    switch - switch adjancy
 #   > else                  switch - server adjancy
-for i in range(K):
-    tmp = i*2 + 1 + M
-    if tmp < (M + K):
-        adj_node[i + M][tmp] = 1
-        adj_node[tmp][i + M] = 1
-        adj_node[i + M][tmp + 1] = 1
-        adj_node[tmp + 1][i + M] = 1
-    else:
-        adj_node[i + M][tmp - (M + K)] = 1
-        adj_node[tmp - (M + K)][i + M] = 1
-        adj_node[i + M][tmp + 1 - (M + K)] = 1
-        adj_node[tmp + 1 - (M + K)][i + M] = 1
+# for i in range(SWITCHES):
+#     tmp = i*2 + 1 + SERVERS
+#     if tmp < (SERVERS + SWITCHES):
+#         adjancy_list[i + SERVERS][tmp] = 1
+#         adjancy_list[tmp][i + SERVERS] = 1
+#         adjancy_list[i + SERVERS][tmp + 1] = 1
+#         adjancy_list[tmp + 1][i + SERVERS] = 1
+#     else:
+#         adjancy_list[i + SERVERS][tmp - (SERVERS + SWITCHES)] = 1
+#         adjancy_list[tmp - (SERVERS + SWITCHES)][i + SERVERS] = 1
+#         adjancy_list[i + SERVERS][tmp + 1 - (SERVERS + SWITCHES)] = 1
+#         adjancy_list[tmp + 1 - (SERVERS + SWITCHES)][i + SERVERS] = 1
+
+# Calculate adjancy list:
+for i in range(SERVERS + SWITCHES):
+    first_son = i*2 + 1
+    second_son = first_son + 1
+    if (second_son < SERVERS + SWITCHES):
+        adjancy_list[i][first_son] = 1
+        adjancy_list[i][second_son] = 1
+        adjancy_list[first_son][i] = 1
+        adjancy_list[second_son][i] = 1
+
+if DEBUG:
+    for i in range(len(adjancy_list)):
+        print()
+        print("Nodo ", i, " collegato ai nodi:")
+        for j in range(len(adjancy_list)):
+            if adjancy_list[i][j] == 1:
+                print(j, end=" ")
 
 
-
-
-src_dst = [[0 for j in range(2)] for i in range(F)]         # list of commmunicating servers
+src_dst = [[0 for j in range(2)] for i in range(FLOWS)]     # list of commmunicating servers
 randoms = []                                                # list of generated random values
-# Fill src_dst with all possible server ids to couple
-for i in range(F):
+for i in range(FLOWS):
     for j in range(2):
-        while True:
-            
-            ran = randint(0, M-1)
+        while True:            
+            ran = randint(0, SERVERS-1)
             
             if not ran in randoms:
                 # Fill list
-                src_dst[i][j] = ran
-                
+                src_dst[i][j] = ran                
                 # Keep number recorded
-                randoms.append(ran)
-                
+                randoms.append(ran)                
                 break
-print("Paths")
+print("Paths:", end=" ")
 print(src_dst)
 
 
-# Initialize rho dictionary for each adjacent node
-# rho[f, [n1,n2]] = 1 if part of flow f goes from n1 to n2
-rho = {}
-for f in range(F):
-    for i in range(K + M):
-        for k in range(K + M):
-            if adj_node[i][k]:
-                rho['rho' + str(f) + '-' + str(i) + '-' + str(k)] = Binary("rho" + str(f) + "-" + str(i) + "-" + str(k))
+# Initialize flow_path dictionary for each possible combination of flow and adjacent node
+# flow_path[f, [n1,n2]] = 1 if part of flow f goes from n1 to n2
+flow_path = {}
+for f in range(FLOWS):
+    for i in range(SWITCHES + SERVERS):
+        for k in range(SWITCHES + SERVERS):
+            if adjancy_list[i][k]:
+                flow_path['f' + str(f) + '-n' + str(i) + '-n' + str(k)] = Binary("f" + str(f) + "-n" + str(i) + "-n" + str(k))
 
 # Initialize dictionary for each adjacent node
 on = {}
-for i in range(M + K):
-    for j in range(M + K):
-        if adj_node[i][j]:
+for i in range(SERVERS + SWITCHES):
+    for j in range(SERVERS + SWITCHES):
+        if adjancy_list[i][j]:
             on["on" + str(i) + "-" + str(j)] = Binary("on" + str(i) + "-" + str(j))
 
 
@@ -142,11 +156,11 @@ cqm = ConstrainedQuadraticModel()
 
 # OBJECTIVE
 # Define Subobjectives
-obj1 = quicksum(pi_idle[i] * si[i] for i in range(M))
-obj2 = quicksum(pi_dyn[i] * quicksum(u_v[j][i] * v[j][i] for j in range(N)) for i in range(M))
-obj3 = quicksum(pi_idle[i] * swk[i - M] for i in range(M, M + K))
-obj4 = quicksum(rho['rho' + str(f) + '-' + str(i) + '-' + str(j)] + rho['rho' + str(f) + '-' + str(j) + '-' + str(i)]
-                    for i in range(M + K) for j in range (M + K) for f in range(F) if adj_node[i][j] == 1)
+obj1 = quicksum(idle_powcons[i] * server_status[i] for i in range(SERVERS))
+obj2 = quicksum(dyn_powcons[i] * quicksum(cpu_util[j][i] * vm_status[j][i] for j in range(VMS)) for i in range(SERVERS))
+obj3 = quicksum(idle_powcons[i] * switch_status[i - SERVERS] for i in range(SERVERS, SERVERS + SWITCHES))
+obj4 = quicksum(flow_path['f' + str(f) + '-n' + str(i) + '-n' + str(j)] + flow_path['f' + str(f) + '-n' + str(j) + '-n' + str(i)]
+                    for i in range(SERVERS + SWITCHES) for j in range (SERVERS + SWITCHES) for f in range(FLOWS) if adjancy_list[i][j] == 1)
 
 # Set Objective
 cqm.set_objective(obj1 + obj2 + obj3 + obj4)
@@ -154,61 +168,61 @@ cqm.set_objective(obj1 + obj2 + obj3 + obj4)
 
 # CONSTRAINTS
 # For each server, the CPU utilization of each VM on that server must be less or equal than server's capacity       (11)
-for i in range(M):
-    cqm.add_constraint(quicksum(u_v[j][i] * v[j][i] for j in range(N)) - Cs[i] * si[i] <= 0)
+for i in range(SERVERS):
+    cqm.add_constraint(quicksum(cpu_util[j][i] * vm_status[j][i] for j in range(VMS)) - server_capacity[i] * server_status[i] <= 0)
 
 # For each VM, it can only be active on one server      (12)
-for j in range(N):
-    cqm.add_constraint(quicksum(v[j][i] for i in range(M)) == 1)
+for j in range(VMS):
+    cqm.add_constraint(quicksum(vm_status[j][i] for i in range(SERVERS)) == 1)
 
 # For each flow and server, ???     (13)
-for f in range(F):
-    for i in range(M):
-        cqm.add_constraint(quicksum(rho['rho' + str(f) + '-' + str(i) + '-' + str(k)] for k in range(M, M + K) if adj_node[i][k] == 1)  - v[src_dst[f][0]][i] <= 0)
+for f in range(FLOWS):
+    for i in range(SERVERS):
+        cqm.add_constraint(quicksum(flow_path['f' + str(f) + '-n' + str(i) + '-n' + str(k)] for k in range(SERVERS, SERVERS + SWITCHES) if adjancy_list[i][k] == 1)  - vm_status[src_dst[f][0]][i] <= 0)
 
 # For each flow and server, ???     (14)
-for f in range(F):
-    for i in range(M):
-        cqm.add_constraint(quicksum(rho['rho' + str(f) + '-' + str(k) + '-' + str(i)] for k in range(M, M + K) if adj_node[k][i] == 1) - v[src_dst[f][1]][i] <= 0) 
+for f in range(FLOWS):
+    for i in range(SERVERS):
+        cqm.add_constraint(quicksum(flow_path['f' + str(f) + '-n' + str(k) + '-n' + str(i)] for k in range(SERVERS, SERVERS + SWITCHES) if adjancy_list[k][i] == 1) - vm_status[src_dst[f][1]][i] <= 0) 
 
 # For each flow and server, ???     (15)
-for f in range(F):
-    for i in range(M):
-        cqm.add_constraint(v[src_dst[f][0]][i] - v[src_dst[f][1]][i]  - (quicksum(rho['rho' + str(f) + '-' + str(i) + '-' + str(k)] for k in range(M, K + M) if adj_node[i][k] == 1) - quicksum(rho['rho' + str(f) + '-' + str(k) + '-' + str(i)] for k in range(M, K + M) if adj_node[k][i] == 1)) == 0)
+for f in range(FLOWS):
+    for i in range(SERVERS):
+        cqm.add_constraint(vm_status[src_dst[f][0]][i] - vm_status[src_dst[f][1]][i]  - (quicksum(flow_path['f' + str(f) + '-n' + str(i) + '-n' + str(k)] for k in range(SERVERS, SWITCHES + SERVERS) if adjancy_list[i][k] == 1) - quicksum(flow_path['f' + str(f) + '-n' + str(k) + '-n' + str(i)] for k in range(SERVERS, SWITCHES + SERVERS) if adjancy_list[k][i] == 1)) == 0)
 
 # For each switch, ???      (16)
-for k in range(M, M + K):
-    for f in range(F):
-        cqm.add_constraint(quicksum(rho['rho' + str(f) + '-' + str(n) + '-' + str(k)]  for n in range(M + K) if adj_node[n][k] == 1) - quicksum(rho['rho' + str(f) + '-' + str(k) + '-' + str(n)] for n in range(M + K) if adj_node[k][n] == 1) == 0)
+for k in range(SERVERS, SERVERS + SWITCHES):
+    for f in range(FLOWS):
+        cqm.add_constraint(quicksum(flow_path['f' + str(f) + '-n' + str(n) + '-n' + str(k)]  for n in range(SERVERS + SWITCHES) if adjancy_list[n][k] == 1) - quicksum(flow_path['f' + str(f) + '-n' + str(k) + '-n' + str(n)] for n in range(SERVERS + SWITCHES) if adjancy_list[k][n] == 1) == 0)
 
 # For each node couple, the data rate on a path is less or equal than its capacity      (17)
 count = 0
-for i in range(M + K):
-    for j in range(M + K):
-        if adj_node[i][j] == 1 and j > i:
-            cqm.add_constraint(quicksum(d[f][count] * (rho['rho' + str(f) + '-' + str(i) + '-' + str(j)] + rho['rho' + str(f) + '-' + str(j) + '-' + str(i)]) for f in range(F)) - Cl[count] * on["on" + str(i) + "-" + str(j)] <= 0)
+for i in range(SERVERS + SWITCHES):
+    for j in range(SERVERS + SWITCHES):
+        if adjancy_list[i][j] == 1 and j > i:
+            cqm.add_constraint(quicksum(data_rate[f][count] * (flow_path['f' + str(f) + '-n' + str(i) + '-n' + str(j)] + flow_path['f' + str(f) + '-n' + str(j) + '-n' + str(i)]) for f in range(FLOWS)) - link_capacity[count] * on["on" + str(i) + "-" + str(j)] <= 0)
             count += 1
 
 # For each node couple, the data rate on a path is less or equal than its capacity      (17)
 count = 0
-for j in range(M + K):
-    for i in range(M + K):
-        if adj_node[i][j] == 1 and i > j:
-            cqm.add_constraint(quicksum(d[f][count] * (rho['rho' + str(f) + '-' + str(i) + '-' + str(j)] + rho['rho' + str(f) + '-' + str(j) + '-' + str(i)]) for f in range(F)) - Cl[count] * on["on" + str(i) + "-" + str(j)] <= 0)
+for j in range(SERVERS + SWITCHES):
+    for i in range(SERVERS + SWITCHES):
+        if adjancy_list[i][j] == 1 and i > j:
+            cqm.add_constraint(quicksum(data_rate[f][count] * (flow_path['f' + str(f) + '-n' + str(i) + '-n' + str(j)] + flow_path['f' + str(f) + '-n' + str(j) + '-n' + str(i)]) for f in range(FLOWS)) - link_capacity[count] * on["on" + str(i) + "-" + str(j)] <= 0)
             count += 1
 
 # For each node couple, if they are adjacent, ???       (18) (19)
-for i in range(M + K):
-    for j in range(M + K):
-        if adj_node[i][j] == 1:
-            if i < M:
-                cqm.add_constraint(on["on" + str(i) + "-" + str(j)] - si[i] <= 0)
+for i in range(SERVERS + SWITCHES):
+    for j in range(SERVERS + SWITCHES):
+        if adjancy_list[i][j] == 1:
+            if i < SERVERS:
+                cqm.add_constraint(on["on" + str(i) + "-" + str(j)] - server_status[i] <= 0)
             else:
-                cqm.add_constraint(on["on" + str(i) + "-" + str(j)] - swk[i - M] <= 0)
-            if j < M:
-                cqm.add_constraint(on["on" + str(i) + "-" + str(j)] - si[j] <= 0)
+                cqm.add_constraint(on["on" + str(i) + "-" + str(j)] - switch_status[i - SERVERS] <= 0)
+            if j < SERVERS:
+                cqm.add_constraint(on["on" + str(i) + "-" + str(j)] - server_status[j] <= 0)
             else:
-                cqm.add_constraint(on["on" + str(i) + "-" + str(j)] - swk[j - M] <= 0)
+                cqm.add_constraint(on["on" + str(i) + "-" + str(j)] - switch_status[j - SERVERS] <= 0)
 
 
 print("\n\n\n")
@@ -229,7 +243,7 @@ sampler = LeapHybridCQMSampler()
 res = sampler.sample_cqm(cqm)
 
 # Extract only solution that satisfy all constraints
-feasible_sampleset = res.filter(lambda d: d.is_feasible)
+feasible_sampleset = res.filter(lambda data_rate: data_rate.is_feasible)
 
 # Extract best solution (minimal energy consumption)
 best_sol = feasible_sampleset.first
@@ -240,8 +254,8 @@ print("time: %s" %(time.time() - start_time))
 # Extract variables values
 dict = best_sol[0]
 count = 0
-print("Gli indici da 0 a " + str(M - 1) + " sono i server")
-print("Gli indici da " + str(M) + " a " + str(M + K - 1) + " sono gli switch")
+print("Gli indici da 0 a " + str(SERVERS - 1) + " sono i server")
+print("Gli indici da " + str(SERVERS) + " a " + str(SERVERS + SWITCHES - 1) + " sono gli switch")
 
 # Iterate through variables set
 for i in dict:
@@ -251,9 +265,9 @@ for i in dict:
             print("Collegamenti attivi: ")
             count += 1
         
-        # Data is rho
-        elif count == 1 and re.search("rho.*", i) is not None:
-            print("rho[f, [n1, n2]] = 1 se parte del flusso f-esimo va da n1 ad n2")
+        # Data is flow_path
+        elif count == 1 and re.search("flow_path.*", i) is not None:
+            print("flow_path[f, [n1, n2]] = 1 se parte del flusso f-esimo va da n1 ad n2")
             count += 1
         
         # Data is active switches/servers
