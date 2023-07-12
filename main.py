@@ -300,9 +300,8 @@ print("Execution Time: %s" %(time.time() - start_time))
 best_sol = sampleset.first
 print("ENERGY: " + str(best_sol[1]))
 
-# Extract embedding info
+# Extract embedding info & print logic variables and qubit
 embedding = sampleset.info['embedding_context']['embedding']
-# Print num of logic variables and qubit used in the embedding
 print(f"Numero di variabili logiche: {len(embedding.keys())}")
 print(f"Numero di qubit fisici usati nell'embedding: {sum(len(chain) for chain in embedding.values())}")
 
