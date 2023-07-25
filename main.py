@@ -213,14 +213,14 @@ print("\n")
 start_time = time.time()
 
 # Create sampler
-sampler = LeapHybridCQMSampler()
+cqm_sampler = LeapHybridCQMSampler()
 
 # Resolve problem, output (numpy array):
 #   variable values
 #   solution cost (energy consumption)
 #   satisfied and unsatisfied constraints
 #   if the solution is feasible
-res = sampler.sample_cqm(cqm)
+res = cqm_sampler.sample_cqm(cqm)
 
 # Print execution time  |   TODO: dovrebbe essere dopo il sampler non dopo il filtraggio
 print("Execution Time: %s" %(time.time() - start_time))
@@ -287,10 +287,10 @@ roof_duality(bqm)
 start_time = time.time()
 
 # Create sampler    | TODO: spostare sopra lo start time
-sampler = EmbeddingComposite(DWaveSampler())
+bqm_sampler = EmbeddingComposite(DWaveSampler())
 
 # Solve problem
-sampleset = sampler.sample(bqm)
+sampleset = bqm_sampler.sample(bqm)
 
 # Print execution time
 print("Execution Time: %s" %(time.time() - start_time))
@@ -317,13 +317,13 @@ print("\n")
 h, j, offset = bqm.to_ising()
 
 # Create sampler
-sampler = EmbeddingComposite(DWaveSampler())
+isi_sampler = EmbeddingComposite(DWaveSampler())
 
 # Start Execution timer
 start_time = time.time()
 
 # Solve problem
-res = sampler.sample_ising(h, j)
+res = isi_sampler.sample_ising(h, j)
 
 # Print Execution timer
 print("Execution Time: %s" %(time.time() - start_time))
