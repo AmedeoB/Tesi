@@ -24,16 +24,17 @@ flow_path           bin dictionary  ρ(f,(k,i))      se parte del flow (f) va da
 on                  bin dictionary  on(n1, n2)      link between node n1 and n2 is ON                
 """
 
-# IMPORTS
+# IMPORTS D-WAVE
 from dimod import ConstrainedQuadraticModel, Integer, QuadraticModel, Binary, quicksum, cqm_to_bqm 
 from dwave.system import DWaveSampler, EmbeddingComposite, LeapHybridCQMSampler
 import dwave.inspector
 from dwave.preprocessing import roof_duality
+
+# IMPORTS OTHERS
 from scipy.stats import norm
 import numpy as np
-from random import seed
-from random import randint
-from datetime import datetime
+from random import seed, randint
+import time
 import re
 
 ################# CONSTANTS #################
@@ -112,7 +113,7 @@ flow_path = {}
 for f in range(FLOWS):
     for i in range(SWITCHES + SERVERS):
         for k in range(SWITCHES + SERVERS):
-            #if adjancy_list[i][k]:
+            #if adjancy_list[i][k]:     # Adjancy Condition (unnecessary)
                 flow_path['f' + str(f) + '-n' + str(i) + '-n' + str(k)] = Binary("f" + str(f) + "-n" + str(i) + "-n" + str(k))
 
 # Initialize dictionary for each adjacent node
@@ -120,7 +121,7 @@ for f in range(FLOWS):
 on = {}
 for i in range(NODES):
     for j in range(NODES):
-        if adjancy_list[i][j]:
+        #if adjancy_list[i][j]:         # Adjancy Condition (unnecessary)
             on["on" + str(i) + "-" + str(j)] = Binary("on" + str(i) + "-" + str(j))
 
 
@@ -188,12 +189,12 @@ for l in range(LINKS):
 
 # (18)(19) For each link, the link is ON only if both nodes are ON       
 for l in range(LINKS):
-    father = l//2       # Father node of the link
-    son = l+1           # Son node of the link
+    father = l//2           # Father node of the link
+    son = l+1               # Son node of the link
     if son >= SWITCHES:     # Son is a Server
         cqm.add_constraint(on["on" + str(father) + "-" + str(son)] - switch_status[father] <= 0)
         cqm.add_constraint(on["on" + str(father) + "-" + str(son)] - server_status[son-SWITCHES] <= 0)
-    else:               # Both nodes are switches
+    else:                   # Both nodes are switches
         cqm.add_constraint(on["on" + str(father) + "-" + str(son)] - switch_status[father] <= 0)
         cqm.add_constraint(on["on" + str(father) + "-" + str(son)] - switch_status[son] <= 0)
 
@@ -207,8 +208,8 @@ print("SERVER Indexes: ", *[s+SWITCHES for s in range(SERVERS)])
 print("\n\n\n")
 print("####################### CQM Model ###########################")
 print("\n")
+
 # Start execution timer
-import time
 start_time = time.time()
 
 # Create sampler
