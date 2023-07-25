@@ -1,8 +1,8 @@
 """
-####### MODEL VARIABLES DICTIONARY #######
-__________________________________________________________________________________________________
+################################### MODEL VARIABLES DICTIONARY ######################################################
+_____________________________________________________________________________________________________________________
 Variable         |  Type         |  Model        |  Description
-_________________|_______________|_______________|_________________________________________________
+_________________|_______________|_______________|___________________________________________________________________
 SERVERS             int             M               number of servers
 VMS                 int             N               number of VM
 SWITCHES            int             K               number of switches
@@ -19,9 +19,9 @@ switch_status       1D list         sw(k)           switch (k) status, 1 on, 0 o
 vm_status           2D list         v(ji)           VM (j) status per server (i), 1 on, 0 off
 cpu_util            2D array        u(v(ji))        CPU utilization of each VM v(ji)
 data_rate           2D array        d(fl)           data rate of flow (f) on link (l)
-
 flow_path           bin dictionary  ρ(f,(k,i))      se parte del flow (f) va da k a i (nodi), allora 1, 0 altrimenti
 on                  bin dictionary  on(n1, n2)      link between node n1 and n2 is ON                
+#####################################################################################################################
 """
 
 # IMPORTS D-WAVE
@@ -277,7 +277,8 @@ print("\n\n\n")
 print("####################### BQM Model ###########################")
 print("\n")
 # Convert model from CQM to BQM
-bqm, invert = cqm_to_bqm(cqm)
+#   inverter is a function that converts samples over the binary quadratic model back into samples for the constrained quadratic model.
+bqm, inverter = cqm_to_bqm(cqm)
 
 # Pre-processing to improve performance
 roof_duality(bqm)
