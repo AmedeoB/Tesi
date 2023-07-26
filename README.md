@@ -1,16 +1,18 @@
-# CHECK
+# PROBLEMI
 - L'obiettivo funziona davvero come indicato?
 - Check obiettivo
   - manca la parte del consumo delle singole porte?
+- funziona solo con 1 VM per server
+- il CQM è molto più veloce del BQM nonostante dovrebbe essere il contrario
+- il BQM dovrebbe fare più iterazioni per trovare il best result? 
+  - {[Linea 292] sampler.sample(bqm, num_reads=1000)}
+- on non è usato nell'obiettivo anche se è una variabile
+
 
 # TO DO
 - Create class
 - Create main cycle
-- rimetti le condizioni di adiacenza
-
-
-# PROBLEMI
-- funziona solo con 1 VM per server
+- Label constraints
 
 
 # TEST
@@ -20,6 +22,7 @@
 - con condizioni di adiacenza su on{}
     - CQM   t: 1.950      e: 190.0
     - BQM   t: 57.607     e: 74206.0
+
 
 ---------------------------------------------------------
 
