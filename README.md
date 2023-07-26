@@ -13,6 +13,8 @@
 - Create class
 - Create main cycle
 - Label constraints
+- Change Dictionary to matrix?
+- Check obj4, itera due volte sui nodi
 
 
 # TEST
