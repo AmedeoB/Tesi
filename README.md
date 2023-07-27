@@ -3,9 +3,11 @@
 - Check obiettivo
   - manca la parte del consumo delle singole porte?
 - funziona solo con 1 VM per server
-- il CQM è molto più veloce del BQM nonostante dovrebbe essere il contrario
+- il CQM è molto più veloce del BQM nonostante dovrebbe essere il 
+    (Video: Quantum Programming Tutorial | D-Wave Qubits 2021 \\ Time:58:30)
 - il BQM dovrebbe fare più iterazioni per trovare il best result? 
   - {[Linea 292] sampler.sample(bqm, num_reads=1000)}
+    - testato e non migliora
 - on non è usato nell'obiettivo anche se è una variabile
 
 
@@ -13,7 +15,7 @@
 - Create class
 - Create main cycle
 - Label constraints
-- Change Dictionary to matrix?
+- Change Dictionary to matrix? In NumPy vectors
 - Check obj4, itera due volte sui nodi
 
 
