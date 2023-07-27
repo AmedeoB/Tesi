@@ -209,11 +209,11 @@ print("\n\n\n")
 print("####################### CQM Model ###########################")
 print("\n")
 
-# Start execution timer
-start_time = time.time()
-
 # Create sampler
 cqm_sampler = LeapHybridCQMSampler()
+
+# Start execution timer
+start_time = time.time()
 
 # Resolve problem, output (numpy array):
 #   variable values
@@ -222,7 +222,7 @@ cqm_sampler = LeapHybridCQMSampler()
 #   if the solution is feasible
 res = cqm_sampler.sample_cqm(cqm)
 
-# Print execution time  |   TODO: dovrebbe essere dopo il sampler non dopo il filtraggio
+# Print execution time
 print("Execution Time: %s" %(time.time() - start_time))
 
 
@@ -277,20 +277,21 @@ print("\n\n\n")
 print("####################### BQM Model ###########################")
 print("\n")
 # Convert model from CQM to BQM
-#   inverter is a function that converts samples over the binary quadratic model back into samples for the constrained quadratic model.
+#   inverter is a function that converts samples over the binary quadratic model back into samples 
+#   for the constrained quadratic model.
 bqm, inverter = cqm_to_bqm(cqm)
 
 # Pre-processing to improve performance
 roof_duality(bqm)
 
+# Create sampler
+bqm_sampler = EmbeddingComposite(DWaveSampler())
+
 # Start Exection timer
 start_time = time.time()
 
-# Create sampler    | TODO: spostare sopra lo start time
-bqm_sampler = EmbeddingComposite(DWaveSampler())
-
 # Solve problem
-sampleset = bqm_sampler.sample(bqm)
+sampleset = bqm_sampler.sample(bqm, num_reads=1000)
 
 # Print execution time
 print("Execution Time: %s" %(time.time() - start_time))
