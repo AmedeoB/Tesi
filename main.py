@@ -26,7 +26,7 @@ on                  bin dictionary  on(n1, n2)      link between node n1 and n2 
 
 # IMPORTS D-WAVE
 from dimod import ConstrainedQuadraticModel, Integer, QuadraticModel, Binary, quicksum, cqm_to_bqm 
-from dwave.system import DWaveSampler, EmbeddingComposite, LeapHybridCQMSampler
+from dwave.system import DWaveSampler, EmbeddingComposite, LeapHybridCQMSampler, LeapHybridBQMSampler
 import dwave.inspector
 from dwave.preprocessing import roof_duality
 
@@ -220,20 +220,20 @@ start_time = time.time()
 #   solution cost (energy consumption)
 #   satisfied and unsatisfied constraints
 #   if the solution is feasible
-res = cqm_sampler.sample_cqm(cqm)
+cqm_res = cqm_sampler.sample_cqm(cqm)
 
 # Print execution time
 print("Execution Time: %s" %(time.time() - start_time))
 
 
 # Extract only solution that satisfy all constraints
-feasible_sampleset = res.filter(lambda data_rate: data_rate.is_feasible)
+cqm_feasible_sampleset = cqm_res.filter(lambda data_rate: data_rate.is_feasible)
 
 # Extract best solution (minimal energy consumption)
-best_sol = feasible_sampleset.first
+cqm_best_sol = cqm_feasible_sampleset.first
 
 # Extract variables values
-dict = best_sol[0]
+dict = cqm_best_sol[0]
 count = 0
 
 # Iterate through variables set
@@ -269,7 +269,7 @@ for i in dict:
 # Print Energy consumption 
 print()
 print()
-print("ENERGY: " + str(best_sol[1]))
+print("ENERGY: " + str(cqm_best_sol[1]))
 
 
 
@@ -285,13 +285,13 @@ bqm, inverter = cqm_to_bqm(cqm)
 roof_duality(bqm)
 
 # Create sampler
-bqm_sampler = EmbeddingComposite(DWaveSampler())
+bqm_sampler = LeapHybridBQMSampler()    #EmbeddingComposite(DWaveSampler())
 
 # Start Exection timer
 start_time = time.time()
 
 # Solve problem
-sampleset = bqm_sampler.sample(bqm, num_reads=1000)
+bqm_res = bqm_sampler.sample(bqm)
 
 # Print execution time
 print("Execution Time: %s" %(time.time() - start_time))
@@ -299,14 +299,17 @@ print("Execution Time: %s" %(time.time() - start_time))
 # Plotting
 # dwave.inspector.show(sampleset)
 
+# Extract only solution that satisfy all constraints
+#bqm_feasible_sampleset = bqm_res.filter(lambda data_rate: data_rate.is_feasible)
+
 # Extract best solution
-best_sol = sampleset.first
-print("ENERGY: " + str(best_sol[1]))
+bqm_best_sol = bqm_res.first
+print("ENERGY: " + str(bqm_best_sol[1]))
 
 # Extract embedding info & print logic variables and qubit
-embedding = sampleset.info['embedding_context']['embedding']
-print(f"Numero di variabili logiche: {len(embedding.keys())}")
-print(f"Numero di qubit fisici usati nell'embedding: {sum(len(chain) for chain in embedding.values())}")
+# embedding = bqm_res.info['embedding_context']['embedding']
+# print(f"Numero di variabili logiche: {len(embedding.keys())}")
+# print(f"Numero di qubit fisici usati nell'embedding: {sum(len(chain) for chain in embedding.values())}")
 
 
 
