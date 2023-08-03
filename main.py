@@ -24,6 +24,7 @@ on                  bin dictionary  on(n1, n2)      link between node n1 and n2 
 #####################################################################################################################
 """
 
+
 # IMPORTS D-WAVE
 from dimod import ConstrainedQuadraticModel, Integer, QuadraticModel, Binary, quicksum, cqm_to_bqm 
 from dwave.system import DWaveSampler, EmbeddingComposite, LeapHybridCQMSampler, LeapHybridBQMSampler
@@ -37,13 +38,21 @@ from random import seed, randint
 import time
 import re
 
-################# CONSTANTS #################
 seed()                  # Init random seed
-DEBUG = True            # Debug bool
+DEBUG = True            # DEBUG BOOLEAN
+
+################# TREE DEFINITION PARAMETERS ###################
 DEPTH = 2               # Tree depth
-#############################################
+SERVER_C = 10           # Server capacity
+LINK_C = 10             # Link capacity
+IDLE_PC = 10            # Idle power consumption
+DYN_PC = 1              # Dynamic power consumption
+REQ_AVG = 8             # Average flow request
+DATAR_AVG = 4           # Average data rate per flow
+###############################################################
 
 
+############### TREE CONSTRUCTION ####################################################################
 
 SERVERS = pow(2, DEPTH)                                 # Server number
 VMS = SERVERS                                           # VM number per server
@@ -52,22 +61,18 @@ FLOWS = VMS//2 if VMS%2==0 else VMS//2+1                # Flow number
 LINKS = 2*SWITCHES                                      # Link number
 NODES = SERVERS + SWITCHES                              # Total Nodes
 
-server_capacity = [10 for i in range(SERVERS)]           # Capacity of each server
-link_capacity = [10 for i in range (LINKS)]              # Capacity of each Link
-idle_powcons = [10 for i in range(NODES)]   # Idle power consumption of each node
-dyn_powcons = [1 for i in range(NODES)]     # Maximum dynamic power of each node
+server_capacity = [SERVER_C for i in range(SERVERS)]           # Capacity of each server
+link_capacity = [LINK_C for i in range (LINKS)]              # Capacity of each Link
+idle_powcons = [IDLE_PC for i in range(NODES)]   # Idle power consumption of each node
+dyn_powcons = [DYN_PC for i in range(NODES)]     # Maximum dynamic power of each node
 
 
 adjancy_list = [[0 for j in range(NODES)] 
         for i in range(NODES)]              # Binary list of adjacent nodes (0 non-andj, 1 adj)
 
-server_status = [Binary("s" + str(i)) for i in range(SERVERS)]          # Binary value for each server, 1 ON, 0 OFF
-switch_status = [Binary("sw" + str(i)) for i in range(SWITCHES)]        # Binary value for each switch, 1 ON, 0 OFF
-vm_status = [[Binary("vm" + str(i) + "-s" + str(j)) 
-        for i in range(VMS)] for j in range(SERVERS)]                   # Binary value for each VM on each server, 1 ON, 0 OFF
 
-cpu_util = (np.random.normal(8, 1, (SERVERS, VMS))).astype(int)         # CPU utilization of each VM on each server
-data_rate = (np.random.normal(4, 1, (FLOWS, LINKS))).astype(int)        # Data rate of flow f on link l 
+cpu_util = (np.random.normal(REQ_AVG, 1, (SERVERS, VMS))).astype(int)         # CPU utilization of each VM on each server
+data_rate = (np.random.normal(DATAR_AVG, 1, (FLOWS, LINKS))).astype(int)      # Data rate of flow f on link l 
 
 # Calculate adjancy list:
 for i in range(NODES):
@@ -107,6 +112,14 @@ print(src_dst)
 print("\n")
 
 
+
+############### BINARY VARIABLES ################################################################################################
+
+server_status = [Binary("s" + str(i)) for i in range(SERVERS)]          # Binary value for each server, 1 ON, 0 OFF
+switch_status = [Binary("sw" + str(i)) for i in range(SWITCHES)]        # Binary value for each switch, 1 ON, 0 OFF
+vm_status = [[Binary("vm" + str(i) + "-s" + str(j)) 
+        for i in range(VMS)] for j in range(SERVERS)]                   # Binary value for each VM on each server, 1 ON, 0 OFF
+
 # Initialize flow_path dictionary for each possible combination of flow and adjacent node
 # flow_path[f, [n1,n2]] = 1 if part of flow f goes from n1 to n2
 flow_path = {}
@@ -126,7 +139,7 @@ for i in range(NODES):
 
 
 
-######################### CQM MODEL #########################
+######################### MODEL (CQM) ################################################################################################
 # Create CQM
 cqm = ConstrainedQuadraticModel()
 
