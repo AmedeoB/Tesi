@@ -1,6 +1,5 @@
 # PROBLEMI
 - funziona solo con 1 VM per server
-- on non è usato nell'obiettivo anche se è una variabile
 
 
 # TO DO
