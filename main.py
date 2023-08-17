@@ -149,18 +149,18 @@ cqm = ConstrainedQuadraticModel()
 
 # OBJECTIVE
 # Define Subobjectives
-obj1 = quicksum(server_status[i] * idle_powcons[i+SWITCHES] for i in range(SERVERS))
-obj2 = quicksum(dyn_powcons[i+SWITCHES] * quicksum(cpu_util[i][j] * vm_status[i][j] for j in range(VMS)) for i in range(SERVERS))
-obj3 = quicksum(switch_status[i] * idle_powcons[i] for i in range(SWITCHES))
+#obj1 = quicksum(server_status[i] * idle_powcons[i+SWITCHES] for i in range(SERVERS))
+#obj2 = quicksum(dyn_powcons[i+SWITCHES] * quicksum(cpu_util[i][j] * vm_status[i][j] for j in range(VMS)) for i in range(SERVERS))
+#obj3 = quicksum(switch_status[i] * idle_powcons[i] for i in range(SWITCHES))
 
-obj4 = quicksum(flow_path['f' + str(f) + '-n' + str(i) + '-n' + str(j)] + flow_path['f' + str(f) + '-n' + str(j) + '-n' + str(i)]
-                    for i in range(NODES) for j in range (NODES) for f in range(FLOWS) if adjancy_list[i][j] == 1)
-"""
+# obj4 = quicksum(flow_path['f' + str(f) + '-n' + str(i) + '-n' + str(j)] + flow_path['f' + str(f) + '-n' + str(j) + '-n' + str(i)]
+                    # for i in range(NODES) for j in range (NODES) for f in range(FLOWS) if adjancy_list[i][j] == 1)
 obj4 = quicksum(flow_path['f' + str(f) + '-n' + str(k) + '-n' + str(n)] + flow_path['f' + str(f) + '-n' + str(n) + '-n' + str(k)] 
-                    for k in range(SWITCHES) for n in range(NODES) for f in range(FLOWS))
-"""
+                    for k in range(SWITCHES) for n in range(NODES) for f in range(FLOWS) if adjancy_list[k][n] == 1)
+
 # Set Objective
-cqm.set_objective(obj1 + obj2 + obj3 + obj4)
+#cqm.set_objective(obj1 + obj2 + obj3 + obj4)
+cqm.set_objective(obj4)
 
 
 # CONSTRAINTS
@@ -248,6 +248,11 @@ cqm_feasible_sampleset = cqm_res.filter(lambda data_rate: data_rate.is_feasible)
 # Extract best solution (minimal energy consumption)
 cqm_best_sol = cqm_feasible_sampleset.first
 
+# Print Energy consumption 
+print()
+print()
+print("ENERGY: " + str(cqm_best_sol[1]))
+
 # Extract variables values
 dict = cqm_best_sol[0]
 count = 0
@@ -281,11 +286,6 @@ for i in dict:
         
         # General printer
         print(i, end= " | ")
-
-# Print Energy consumption 
-print()
-print()
-print("ENERGY: " + str(cqm_best_sol[1]))
 
 
 
@@ -330,23 +330,23 @@ print("ENERGY: " + str(bqm_best_sol[1]))
 
 
 
-print("\n\n\n")
-print("####################### Ising Model ###########################")
-print("\n")
-# Convert from BQM to ising
-h, j, offset = bqm.to_ising()
+# print("\n\n\n")
+# print("####################### Ising Model ###########################")
+# print("\n")
+# # Convert from BQM to ising
+# h, j, offset = bqm.to_ising()
 
-# Create sampler
-isi_sampler = EmbeddingComposite(DWaveSampler())
+# # Create sampler
+# isi_sampler = EmbeddingComposite(DWaveSampler())
 
-# Start Execution timer
-start_time = time.time()
+# # Start Execution timer
+# start_time = time.time()
 
-# Solve problem
-res = isi_sampler.sample_ising(h, j)
+# # Solve problem
+# res = isi_sampler.sample_ising(h, j)
 
-# Print Execution timer
-print("Execution Time: %s" %(time.time() - start_time))
+# # Print Execution timer
+# print("Execution Time: %s" %(time.time() - start_time))
 
 # Plotting
 # dwave.inspector.show(res)
