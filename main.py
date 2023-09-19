@@ -149,14 +149,14 @@ cqm = ConstrainedQuadraticModel()
 
 # OBJECTIVE
 # Define Subobjectives
-#obj1 = quicksum(server_status[i] * idle_powcons[i+SWITCHES] for i in range(SERVERS))
-#obj2 = quicksum(dyn_powcons[i+SWITCHES] * quicksum(cpu_util[i][j] * vm_status[i][j] for j in range(VMS)) for i in range(SERVERS))
-#obj3 = quicksum(switch_status[i] * idle_powcons[i] for i in range(SWITCHES))
+obj1 = quicksum(server_status[i] * idle_powcons[i+SWITCHES] for i in range(SERVERS))
+obj2 = quicksum(dyn_powcons[i+SWITCHES] * quicksum(cpu_util[i][j] * vm_status[i][j] for j in range(VMS)) for i in range(SERVERS))
+obj3 = quicksum(switch_status[i] * idle_powcons[i] for i in range(SWITCHES))
 
-# obj4 = quicksum(flow_path['f' + str(f) + '-n' + str(i) + '-n' + str(j)] + flow_path['f' + str(f) + '-n' + str(j) + '-n' + str(i)]
-                    # for i in range(NODES) for j in range (NODES) for f in range(FLOWS) if adjancy_list[i][j] == 1)
-obj4 = quicksum(flow_path['f' + str(f) + '-n' + str(k) + '-n' + str(n)] + flow_path['f' + str(f) + '-n' + str(n) + '-n' + str(k)] 
-                    for k in range(SWITCHES) for n in range(NODES) for f in range(FLOWS) if adjancy_list[k][n] == 1)
+obj4 = quicksum(flow_path['f' + str(f) + '-n' + str(i) + '-n' + str(j)] + flow_path['f' + str(f) + '-n' + str(j) + '-n' + str(i)]
+                    for i in range(NODES) for j in range (NODES) for f in range(FLOWS) if adjancy_list[i][j] == 1)
+# obj4 = quicksum(flow_path['f' + str(f) + '-n' + str(k) + '-n' + str(n)] + flow_path['f' + str(f) + '-n' + str(n) + '-n' + str(k)] 
+                    # for k in range(SWITCHES) for n in range(NODES) for f in range(FLOWS) if adjancy_list[k][n] == 1)
 
 # Set Objective
 #cqm.set_objective(obj1 + obj2 + obj3 + obj4)
@@ -221,111 +221,117 @@ for l in range(LINKS):
 print("SWITCH Indexes: ", *[k for k in range(SWITCHES)])
 print("SERVER Indexes: ", *[s+SWITCHES for s in range(SERVERS)])
 
-print("\n\n\n")
-print("####################### CQM Model ###########################")
-print("\n")
+for i in range(5):
 
-# Create sampler
-cqm_sampler = LeapHybridCQMSampler()
+    print("\n\n\n")
+    print("####################### CQM Model ###########################")
+    print("\n")
 
-# Start execution timer
-start_time = time.time()
+    # Create sampler
+    cqm_sampler = LeapHybridCQMSampler()
 
-# Resolve problem, output (numpy array):
-#   variable values
-#   solution cost (energy consumption)
-#   satisfied and unsatisfied constraints
-#   if the solution is feasible
-cqm_res = cqm_sampler.sample_cqm(cqm)
+    # Start execution timer
+    # start_time = time.time()
 
-# Print execution time
-print("Execution Time: %s" %(time.time() - start_time))
-
-
-# Extract only solution that satisfy all constraints
-cqm_feasible_sampleset = cqm_res.filter(lambda data_rate: data_rate.is_feasible)
-
-# Extract best solution (minimal energy consumption)
-cqm_best_sol = cqm_feasible_sampleset.first
-
-# Print Energy consumption 
-print()
-print()
-print("ENERGY: " + str(cqm_best_sol[1]))
-
-# Extract variables values
-dict = cqm_best_sol[0]
-count = 0
-
-# Iterate through variables set
-for i in dict:
-    if dict[i] > 0:
-        # Data is flow_path
-        if count == 0 and re.search("f.*", i) is not None:
-            print("\n")
-            print("--- Assegnamento Flow ---")
-            count += 1
-
-        # Data is on
-        elif count == 1 and re.search("on.*", i) is not None:
-            print("\n")
-            print("--- Link attivi ---")
-            count += 1
-        
-        # Data is active switches/servers
-        elif count == 2 and re.search("s.*", i) is not None:
-            print("\n")
-            print("--- Switch / Server attivi ---")
-            count += 1
-
-        # Data is VMs distribution over servers
-        elif count == 3 and re.search("v.*", i) is not None:
-            print("\n")
-            print("--- Assegnamento VM ---")
-            count += 1
-        
-        # General printer
-        print(i, end= " | ")
+    # Resolve problem, output (numpy array):
+    #   variable values
+    #   solution cost (energy consumption)
+    #   satisfied and unsatisfied constraints
+    #   if the solution is feasible
+    cqm_res = cqm_sampler.sample_cqm(cqm)
 
 
+    # Print execution time
+    # print("Execution Time: %s" %(time.time() - start_time))
+    print("CQM Execution Time: ", cqm_res.info.get('run_time'), " micros")
 
-print("\n\n\n")
-print("####################### BQM Model ###########################")
-print("\n")
-# Convert model from CQM to BQM
-#   inverter is a function that converts samples over the binary quadratic model back into samples 
-#   for the constrained quadratic model.
-bqm, inverter = cqm_to_bqm(cqm)
 
-# Pre-processing to improve performance
-roof_duality(bqm)
+    # Extract only solution that satisfy all constraints
+    cqm_feasible_sampleset = cqm_res.filter(lambda data_rate: data_rate.is_feasible)
 
-# Create sampler
-bqm_sampler = LeapHybridBQMSampler()    #EmbeddingComposite(DWaveSampler())
+    # Extract best solution (minimal energy consumption)
+    cqm_best_sol = cqm_feasible_sampleset.first
 
-# Start Exection timer
-start_time = time.time()
+    # Print Energy consumption 
+    print("ENERGY: " + str(cqm_best_sol[1]))
 
-# Solve problem
-bqm_res = bqm_sampler.sample(bqm)
+    # Extract variables values
+    dict = cqm_best_sol[0]
+    count = 0
 
-# Print execution time
-print("Execution Time: %s" %(time.time() - start_time))
+    # Iterate through variables set
+    for i in dict:
+        if dict[i] > 0:
+            # Data is flow_path
+            if count == 0 and re.search("f.*", i) is not None:
+                print("\n")
+                print("--- Assegnamento Flow ---")
+                count += 1
 
-# Plotting
-# dwave.inspector.show(sampleset)
+            # Data is on
+            elif count == 1 and re.search("on.*", i) is not None:
+                print("\n")
+                print("--- Link attivi ---")
+                count += 1
+            
+            # Data is active switches/servers
+            elif count == 2 and re.search("s.*", i) is not None:
+                print("\n")
+                print("--- Switch / Server attivi ---")
+                count += 1
 
-# Extract only solution that satisfy all constraints
-#bqm_feasible_sampleset = bqm_res.filter(lambda data_rate: data_rate.is_feasible)
+            # Data is VMs distribution over servers
+            elif count == 3 and re.search("v.*", i) is not None:
+                print("\n")
+                print("--- Assegnamento VM ---")
+                count += 1
+            
+            # General printer
+            print(i, end= " | ")
 
-# Extract best solution
-bqm_best_sol = bqm_res.first
-print("ENERGY: " + str(bqm_best_sol[1]))
 
-# Extract embedding info & print logic variables and qubit
-# embedding = bqm_res.info['embedding_context']['embedding']
-# print(f"Numero di variabili logiche: {len(embedding.keys())}")
-# print(f"Numero di qubit fisici usati nell'embedding: {sum(len(chain) for chain in embedding.values())}")
+
+    print("\n\n\n")
+    print("####################### BQM Model ###########################")
+    print("\n")
+    # Convert model from CQM to BQM
+    #   inverter is a function that converts samples over the binary quadratic model back into samples 
+    #   for the constrained quadratic model.
+    bqm, inverter = cqm_to_bqm(cqm)
+
+    # Pre-processing to improve performance
+    roof_duality(bqm)
+
+    # Create sampler
+    bqm_sampler = LeapHybridBQMSampler()
+
+    # Start Exection timer
+    # start_time = time.time()
+
+    # Solve problem
+    bqm_res = bqm_sampler.sample(bqm, time_limit = 10)
+
+    # Print execution time
+    # print("Execution Time: %s" %(time.time() - start_time))
+    print("BQM Execution Time: ", bqm_res.info.get('run_time'), " micros")
+
+    # Plotting
+    # dwave.inspector.show(sampleset)
+
+    # Extract only solution that satisfy all constraints
+    #bqm_feasible_sampleset = bqm_res.filter(lambda data_rate: data_rate.is_feasible)
+
+    # Extract best solution
+    bqm_best_sol = bqm_res.first
+    print("ENERGY: " + str(bqm_best_sol[1]))
+
+
+
+    # Time & Energy Difference
+    print("\n\n\n")
+    print("####################### Time & Energy Difference (CQM - BQM) ###########################")
+    print("Time difference: ", cqm_res.info.get('run_time') - bqm_res.info.get('run_time'), " micros")
+    print("Energy difference: ", cqm_best_sol[1] - bqm_best_sol[1])
 
 
 
