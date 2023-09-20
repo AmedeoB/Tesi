@@ -8,7 +8,17 @@
 - Check obj4, itera due volte sui nodi
 
 
-# TEST
+# TEST NEW TIMER & TIME LIMIT (n = CQM Time, time in micros)
+- 10 Iterations | n time limit
+    - Avg t: 5088.4         Avg e: -3.6
+- 5 Iterations | n+1 time limit
+    - Avg t: -710673.2      Avg e: -0.8
+    - Avg t: -769147.2      Avg e: 0.0
+    - Avg t: -777329.0      Avg e: 0.0
+    - Avg t: -936117        Avg e: 0.0
+
+
+# TEST OBIETTIVI SEPARATI
 - OBJ 1 (Fail runs: 0 / 10)
     - ////// Runs: 1 / 10 ///////
         - CQM   e: 40.0     t: 0.0305

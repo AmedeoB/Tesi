@@ -40,6 +40,7 @@ import re
 
 seed()                  # Init random seed
 DEBUG = True            # DEBUG BOOLEAN
+ITERATIONS = 5          # Iterations to compare results
 
 ################# TREE DEFINITION PARAMETERS ###################
 DEPTH = 2               # Tree depth
@@ -221,7 +222,9 @@ for l in range(LINKS):
 print("SWITCH Indexes: ", *[k for k in range(SWITCHES)])
 print("SERVER Indexes: ", *[s+SWITCHES for s in range(SERVERS)])
 
-for i in range(5):
+avg_time = 0
+avg_energy = 0
+for i in range(ITERATIONS):
 
     print("\n\n\n")
     print("####################### CQM Model ###########################")
@@ -229,9 +232,6 @@ for i in range(5):
 
     # Create sampler
     cqm_sampler = LeapHybridCQMSampler()
-
-    # Start execution timer
-    # start_time = time.time()
 
     # Resolve problem, output (numpy array):
     #   variable values
@@ -242,8 +242,8 @@ for i in range(5):
 
 
     # Print execution time
-    # print("Execution Time: %s" %(time.time() - start_time))
-    print("CQM Execution Time: ", cqm_res.info.get('run_time'), " micros")
+    cqm_time = cqm_res.info.get('run_time')
+    print("CQM Execution Time: ", cqm_time, " micros")
 
 
     # Extract only solution that satisfy all constraints
@@ -305,15 +305,12 @@ for i in range(5):
     # Create sampler
     bqm_sampler = LeapHybridBQMSampler()
 
-    # Start Exection timer
-    # start_time = time.time()
-
     # Solve problem
-    bqm_res = bqm_sampler.sample(bqm, time_limit = 10)
+    bqm_res = bqm_sampler.sample(bqm, time_limit = cqm_time // (10**6)+1)
 
     # Print execution time
-    # print("Execution Time: %s" %(time.time() - start_time))
-    print("BQM Execution Time: ", bqm_res.info.get('run_time'), " micros")
+    bqm_time = bqm_res.info.get('run_time')
+    print("BQM Execution Time: ", bqm_time, " micros")
 
     # Plotting
     # dwave.inspector.show(sampleset)
@@ -327,13 +324,20 @@ for i in range(5):
 
 
 
-    # Time & Energy Difference
+    # Single Time & Energy Difference
+    avg_time += cqm_time - bqm_time
+    avg_energy += cqm_best_sol[1] - bqm_best_sol[1]
     print("\n\n\n")
     print("####################### Time & Energy Difference (CQM - BQM) ###########################")
-    print("Time difference: ", cqm_res.info.get('run_time') - bqm_res.info.get('run_time'), " micros")
+    print("Time difference: ", cqm_time - bqm_time, " micros")
     print("Energy difference: ", cqm_best_sol[1] - bqm_best_sol[1])
 
 
+# Average Time & Energy Difference
+print("\n\n\n")
+print("####################### AVERAGE Time & Energy Difference (CQM - BQM) ###########################")
+print("Average Time difference: ", avg_time / ITERATIONS, " micros")
+print("Average Energy difference: ", avg_energy / ITERATIONS)
 
 
 # print("\n\n\n")
