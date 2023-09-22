@@ -17,7 +17,7 @@ src_dst             2D list         ---             list of vms communicating th
 server_status       1D list         s(i)            server (i) status, 1 on, 0 off
 switch_status       1D list         sw(k)           switch (k) status, 1 on, 0 off
 vm_status           2D list         v(ji)           VM (j) status per server (i), 1 on, 0 off
-cpu_util            2D array        u(v(ji))        CPU utilization of each VM v(ji)
+cpu_util            1D array        u(v(ji))        CPU utilization of each VM 
 data_rate           2D array        d(fl)           data rate of flow (f) on link (l)
 flow_path           bin dictionary  ρ(f,(k,i))      se parte del flow (f) va da k a i (nodi), allora 1, 0 altrimenti
 on                  bin dictionary  on(n1, n2)      link between node n1 and n2 is ON                
@@ -37,13 +37,16 @@ import numpy as np
 from random import seed, randint
 import time
 import re
+import json
 
 seed()                  # Init random seed
 DEBUG = True            # DEBUG BOOLEAN
-ITERATIONS = 5          # Iterations to compare results
+SAVE_DICT = True
+ITERATIONS = 1          # Iterations to compare results
+TIME_MULT = 1
 
 ################# TREE DEFINITION PARAMETERS ###################
-DEPTH = 2               # Tree depth
+DEPTH = 3               # Tree depth
 SERVER_C = 10           # Server capacity
 LINK_C = 10             # Link capacity
 IDLE_PC = 10            # Idle power consumption
@@ -72,7 +75,7 @@ adjancy_list = [[0 for j in range(NODES)]
         for i in range(NODES)]              # Binary list of adjacent nodes (0 non-andj, 1 adj)
 
 
-cpu_util = (np.random.normal(REQ_AVG, 1, (SERVERS, VMS))).astype(int)         # CPU utilization of each VM on each server
+cpu_util = (np.random.normal(REQ_AVG, 1, VMS)).astype(int)         # CPU utilization of each VM on each server
 data_rate = (np.random.normal(DATAR_AVG, 1, (FLOWS, LINKS))).astype(int)      # Data rate of flow f on link l 
 if DEBUG:
 	print("\n### CPU Utilization ###\n", cpu_util)
@@ -151,7 +154,7 @@ cqm = ConstrainedQuadraticModel()
 # OBJECTIVE
 # Define Subobjectives
 obj1 = quicksum(server_status[i] * idle_powcons[i+SWITCHES] for i in range(SERVERS))
-obj2 = quicksum(dyn_powcons[i+SWITCHES] * quicksum(cpu_util[i][j] * vm_status[i][j] for j in range(VMS)) for i in range(SERVERS))
+obj2 = quicksum(dyn_powcons[i+SWITCHES] * quicksum(cpu_util[j] * vm_status[i][j] for j in range(VMS)) for i in range(SERVERS))
 obj3 = quicksum(switch_status[i] * idle_powcons[i] for i in range(SWITCHES))
 
 obj4 = quicksum(flow_path['f' + str(f) + '-n' + str(i) + '-n' + str(j)] + flow_path['f' + str(f) + '-n' + str(j) + '-n' + str(i)]
@@ -160,14 +163,14 @@ obj4 = quicksum(flow_path['f' + str(f) + '-n' + str(i) + '-n' + str(j)] + flow_p
                     # for k in range(SWITCHES) for n in range(NODES) for f in range(FLOWS) if adjancy_list[k][n] == 1)
 
 # Set Objective
-#cqm.set_objective(obj1 + obj2 + obj3 + obj4)
-cqm.set_objective(obj4)
+cqm.set_objective(obj1 + obj2 + obj3 + obj4)
+#cqm.set_objective(obj4)
 
 
 # CONSTRAINTS
 # (11) For each server, the CPU utilization of each VM on that server must be less or equal than server's capacity       
 for i in range(SERVERS):
-    cqm.add_constraint(quicksum(cpu_util[i][j] * vm_status[i][j] for j in range(VMS)) - server_capacity[i]*server_status[i] <= 0)
+    cqm.add_constraint(quicksum(cpu_util[j] * vm_status[i][j] for j in range(VMS)) - server_capacity[i]*server_status[i] <= 0)
 
 # (12) For each VM, it can only be active on one server
 for j in range(VMS):
@@ -256,12 +259,17 @@ for i in range(ITERATIONS):
     print("ENERGY: " + str(cqm_best_sol[1]))
 
     # Extract variables values
-    dict = cqm_best_sol[0]
+    cqm_dict = cqm_best_sol[0]
     count = 0
 
+    if SAVE_DICT:
+        with open("cqm_dict.txt", "w") as fp:
+            json.dump(cqm_dict, fp)
+            print("CQM Dictionary updated!")
+
     # Iterate through variables set
-    for i in dict:
-        if dict[i] > 0:
+    for i in cqm_dict:
+        if cqm_dict[i] > 0:
             # Data is flow_path
             if count == 0 and re.search("f.*", i) is not None:
                 print("\n")
@@ -287,7 +295,7 @@ for i in range(ITERATIONS):
                 count += 1
             
             # General printer
-            print(i, end= " | ")
+            print(i, cqm_dict.get(i),sep = ": ",end= " | ")
 
 
 
@@ -306,21 +314,58 @@ for i in range(ITERATIONS):
     bqm_sampler = LeapHybridBQMSampler()
 
     # Solve problem
-    bqm_res = bqm_sampler.sample(bqm, time_limit = cqm_time // (10**6)+1)
+    bqm_res = bqm_sampler.sample(bqm, time_limit = (cqm_time // (10**6))*TIME_MULT)
 
     # Print execution time
     bqm_time = bqm_res.info.get('run_time')
     print("BQM Execution Time: ", bqm_time, " micros")
 
-    # Plotting
-    # dwave.inspector.show(sampleset)
-
     # Extract only solution that satisfy all constraints
-    #bqm_feasible_sampleset = bqm_res.filter(lambda data_rate: data_rate.is_feasible)
+    # bqm_feasible_sampleset = bqm_res.filter(lambda data_rate: data_rate.is_feasible)
 
     # Extract best solution
     bqm_best_sol = bqm_res.first
+    # bqm_best_sol = bqm_feasible_sampleset.first
     print("ENERGY: " + str(bqm_best_sol[1]))
+
+    # Extract variables values
+    bqm_dict = bqm_best_sol[0]
+    count = 0
+
+    # if SAVE_DICT:
+    #     with open("bqm_dict.txt", "w") as fp:
+    #         json.dump(bqm_dict, fp)
+    #         print("BQM Dictionary updated!")
+
+    # Iterate through variables set
+    for i in bqm_dict:
+        if bqm_dict[i] > 0:
+            # Data is flow_path
+            if count == 0 and re.search("f.*", i) is not None:
+                print("\n")
+                print("--- Assegnamento Flow ---")
+                count += 1
+
+            # Data is on
+            elif count == 1 and re.search("on.*", i) is not None:
+                print("\n")
+                print("--- Link attivi ---")
+                count += 1
+            
+            # Data is active switches/servers
+            elif count == 2 and re.search("s.*", i) is not None:
+                print("\n")
+                print("--- Switch / Server attivi ---")
+                count += 1
+
+            # Data is VMs distribution over servers
+            elif count == 3 and re.search("v.*", i) is not None:
+                print("\n")
+                print("--- Assegnamento VM ---")
+                count += 1
+            
+            # General printer
+            print(i, bqm_dict.get(i),sep = ": ",end= " | ")
 
 
 
