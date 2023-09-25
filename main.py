@@ -75,7 +75,7 @@ adjancy_list = [[0 for j in range(NODES)]
         for i in range(NODES)]              # Binary list of adjacent nodes (0 non-andj, 1 adj)
 
 
-cpu_util = (np.random.normal(REQ_AVG, 1, VMS)).astype(int)         # CPU utilization of each VM on each server
+cpu_util = (np.random.normal(REQ_AVG, 1, VMS)).astype(int)         # CPU utilization of each VM
 data_rate = (np.random.normal(DATAR_AVG, 1, (FLOWS, LINKS))).astype(int)      # Data rate of flow f on link l 
 if DEBUG:
 	print("\n### CPU Utilization ###\n", cpu_util)
