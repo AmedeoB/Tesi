@@ -1,4 +1,8 @@
 """
+TODO
+    - return and fix constrain 17 with new link definition
+"""
+"""
 ################################### MODEL VARIABLES DICTIONARY ######################################################
 _____________________________________________________________________________________________________________________
 Variable         |  Type         |  Model        |  Description
@@ -67,6 +71,7 @@ if DEBUG:
     print("SERVER Indexes: ", *[s+SWITCHES for s in range(SERVERS)])
 
 server_capacity = [SERVER_C for i in range(SERVERS)]           # Capacity of each server
+link_list = [[-1 for i in range(NODES)] for j in range(NODES)]  # NxN link list, cell saves link number, -1 if not present
 link_capacity = [LINK_C for i in range (LINKS)]              # Capacity of each Link
 idle_powcons = [IDLE_PC for i in range(NODES)]   # Idle power consumption of each node
 dyn_powcons = [DYN_PC for i in range(NODES)]     # Maximum dynamic power of each node
@@ -77,6 +82,7 @@ if DEBUG:
 	print("\n### Flow Path Data Rate ###\n", data_rate)
 
 # Create Tree:
+link_counter = 0
 adjancy_list = [[0 for j in range(NODES)] for i in range(NODES)]    # NxN Binary matrix of adjacent nodes
 if(BINARY):
     for i in range(NODES):
@@ -84,9 +90,15 @@ if(BINARY):
         second_son = first_son + 1
         if (second_son < NODES):
             adjancy_list[i][first_son] = 1
-            adjancy_list[i][second_son] = 1
             adjancy_list[first_son][i] = 1
+            link_list[i][first_son] = link_counter
+            link_list[first_son][i] = link_counter
+            link_counter += 1
+            adjancy_list[i][second_son] = 1
             adjancy_list[second_son][i] = 1
+            link_list[i][second_son] = link_counter
+            link_list[second_son][i] = link_counter
+            link_counter += 1
 else:
     # Create all sw-sw links
     for lvl in range(DEPTH-1):
@@ -94,6 +106,9 @@ else:
             for i in range(1,3):
                 adjancy_list[0][i] = 1
                 adjancy_list[i][0] = 1
+                link_list[i][0] = link_counter
+                link_list[0][i] = link_counter
+                link_counter += 1
         else:
             first_sw = 2**(lvl) - 1
             last_sw = first_sw * 2
@@ -103,6 +118,9 @@ else:
                 for son in range(first_son, last_son + 1):
                     adjancy_list[father][son] = 1
                     adjancy_list[son][father] = 1
+                    link_list[father][son] = link_counter
+                    link_list[son][father] = link_counter
+                    link_counter += 1
     
     # Last layer first and last switch
     ll_firstsw = 2**(DEPTH-1) - 1
@@ -112,18 +130,27 @@ else:
     for switch in range(ll_firstsw, ll_lastsw + 1):
         first_son = switch * 2 + 1
         second_son = first_son + 1
+
         adjancy_list[switch][first_son] = 1
-        adjancy_list[switch][second_son] = 1
         adjancy_list[first_son][switch] = 1
+        link_list[switch][first_son] = link_counter
+        link_list[first_son][switch] = link_counter
+        link_counter += 1
+        
+        adjancy_list[switch][second_son] = 1
         adjancy_list[second_son][switch] = 1
+        link_list[switch][second_son] = link_counter
+        link_list[second_son][switch] = link_counter
+        link_counter += 1
 
 if DEBUG:
     for i in range(len(adjancy_list)):
         print("\nNodo ", i, " collegato ai nodi:", end="\t")
         for j in range(len(adjancy_list)):
             if adjancy_list[i][j] == 1:
-                print(j, end=" ")
+                print(j, " (link ", link_list[i][j] ,")", sep="", end="\t")
     print("\n")
+
 
 # Creating communicating VMS
 src_dst = [[0 for j in range(2)] for i in range(FLOWS)]
@@ -138,7 +165,7 @@ print("VM Paths:", end=" ")
 print(src_dst)
 print("\n")
 
-
+# exit()
 ############### VM MODEL BINARY VARIABLES ###################################
 server_status = [dimod.Binary("s" + str(i)) for i in range(SERVERS)]          # Binary value for each server, 1 ON, 0 OFF
 vm_status = [[dimod.Binary("vm" + str(i) + "-s" + str(j)) 
@@ -152,20 +179,27 @@ vm_cqm = dimod.ConstrainedQuadraticModel()
 
 # Objective
 # 1 - SUM of server pow cons
-obj1 = dimod.quicksum(server_status[i] * idle_powcons[i+SWITCHES] for i in range(SERVERS))
+obj1 = dimod.quicksum(server_status[s] * idle_powcons[s+SWITCHES] for s in range(SERVERS))
 # 2 - SUM of vm dyn pow cons
-obj2 = dimod.quicksum(dyn_powcons[i+SWITCHES] * dimod.quicksum(cpu_util[j] * vm_status[i][j] for j in range(VMS)) for i in range(SERVERS))
+obj2 = dimod.quicksum(dyn_powcons[s+SWITCHES] * dimod.quicksum(cpu_util[vm] * vm_status[s][vm] for vm in range(VMS)) for s in range(SERVERS))
 # Total
 vm_cqm.set_objective(obj1 + obj2)
 
 # Constraints
 # (11) For each server, the CPU utilization of each VM on that server must be less or equal than server's capacity       
-for i in range(SERVERS):
-    vm_cqm.add_constraint(dimod.quicksum(cpu_util[j] * vm_status[i][j] for j in range(VMS)) - server_capacity[i]*server_status[i] <= 0)
+for s in range(SERVERS):
+    vm_cqm.add_constraint(
+        dimod.quicksum(
+            cpu_util[vm] * vm_status[s][vm] for vm in range(VMS)) 
+        - server_capacity[s]*server_status[s] 
+        <= 0)
 
-# (12) For each VM, it can only be active on one server
-for j in range(VMS):
-    vm_cqm.add_constraint(dimod.quicksum(vm_status[i][j] for i in range(SERVERS)) == 1)
+# (12) For each VM, it must be active on one and only one server
+for vm in range(VMS):
+    vm_cqm.add_constraint(
+        dimod.quicksum(
+            vm_status[s][vm] for s in range(SERVERS)) 
+        == 1)
 
 
 print("\n\n\n")
@@ -268,47 +302,78 @@ path_cqm.set_objective(obj3 + obj4)
 # Constraints
 # (13) For each flow and server, the sum of exiting flow from the server to all adj switch is <= than vms part of that flow     
 for f in range(FLOWS):
-    for i in range(SWITCHES, SWITCHES + SERVERS):           # Start from switches cause nodes are numerated in order -> all switches -> all servers
-        path_cqm.add_constraint( dimod.quicksum( flow_path['f' + str(f) + '-n' + str(i) + '-n' + str(k)] for k in range(SWITCHES) if adjancy_list[i][k] == 1) 
-                - cqm_best[0].get("vm"+str(i-SWITCHES)+"-s"+str(src_dst[f][0])) <= 0)
+    for s in range(SWITCHES, SWITCHES + SERVERS):           # Start from switches cause nodes are numerated in order -> all switches -> all servers
+        path_cqm.add_constraint( 
+            dimod.quicksum( 
+                flow_path['f' + str(f) + '-n' + str(s) + '-n' + str(sw)] for sw in range(SWITCHES) if adjancy_list[s][sw] == 1) 
+                - cqm_best[0].get("vm" + str(src_dst[f][0])) + "-s" + str(s-SWITCHES) 
+            <= 0)
 
 # (14) For each flow and server, the sum of entering flow from the server to all adj switch is <= than vms part of that flow     
 for f in range(FLOWS):
-    for i in range(SWITCHES, SWITCHES + SERVERS):
-        path_cqm.add_constraint( dimod.quicksum( flow_path['f' + str(f) + '-n' + str(k) + '-n' + str(i)] for k in range(SWITCHES) if adjancy_list[k][i] == 1) 
-                - cqm_best[0].get("vm"+str(i-SWITCHES)+"-s"+str(src_dst[f][1])) <= 0) 
+    for s in range(SWITCHES, SWITCHES + SERVERS):
+        path_cqm.add_constraint( 
+            dimod.quicksum( 
+                flow_path['f' + str(f) + '-n' + str(sw) + '-n' + str(s)] for sw in range(SWITCHES) if adjancy_list[sw][s] == 1) 
+                - cqm_best[0].get("vm"+str(src_dst[f][1]))+"-s"+str(s-SWITCHES) 
+            <= 0) 
 
 # (15) For each flow and server, force allocation of all flows     
 for f in range(FLOWS):
-    for i in range(SWITCHES, SWITCHES + SERVERS):
-        path_cqm.add_constraint( cqm_best[0].get("vm"+str(i-SWITCHES)+"-s"+str(src_dst[f][0])) - cqm_best[0].get("vm"+str(i-SWITCHES)+"-s"+str(src_dst[f][1]))  
-                - ( dimod.quicksum(flow_path['f' + str(f) + '-n' + str(i) + '-n' + str(k)] for k in range(SWITCHES) if adjancy_list[i][k] == 1) - 
-                dimod.quicksum( flow_path['f' + str(f) + '-n' + str(k) + '-n' + str(i)] for k in range(SWITCHES) if adjancy_list[k][i] == 1)) == 0)
+    for s in range(SWITCHES, SWITCHES + SERVERS):
+        path_cqm.add_constraint( 
+            cqm_best[0].get("vm" + str(src_dst[f][0]) + "-s" + str(s-SWITCHES)) - cqm_best[0].get("vm" + str(src_dst[f][1]) + "-s" + str(s-SWITCHES))  
+            - ( 
+                dimod.quicksum( 
+                    flow_path['f' + str(f) + '-n' + str(s) + '-n' + str(sw)] for sw in range(SWITCHES) if adjancy_list[s][sw] == 1) 
+                - dimod.quicksum( 
+                    flow_path['f' + str(f) + '-n' + str(sw) + '-n' + str(s)] for sw in range(SWITCHES) if adjancy_list[sw][s] == 1)) 
+            == 0)
 
 # (16) For each switch and flow, entering and exiting flow from the switch are equal
-for k in range(SWITCHES):
+for sw in range(SWITCHES):
     for f in range(FLOWS):
-        path_cqm.add_constraint( dimod.quicksum( flow_path['f' + str(f) + '-n' + str(n) + '-n' + str(k)]  for n in range(NODES) if adjancy_list[n][k] == 1) - 
-                dimod.quicksum( flow_path['f' + str(f) + '-n' + str(k) + '-n' + str(n)] for n in range(NODES) if adjancy_list[k][n] == 1) == 0 )
+        path_cqm.add_constraint( 
+            dimod.quicksum( 
+                flow_path['f' + str(f) + '-n' + str(n) + '-n' + str(sw)]  for n in range(NODES) if adjancy_list[n][sw] == 1) 
+            - dimod.quicksum( 
+                flow_path['f' + str(f) + '-n' + str(sw) + '-n' + str(n)] for n in range(NODES) if adjancy_list[sw][n] == 1) 
+            == 0)
 
-# (17) For each link, the data rate on a it is less or equal than its capacity      
+# (17) For each link, the data rate on it is less or equal than its capacity      
 for l in range(LINKS):
     father = l//2       # Father node of the link
     son = l+1           # Son node of the link
-    path_cqm.add_constraint( dimod.quicksum( data_rate[f][l] * (flow_path['f' + str(f) + '-n' + str(father) + '-n' + str(son)] + 
-            flow_path['f' + str(f) + '-n' + str(son) + '-n' + str(father)]) for f in range(FLOWS)) - 
-            link_capacity[l] * on["on" + str(father) + "-" + str(son)] <= 0)
+    path_cqm.add_constraint( 
+        dimod.quicksum( 
+            data_rate[f][l] * (
+                flow_path['f' + str(f) + '-n' + str(father) + '-n' + str(son)] 
+                + flow_path['f' + str(f) + '-n' + str(son) + '-n' + str(father)]) for f in range(FLOWS)) 
+        - link_capacity[l] * on["on" + str(father) + "-" + str(son)] 
+        <= 0)
 
 # (18)(19) For each link, the link is ON only if both nodes are ON       
 for l in range(LINKS):
     father = l//2           # Father node of the link
     son = l+1               # Son node of the link
     if son >= SWITCHES:     # Son is a Server
-        path_cqm.add_constraint(on["on" + str(father) + "-" + str(son)] - switch_status[father] <= 0)
-        path_cqm.add_constraint(on["on" + str(father) + "-" + str(son)] - cqm_best[0].get("s"+str(son-SWITCHES)) <= 0)
+        path_cqm.add_constraint(
+            on["on" + str(father) + "-" + str(son)] 
+            - switch_status[father] 
+            <= 0)
+        path_cqm.add_constraint(
+            on["on" + str(father) + "-" + str(son)] 
+            - cqm_best[0].get("s"+str(son-SWITCHES)) 
+            <= 0)
     else:                   # Both nodes are switches
-        path_cqm.add_constraint(on["on" + str(father) + "-" + str(son)] - switch_status[father] <= 0)
-        path_cqm.add_constraint(on["on" + str(father) + "-" + str(son)] - switch_status[son] <= 0)
+        path_cqm.add_constraint(
+            on["on" + str(father) + "-" + str(son)] 
+            - switch_status[father] 
+            <= 0)
+        path_cqm.add_constraint(
+            on["on" + str(father) + "-" + str(son)] 
+            - switch_status[son] 
+            <= 0)
 
 
 print("\n\n\n")
