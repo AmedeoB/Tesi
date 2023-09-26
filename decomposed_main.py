@@ -1,6 +1,6 @@
 """
 TODO
-    - return and fix constrain 17 with new link definition
+    
 """
 """
 ################################### MODEL VARIABLES DICTIONARY ######################################################
@@ -36,6 +36,7 @@ import dwave.system
 # OTHERS
 import numpy as np
 import random
+import fun_lib as fn
 
 """--------------------------------------------------"""
 
@@ -71,7 +72,6 @@ if DEBUG:
     print("SERVER Indexes: ", *[s+SWITCHES for s in range(SERVERS)])
 
 server_capacity = [SERVER_C for i in range(SERVERS)]           # Capacity of each server
-link_list = [[-1 for i in range(NODES)] for j in range(NODES)]  # NxN link list, cell saves link number, -1 if not present
 link_capacity = [LINK_C for i in range (LINKS)]              # Capacity of each Link
 idle_powcons = [IDLE_PC for i in range(NODES)]   # Idle power consumption of each node
 dyn_powcons = [DYN_PC for i in range(NODES)]     # Maximum dynamic power of each node
@@ -81,24 +81,23 @@ if DEBUG:
 	print("\n### CPU Utilization ###\n", cpu_util)
 	print("\n### Flow Path Data Rate ###\n", data_rate)
 
+
+
 # Create Tree:
+link_dict = {}
 link_counter = 0
 adjancy_list = [[0 for j in range(NODES)] for i in range(NODES)]    # NxN Binary matrix of adjacent nodes
 if(BINARY):
-    for i in range(NODES):
-        first_son = i*2 + 1
-        second_son = first_son + 1
-        if (second_son < NODES):
-            adjancy_list[i][first_son] = 1
-            adjancy_list[first_son][i] = 1
-            link_list[i][first_son] = link_counter
-            link_list[first_son][i] = link_counter
-            link_counter += 1
-            adjancy_list[i][second_son] = 1
-            adjancy_list[second_son][i] = 1
-            link_list[i][second_son] = link_counter
-            link_list[second_son][i] = link_counter
-            link_counter += 1
+    for father in range(NODES):
+        for i in range(2):
+            son = father * 2 + 1 + i
+            if (son < NODES):
+
+                adjancy_list[father][son] = 1
+                adjancy_list[son][father] = 1
+                link_dict[str((father,son))] = link_counter
+                link_dict[str((son,father))] = link_counter
+                link_counter += 1
 else:
     # Create all sw-sw links
     for lvl in range(DEPTH-1):
@@ -106,8 +105,8 @@ else:
             for i in range(1,3):
                 adjancy_list[0][i] = 1
                 adjancy_list[i][0] = 1
-                link_list[i][0] = link_counter
-                link_list[0][i] = link_counter
+                link_dict[str((0,i))] = link_counter
+                link_dict[str((i,0))] = link_counter
                 link_counter += 1
         else:
             first_sw = 2**(lvl) - 1
@@ -118,8 +117,8 @@ else:
                 for son in range(first_son, last_son + 1):
                     adjancy_list[father][son] = 1
                     adjancy_list[son][father] = 1
-                    link_list[father][son] = link_counter
-                    link_list[son][father] = link_counter
+                    link_dict[str((father,son))] = link_counter
+                    link_dict[str((son,father))] = link_counter
                     link_counter += 1
     
     # Last layer first and last switch
@@ -127,28 +126,22 @@ else:
     ll_lastsw = ll_firstsw * 2
     
     # Create all sw-s links
-    for switch in range(ll_firstsw, ll_lastsw + 1):
-        first_son = switch * 2 + 1
-        second_son = first_son + 1
+    for father in range(ll_firstsw, ll_lastsw + 1):
+        for i in range(2):
+            son = father * 2 + 1 + i
 
-        adjancy_list[switch][first_son] = 1
-        adjancy_list[first_son][switch] = 1
-        link_list[switch][first_son] = link_counter
-        link_list[first_son][switch] = link_counter
-        link_counter += 1
-        
-        adjancy_list[switch][second_son] = 1
-        adjancy_list[second_son][switch] = 1
-        link_list[switch][second_son] = link_counter
-        link_list[second_son][switch] = link_counter
-        link_counter += 1
+            adjancy_list[father][son] = 1
+            adjancy_list[son][father] = 1
+            link_dict[str((father,son))] = link_counter
+            link_dict[str((son,father))] = link_counter
+            link_counter += 1
 
 if DEBUG:
     for i in range(len(adjancy_list)):
         print("\nNodo ", i, " collegato ai nodi:", end="\t")
         for j in range(len(adjancy_list)):
             if adjancy_list[i][j] == 1:
-                print(j, " (link ", link_list[i][j] ,")", sep="", end="\t")
+                print(j, " (link ", link_dict.get(str((i,j))) ,")", sep="", end="\t")
     print("\n")
 
 
@@ -156,7 +149,6 @@ if DEBUG:
 src_dst = [[0 for j in range(2)] for i in range(FLOWS)]
 index_list = [i for i in range(VMS)]
 random.shuffle(index_list)
-
 for i in range(FLOWS):
     for j in range(2):
         src_dst[i][j] = index_list[i*2 + j]
@@ -165,7 +157,8 @@ print("VM Paths:", end=" ")
 print(src_dst)
 print("\n")
 
-# exit()
+
+
 ############### VM MODEL BINARY VARIABLES ###################################
 server_status = [dimod.Binary("s" + str(i)) for i in range(SERVERS)]          # Binary value for each server, 1 ON, 0 OFF
 vm_status = [[dimod.Binary("vm" + str(i) + "-s" + str(j)) 
@@ -213,7 +206,8 @@ cqm_sampler = dwave.system.LeapHybridCQMSampler()
 cqm_samples = cqm_sampler.sample_cqm(vm_cqm)
 
 # Exec time
-print("CQM TIME: ", cqm_samples.info.get('run_time')," micros")
+cqm_time = cqm_samples.info.get('run_time')
+print("CQM TIME: ", cqm_time, " micros")
 
 # Extract feasible solution
 cqm_feasibles = cqm_samples.filter(lambda sample: sample.is_feasible)
@@ -242,10 +236,11 @@ vm_bqm, _ = dimod.cqm_to_bqm(vm_cqm)
 bqm_sampler = dwave.system.LeapHybridSampler()
 
 # Sample Results
-bqm_samples = bqm_sampler.sample(vm_bqm)
+bqm_samples = bqm_sampler.sample(vm_bqm, cqm_time // 10**6 * TIME_MULT)
 
 # Exec Time
-print("CQM TIME: ", bqm_samples.info.get('run_time')," micros")
+bqm_time = bqm_samples.info.get('run_time')
+print("BQM TIME: ", bqm_time, " micros")
 
 # Extract feasible solution
 # bqm_feasibles = bqm_samples.filter(lambda sample: sample.is_feasible)
@@ -272,18 +267,18 @@ switch_status = [dimod.Binary("sw" + str(i)) for i in range(SWITCHES)]        # 
 # flow_path[f, [n1,n2]] = 1 if part of flow f goes from n1 to n2
 flow_path = {}
 for f in range(FLOWS):
-    for i in range(SWITCHES + SERVERS):
-        for k in range(SWITCHES + SERVERS):
-            if adjancy_list[i][k]:     # Adjancy Condition (lowers variable number)
-                flow_path['f' + str(f) + '-n' + str(i) + '-n' + str(k)] = dimod.Binary("f" + str(f) + "-n" + str(i) + "-n" + str(k))
+    for n1 in range(NODES):
+        for n2 in range(NODES):
+            if adjancy_list[n1][n2]:     # Adjancy Condition (lowers variable number)
+                flow_path['f' + str(f) + '-n' + str(n1) + '-n' + str(n2)] = dimod.Binary("f" + str(f) + "-n" + str(n1) + "-n" + str(n2))
 
 # Initialize dictionary for each adjacent node
 # on[n1,n2] = 1 if the link between n1 and n2 is ON
 on = {}
-for i in range(NODES):
-    for j in range(NODES):
-        if adjancy_list[i][j]:         # Adjancy Condition (lowers variable number)
-            on["on" + str(i) + "-" + str(j)] = dimod.Binary("on" + str(i) + "-" + str(j))
+for n1 in range(NODES):
+    for n2 in range(n1, NODES):
+        if adjancy_list[n1][n2]:         # Adjancy Condition (lowers variable number)
+            on["on" + str(n1) + "-" + str(n2)] = dimod.Binary("on" + str(n1) + "-" + str(n2))
 
 
 ############### PATH MODEL ########################################
@@ -306,7 +301,7 @@ for f in range(FLOWS):
         path_cqm.add_constraint( 
             dimod.quicksum( 
                 flow_path['f' + str(f) + '-n' + str(s) + '-n' + str(sw)] for sw in range(SWITCHES) if adjancy_list[s][sw] == 1) 
-                - cqm_best[0].get("vm" + str(src_dst[f][0])) + "-s" + str(s-SWITCHES) 
+                - cqm_best[0].get("vm" + str(src_dst[f][0]) + "-s" + str(s-SWITCHES)) 
             <= 0)
 
 # (14) For each flow and server, the sum of entering flow from the server to all adj switch is <= than vms part of that flow     
@@ -315,7 +310,7 @@ for f in range(FLOWS):
         path_cqm.add_constraint( 
             dimod.quicksum( 
                 flow_path['f' + str(f) + '-n' + str(sw) + '-n' + str(s)] for sw in range(SWITCHES) if adjancy_list[sw][s] == 1) 
-                - cqm_best[0].get("vm"+str(src_dst[f][1]))+"-s"+str(s-SWITCHES) 
+                - cqm_best[0].get("vm" + str(src_dst[f][1]) + "-s" + str(s-SWITCHES)) 
             <= 0) 
 
 # (15) For each flow and server, force allocation of all flows     
@@ -342,37 +337,37 @@ for sw in range(SWITCHES):
 
 # (17) For each link, the data rate on it is less or equal than its capacity      
 for l in range(LINKS):
-    father = l//2       # Father node of the link
-    son = l+1           # Son node of the link
+    n1,n2 = fn.get_nodes(l, link_dict)
     path_cqm.add_constraint( 
         dimod.quicksum( 
             data_rate[f][l] * (
-                flow_path['f' + str(f) + '-n' + str(father) + '-n' + str(son)] 
-                + flow_path['f' + str(f) + '-n' + str(son) + '-n' + str(father)]) for f in range(FLOWS)) 
-        - link_capacity[l] * on["on" + str(father) + "-" + str(son)] 
+                flow_path['f' + str(f) + '-n' + str(n1) + '-n' + str(n2)] 
+                + flow_path['f' + str(f) + '-n' + str(n2) + '-n' + str(n1)]) for f in range(FLOWS)) 
+        - link_capacity[l] * on["on" + str(n1) + "-" + str(n2)] 
         <= 0)
 
 # (18)(19) For each link, the link is ON only if both nodes are ON       
 for l in range(LINKS):
-    father = l//2           # Father node of the link
-    son = l+1               # Son node of the link
-    if son >= SWITCHES:     # Son is a Server
+    n1,n2 = fn.get_nodes(l, link_dict)
+    if n1 < SWITCHES:
         path_cqm.add_constraint(
-            on["on" + str(father) + "-" + str(son)] 
-            - switch_status[father] 
+            on["on" + str(n1) + "-" + str(n2)] 
+            - switch_status[n1] 
             <= 0)
+    else:
         path_cqm.add_constraint(
-            on["on" + str(father) + "-" + str(son)] 
-            - cqm_best[0].get("s"+str(son-SWITCHES)) 
+            on["on" + str(n1) + "-" + str(n2)] 
+            - cqm_best[0].get("s"+str(n1-SWITCHES)) 
             <= 0)
-    else:                   # Both nodes are switches
+    if n2 < SWITCHES:
         path_cqm.add_constraint(
-            on["on" + str(father) + "-" + str(son)] 
-            - switch_status[father] 
+            on["on" + str(n1) + "-" + str(n2)] 
+            - switch_status[n2] 
             <= 0)
+    else:
         path_cqm.add_constraint(
-            on["on" + str(father) + "-" + str(son)] 
-            - switch_status[son] 
+            on["on" + str(n1) + "-" + str(n2)] 
+            - cqm_best[0].get("s"+str(n2-SWITCHES)) 
             <= 0)
 
 
@@ -384,7 +379,8 @@ print("\n")
 cqm_samples = cqm_sampler.sample_cqm(path_cqm)
 
 # Exec time
-print("CQM TIME: ", cqm_samples.info.get('run_time')," micros")
+cqm_time = cqm_samples.info.get('run_time')
+print("CQM TIME: ", cqm_time, " micros")
 
 # Extract feasible solution
 cqm_feasibles = cqm_samples.filter(lambda sample: sample.is_feasible)
@@ -413,10 +409,11 @@ path_bqm, _ = dimod.cqm_to_bqm(path_cqm)
 bqm_sampler = dwave.system.LeapHybridSampler()
 
 # Sample Results
-bqm_samples = bqm_sampler.sample(path_bqm)
+bqm_samples = bqm_sampler.sample(path_bqm, cqm_time // 10**6 * TIME_MULT)
 
 # Exec Time
-print("CQM TIME: ", bqm_samples.info.get('run_time')," micros")
+bqm_time = bqm_samples.info.get('run_time')
+print("BQM TIME: ", bqm_time, " micros")
 
 # Extract feasible solution
 # bqm_feasibles = bqm_samples.filter(lambda sample: sample.is_feasible)
