@@ -40,79 +40,103 @@ ITERATIONS = 1          # Total problem iterations
 TIME_MULT = 1           # CQM Time multiplier fro BQM
 
 ################# TREE DEFINITION PARAMETERS ###################
-DEPTH = 2               # Tree depth
+BINARY = False
+DEPTH = 3               # Tree depth
 SERVER_C = 10           # Server capacity
 LINK_C = 10             # Link capacity
 IDLE_PC = 10            # Idle power consumption
 DYN_PC = 1              # Dynamic power consumption
 REQ_AVG = 8             # Average flow request
 DATAR_AVG = 4           # Average data rate per flow
-
-###############################################################
+#################################################################
 
 SERVERS = pow(2, DEPTH)                                 # Server number
-VMS = SERVERS                                           # VM number per server
 SWITCHES = sum(pow(2,i) for i in range(DEPTH))          # Switch number
+VMS = SERVERS                                           # VM number per server
 FLOWS = VMS//2 if VMS%2==0 else VMS//2+1                # Flow number
-LINKS = 2*SWITCHES                                      # Link number
 NODES = SERVERS + SWITCHES                              # Total Nodes
+if(BINARY):
+    LINKS = 2*SWITCHES                                      # Link number
+else:
+    LINKS = 0
+    for i in range(DEPTH-1):
+        LINKS += 2**i * 2**(i+1)
+    LINKS += 2*(2**(DEPTH-1))
+if DEBUG:
+    print("SWITCH Indexes: ", *[k for k in range(SWITCHES)])
+    print("SERVER Indexes: ", *[s+SWITCHES for s in range(SERVERS)])
 
 server_capacity = [SERVER_C for i in range(SERVERS)]           # Capacity of each server
 link_capacity = [LINK_C for i in range (LINKS)]              # Capacity of each Link
 idle_powcons = [IDLE_PC for i in range(NODES)]   # Idle power consumption of each node
 dyn_powcons = [DYN_PC for i in range(NODES)]     # Maximum dynamic power of each node
-
-if DEBUG:
-    print("SWITCH Indexes: ", *[k for k in range(SWITCHES)])
-    print("SERVER Indexes: ", *[s+SWITCHES for s in range(SERVERS)])
-
-adjancy_list = [[0 for j in range(NODES)] 
-        for i in range(NODES)]              # Binary list of adjacent nodes (0 non-andj, 1 adj)
-
-
 cpu_util = (np.random.normal(REQ_AVG, 1, VMS)).astype(int)         # CPU utilization of each VM
 data_rate = (np.random.normal(DATAR_AVG, 1, (FLOWS, LINKS))).astype(int)      # Data rate of flow f on link l 
 if DEBUG:
 	print("\n### CPU Utilization ###\n", cpu_util)
-	print("\n### Data Rate ###\n", data_rate)
+	print("\n### Flow Path Data Rate ###\n", data_rate)
 
-# Calculate adjancy list:
-for i in range(NODES):
-    first_son = i*2 + 1
-    second_son = first_son + 1
-    if (second_son < NODES):
-        adjancy_list[i][first_son] = 1
-        adjancy_list[i][second_son] = 1
-        adjancy_list[first_son][i] = 1
-        adjancy_list[second_son][i] = 1
+# Create Tree:
+adjancy_list = [[0 for j in range(NODES)] for i in range(NODES)]    # NxN Binary matrix of adjacent nodes
+if(BINARY):
+    for i in range(NODES):
+        first_son = i*2 + 1
+        second_son = first_son + 1
+        if (second_son < NODES):
+            adjancy_list[i][first_son] = 1
+            adjancy_list[i][second_son] = 1
+            adjancy_list[first_son][i] = 1
+            adjancy_list[second_son][i] = 1
+else:
+    # Create all sw-sw links
+    for lvl in range(DEPTH-1):
+        if lvl == 0:
+            for i in range(1,3):
+                adjancy_list[0][i] = 1
+                adjancy_list[i][0] = 1
+        else:
+            first_sw = 2**(lvl) - 1
+            last_sw = first_sw * 2
+            for father in range(first_sw, last_sw + 1):
+                first_son = 2**(lvl+1) - 1
+                last_son = first_son * 2
+                for son in range(first_son, last_son + 1):
+                    adjancy_list[father][son] = 1
+                    adjancy_list[son][father] = 1
+    
+    # Last layer first and last switch
+    ll_firstsw = 2**(DEPTH-1) - 1
+    ll_lastsw = ll_firstsw * 2
+    
+    # Create all sw-s links
+    for switch in range(ll_firstsw, ll_lastsw + 1):
+        first_son = switch * 2 + 1
+        second_son = first_son + 1
+        adjancy_list[switch][first_son] = 1
+        adjancy_list[switch][second_son] = 1
+        adjancy_list[first_son][switch] = 1
+        adjancy_list[second_son][switch] = 1
 
 if DEBUG:
     for i in range(len(adjancy_list)):
-        print()
-        print("Nodo ", i, " collegato ai nodi:")
+        print("\nNodo ", i, " collegato ai nodi:", end="\t")
         for j in range(len(adjancy_list)):
             if adjancy_list[i][j] == 1:
                 print(j, end=" ")
     print("\n")
 
+# Creating communicating VMS
+src_dst = [[0 for j in range(2)] for i in range(FLOWS)]
+index_list = [i for i in range(VMS)]
+random.shuffle(index_list)
 
-src_dst = [[0 for j in range(2)] for i in range(FLOWS)]     # list of commmunicating servers
-randoms = []                                                # list of generated random values
 for i in range(FLOWS):
     for j in range(2):
-        while True:            
-            ran = random.randint(0, VMS-1)
-            
-            if not ran in randoms:
-                # Fill list
-                src_dst[i][j] = ran                
-                # Keep number recorded
-                randoms.append(ran)                
-                break
-print("Paths:", end=" ")
+        src_dst[i][j] = index_list[i*2 + j]
+
+print("VM Paths:", end=" ")
 print(src_dst)
 print("\n")
-
 
 
 ############### VM MODEL BINARY VARIABLES ###################################
