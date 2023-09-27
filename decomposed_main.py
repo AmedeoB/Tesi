@@ -48,9 +48,12 @@ TIME_MULT = 1           # CQM Time multiplier fro BQM
 BINARY = False
 DEPTH = 3               # Tree depth
 SERVER_C = 10           # Server capacity
-LINK_C = 10             # Link capacity
-IDLE_PC = 10            # Idle power consumption
-DYN_PC = 1              # Dynamic power consumption
+LINK_C = 5*DEPTH             # Link capacity
+LINK_C_DECREASE = 2
+IDLE_PC = 10*DEPTH            # Idle power consumption
+IDLE_PC_DECREASE = 5            # Idle power consumption
+DYN_PC = 2*DEPTH              # Dynamic power consumption
+DYN_PC_DECREASE = 1              # Dynamic power consumption
 REQ_AVG = 8             # Average flow request
 DATAR_AVG = 4           # Average data rate per flow
 #################################################################
@@ -67,20 +70,43 @@ else:
     for i in range(DEPTH-1):
         LINKS += 2**i * 2**(i+1)
     LINKS += 2*(2**(DEPTH-1))
+
+server_capacity = [SERVER_C for i in range(SERVERS)]           # Capacity of each server
+
+link_capacity = []
+# Switch links
+for lvl in range(DEPTH-1):
+    for link in range(2**(2*lvl+1)):
+        link_capacity.append(LINK_C)
+    LINK_C -= LINK_C_DECREASE
+# Server links
+for link in range(2**DEPTH):
+    link_capacity.append(LINK_C)
+
+idle_powcons = []           # Idle power consumption of each node
+dyn_powcons = []            # Dynamic power of each node
+for lvl in range(DEPTH+1):
+    for node in range(2**lvl):
+        idle_powcons.append(IDLE_PC)
+        dyn_powcons.append(DYN_PC)
+    IDLE_PC -= IDLE_PC_DECREASE
+    DYN_PC -= DYN_PC_DECREASE
+
+cpu_util = (np.random.normal(REQ_AVG, 1, VMS)).astype(int)         # CPU utilization of each VM
+data_rate = (np.random.normal(DATAR_AVG, 1, (FLOWS, LINKS))).astype(int)      # Data rate of flow f on link l 
+
 if DEBUG:
     print("SWITCH Indexes: ", *[k for k in range(SWITCHES)])
     print("SERVER Indexes: ", *[s+SWITCHES for s in range(SERVERS)])
-
-server_capacity = [SERVER_C for i in range(SERVERS)]           # Capacity of each server
-link_capacity = [LINK_C for i in range (LINKS)]              # Capacity of each Link
-idle_powcons = [IDLE_PC for i in range(NODES)]   # Idle power consumption of each node
-dyn_powcons = [DYN_PC for i in range(NODES)]     # Maximum dynamic power of each node
-cpu_util = (np.random.normal(REQ_AVG, 1, VMS)).astype(int)         # CPU utilization of each VM
-data_rate = (np.random.normal(DATAR_AVG, 1, (FLOWS, LINKS))).astype(int)      # Data rate of flow f on link l 
-if DEBUG:
-	print("\n### CPU Utilization ###\n", cpu_util)
-	print("\n### Flow Path Data Rate ###\n", data_rate)
-
+    print("SERVER Capacity: ", *[s for s in server_capacity])
+    print("LINK Capacity: ", *[s for s in link_capacity])
+    print("IDLE Power Consumption: ", *[s for s in idle_powcons])
+    print("DYNAMIC Power Consumption: ", *[s for s in dyn_powcons])
+    print("VM's CPU Utilization: ", *[s for s in cpu_util])
+    print("\n### Flow Path Data Rate ###")
+    for links in data_rate:
+        print("Flow ", *np.where(np.all(data_rate == links, axis=1))[0], ": ", *[s for s in links])
+    print("\n\n")
 
 
 # Create Tree:
@@ -137,12 +163,13 @@ else:
             link_counter += 1
 
 if DEBUG:
+    print("### Tree Structure ###")
     for i in range(len(adjancy_list)):
         print("\nNodo ", i, " collegato ai nodi:", end="\t")
         for j in range(len(adjancy_list)):
             if adjancy_list[i][j] == 1:
                 print(j, " (link ", link_dict.get(str((i,j))) ,")", sep="", end="\t")
-    print("\n")
+    print("\n\n")
 
 
 # Creating communicating VMS
@@ -153,10 +180,12 @@ for i in range(FLOWS):
     for j in range(2):
         src_dst[i][j] = index_list[i*2 + j]
 
-print("VM Paths:", end=" ")
-print(src_dst)
-print("\n")
-
+if DEBUG:
+    print("### VM Paths ###")
+    for path in src_dst:
+        print("Path ", src_dst.index(path), ": ", end="\t")
+        print( *[s for s in path], sep="  -  ")
+    print("\n")
 
 
 ############### VM MODEL BINARY VARIABLES ###################################
@@ -281,18 +310,22 @@ for n1 in range(NODES):
             on["on" + str(n1) + "-" + str(n2)] = dimod.Binary("on" + str(n1) + "-" + str(n2))
 
 
+
 ############### PATH MODEL ########################################
 # Create CQM
 path_cqm = dimod.ConstrainedQuadraticModel()
 
 # Objective
 # 3 - SUM of switch idle pow cons
-obj3 = dimod.quicksum(switch_status[i] * idle_powcons[i] for i in range(SWITCHES))
+obj3 = dimod.quicksum(switch_status[sw] * idle_powcons[sw] for sw in range(SWITCHES))
 # 4 - SUM of flow path
-obj4 = dimod.quicksum(flow_path['f' + str(f) + '-n' + str(i) + '-n' + str(j)] + flow_path['f' + str(f) + '-n' + str(j) + '-n' + str(i)]
-                    for i in range(NODES) for j in range (NODES) for f in range(FLOWS) if adjancy_list[i][j] == 1)
+# obj4 = dimod.quicksum(flow_path['f' + str(f) + '-n' + str(n1) + '-n' + str(n2)] + flow_path['f' + str(f) + '-n' + str(n2) + '-n' + str(n1)]
+                    # for n1 in range(NODES) for n2 in range(NODES) for f in range(FLOWS) if adjancy_list[n1][n2] == 1)
+obj4 = dimod.quicksum( dyn_powcons[sw] * flow_path['f' + str(f) + '-n' + str(n) + '-n' + str(sw)] + flow_path['f' + str(f) + '-n' + str(sw) + '-n' + str(n)]
+                    for n in range(NODES) for f in range(FLOWS) for sw in range(SWITCHES) if adjancy_list[n][sw] == 1)
 # Total
 path_cqm.set_objective(obj3 + obj4)
+
 
 # Constraints
 # (13) For each flow and server, the sum of exiting flow from the server to all adj switch is <= than vms part of that flow     

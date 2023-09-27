@@ -1,0 +1,111 @@
+SWITCH Indexes:  0 1 2 3 4 5 6
+SERVER Indexes:  7 8 9 10 11 12 13 14
+SERVER Capacity:  10 10 10 10 10 10 10 10
+LINK Capacity:  15 15 13 13 13 13 13 13 13 13 11 11 11 11 11 11 11 11
+IDLE Power Consumption:  30 25 25 20 20 20 20 15 15 15 15 15 15 15 15
+DYNAMIC Power Consumption:  6 5 5 4 4 4 4 3 3 3 3 3 3 3 3
+VM's CPU Utilization:  8 7 8 7 8 8 8 8
+
+### Flow Path Data Rate ###
+Flow  0 :  4 2 2 4 3 3 5 1 2 5 3 3 2 4 6 3 4 2
+Flow  1 :  3 3 4 3 3 4 4 2 4 3 3 3 2 5 4 4 4 3
+Flow  2 :  3 3 2 4 4 4 4 4 5 3 4 5 3 4 4 4 4 4
+Flow  3 :  4 3 2 5 3 4 4 2 5 1 3 5 1 3 2 4 5 3
+
+
+
+### Tree Structure ###
+
+Nodo  0  collegato ai nodi:     1 (link 0)      2 (link 1)
+Nodo  1  collegato ai nodi:     0 (link 0)      3 (link 2)      4 (link 3)      5 (link 4)      6 (link 5)
+Nodo  2  collegato ai nodi:     0 (link 1)      3 (link 6)      4 (link 7)      5 (link 8)      6 (link 9)
+Nodo  3  collegato ai nodi:     1 (link 2)      2 (link 6)      7 (link 10)     8 (link 11)
+Nodo  4  collegato ai nodi:     1 (link 3)      2 (link 7)      9 (link 12)     10 (link 13)
+Nodo  5  collegato ai nodi:     1 (link 4)      2 (link 8)      11 (link 14)    12 (link 15)
+Nodo  6  collegato ai nodi:     1 (link 5)      2 (link 9)      13 (link 16)    14 (link 17)
+Nodo  7  collegato ai nodi:     3 (link 10)
+Nodo  8  collegato ai nodi:     3 (link 11)
+Nodo  9  collegato ai nodi:     4 (link 12)
+Nodo  10  collegato ai nodi:    4 (link 13)
+Nodo  11  collegato ai nodi:    5 (link 14)
+Nodo  12  collegato ai nodi:    5 (link 15)
+Nodo  13  collegato ai nodi:    6 (link 16)
+Nodo  14  collegato ai nodi:    6 (link 17)
+
+
+### VM Paths ###
+Path  0 :       2  -  4
+Path  1 :       5  -  7
+Path  2 :       3  -  0
+Path  3 :       6  -  1
+
+
+
+
+
+
+####################### CQM VM Model ###########################
+
+
+CQM TIME:  5110323  micros
+CQM ENERGY:  306.0
+s0: 1.0 | s1: 1.0 | s2: 1.0 | s3: 1.0 | s4: 1.0 | s5: 1.0 | s6: 1.0 | s7: 1.0 | vm0-s0: 1.0 | vm1-s1: 1.0 | vm2-s2: 1.0 | vm3-s3: 1.0 | vm4-s5: 1.0 | vm5-s6: 1.0 | vm6-s4: 1.0 | vm7-s7: 1.0 | 
+
+
+
+####################### BQM VM Model ###########################
+
+
+BQM TIME:  4998124  micros
+BQM ENERGY:  507.0
+s0: 1 | s2: 1 | s3: 1 | s4: 1 | s5: 1 | s6: 1 | s7: 1 | slack_v1f2e8ecc42c34ebd88b03c23665d2c79_3: 1 | slack_v345b53bf5db441caa3feb58a250a582a_1: 1 | slack_v488079278f2842f9bde30a6a44e894be_1: 1 | slack_v51c1bef7bd12424f976b53e4081e4457_1: 1 | slack_vc19de916d9394115ad2d56310c78cf90_0: 1 | slack_vc19de916d9394115ad2d56310c78cf90_1: 1 | slack_ve7e57fb956234c3a833d83fbab4eb46b_1: 1 | slack_vfd342935d4a54f9e909a021b702a5713_1: 1 | vm1-s3: 1 | vm2-s6: 1 | vm3-s2: 1 | vm4-s0: 1 | vm5-s5: 1 | vm6-s4: 1 | vm7-s7: 1 | 
+
+
+
+####################### CQM Path Model ###########################
+
+
+CQM TIME:  5144065  micros
+CQM ENERGY:  158.0
+f0-n2-n5: 1.0 | f0-n4-n2: 1.0 | f0-n5-n12: 1.0 | f0-n9-n4: 1.0 | f1-n13-n6: 1.0 | f1-n6-n14: 1.0 | f2-n10-n4: 1.0 | f2-n2-n3: 1.0 | f2-n3-n7: 1.0 | f2-n4-n2: 1.0 | f3-n11-n5: 1.0 | f3-n2-n3: 1.0 | f3-n3-n8: 1.0 | f3-n5-n2: 1.0 | on2-3: 1.0 | on2-4: 1.0 | on2-5: 1.0 | on3-7: 1.0 | on3-8: 1.0 | on4-10: 1.0 | on4-9: 1.0 | on5-11: 1.0 | on5-12: 1.0 | on6-13: 1.0 | on6-14: 1.0 | sw2: 1.0 | sw3: 1.0 | sw4: 1.0 | sw5: 1.0 | sw6: 1.0 | 
+
+
+
+####################### BQM Path Model ###########################
+
+
+/usr/local/lib/python3.9/site-packages/dimod/binary/binary_quadratic_model.py:765: UserWarning: Did not add constraint v4ec0dcd864aa4fbf9aa12aa59553d0c0. This constraint is feasible with any value for state variables.
+  warnings.warn(
+/usr/local/lib/python3.9/site-packages/dimod/binary/binary_quadratic_model.py:765: UserWarning: Did not add constraint v82093218c6f14d21850ab49fef963b99. This constraint is feasible with any value for state variables.
+  warnings.warn(
+/usr/local/lib/python3.9/site-packages/dimod/binary/binary_quadratic_model.py:765: UserWarning: Did not add constraint v5dc9b85ff71f4a7daf467ce8248df846. This constraint is feasible with any value for state variables.
+  warnings.warn(
+/usr/local/lib/python3.9/site-packages/dimod/binary/binary_quadratic_model.py:765: UserWarning: Did not add constraint vbb224420938147f585dc58a9c16cce17. This constraint is feasible with any value for state variables.
+  warnings.warn(
+/usr/local/lib/python3.9/site-packages/dimod/binary/binary_quadratic_model.py:765: UserWarning: Did not add constraint v907807eafd1c48a7bd327a6f59dadd67. This constraint is feasible with any value for state variables.
+  warnings.warn(
+/usr/local/lib/python3.9/site-packages/dimod/binary/binary_quadratic_model.py:765: UserWarning: Did not add constraint vcb758c1b86184bc29499680c31ad4eb2. This constraint is feasible with any value for state variables.
+  warnings.warn(
+/usr/local/lib/python3.9/site-packages/dimod/binary/binary_quadratic_model.py:765: UserWarning: Did not add constraint vb0ab8eca18c9447fbf0ef7d158a63c0b. This constraint is feasible with any value for state variables.
+  warnings.warn(
+/usr/local/lib/python3.9/site-packages/dimod/binary/binary_quadratic_model.py:765: UserWarning: Did not add constraint vcdb13dbd838545dfb31ef2e90ab3b8db. This constraint is feasible with any value for state variables.
+  warnings.warn(
+/usr/local/lib/python3.9/site-packages/dimod/binary/binary_quadratic_model.py:765: UserWarning: Did not add constraint v0ff9c2d2f1d24708830a06483b4106c4. This constraint is feasible with any value for state variables.
+  warnings.warn(
+/usr/local/lib/python3.9/site-packages/dimod/binary/binary_quadratic_model.py:765: UserWarning: Did not add constraint v4f1e62ba3ba445a0b75840e48b39f8f3. This constraint is feasible with any value for state variables.
+  warnings.warn(
+/usr/local/lib/python3.9/site-packages/dimod/binary/binary_quadratic_model.py:765: UserWarning: Did not add constraint v49e6ddf58494464a9c22796796e32176. This constraint is feasible with any value for state variables.
+  warnings.warn(
+/usr/local/lib/python3.9/site-packages/dimod/binary/binary_quadratic_model.py:765: UserWarning: Did not add constraint v2ab13ae01063438b981017e10c5680f3. This constraint is feasible with any value for state variables.
+  warnings.warn(
+/usr/local/lib/python3.9/site-packages/dimod/binary/binary_quadratic_model.py:765: UserWarning: Did not add constraint v22658c0775354bc4b5e721b0c3993413. This constraint is feasible with any value for state variables.
+  warnings.warn(
+/usr/local/lib/python3.9/site-packages/dimod/binary/binary_quadratic_model.py:765: UserWarning: Did not add constraint v3cf20f804fdf497893e6abbca5c70b72. This constraint is feasible with any value for state variables.
+  warnings.warn(
+/usr/local/lib/python3.9/site-packages/dimod/binary/binary_quadratic_model.py:765: UserWarning: Did not add constraint v79571982074c4000b8839b9ea163fceb. This constraint is feasible with any value for state variables.
+  warnings.warn(
+/usr/local/lib/python3.9/site-packages/dimod/binary/binary_quadratic_model.py:765: UserWarning: Did not add constraint v4aa323e1281a43a1922fa121e21debf1. This constraint is feasible with any value for state variables.
+  warnings.warn(
+BQM TIME:  4991389  micros
+BQM ENERGY:  1530.0
+f0-n0-n1: 1 | f0-n1-n0: 1 | f0-n2-n5: 1 | f0-n4-n2: 1 | f0-n5-n12: 1 | f0-n9-n4: 1 | f1-n0-n2: 1 | f1-n1-n0: 1 | f1-n1-n3: 1 | f1-n13-n6: 1 | f1-n2-n6: 1 | f1-n3-n1: 1 | f1-n6-n1: 1 | f1-n6-n2: 1 | f2-n0-n2: 1 | f2-n1-n3: 1 | f2-n1-n6: 1 | f2-n10-n4: 1 | f2-n2-n0: 1 | f2-n2-n5: 1 | f2-n3-n7: 1 | f2-n4-n1: 1 | f2-n5-n1: 1 | f2-n6-n2: 1 | f3-n0-n2: 1 | f3-n1-n4: 1 | f3-n11-n5: 1 | f3-n2-n0: 1 | f3-n2-n6: 1 | f3-n4-n2: 1 | f3-n5-n1: 1 | f3-n6-n2: 1 | on0-1: 1 | on0-2: 1 | on1-3: 1 | on1-4: 1 | on1-5: 1 | on1-6: 1 | on2-4: 1 | on2-5: 1 | on2-6: 1 | on3-7: 1 | on3-8: 1 | on4-10: 1 | on4-9: 1 | on5-11: 1 | on5-12: 1 | on6-13: 1 | on6-14: 1 | slack_v03535a44aca84ec2b1eaabaa387fcda8_0: 1 | slack_v03535a44aca84ec2b1eaabaa387fcda8_1: 1 | slack_v03535a44aca84ec2b1eaabaa387fcda8_2: 1 | slack_v0789581603e84164b423418495c5d872_1: 1 | slack_v0789581603e84164b423418495c5d872_2: 1 | slack_v2c258cfa9b9f4230b9086354f02d92fa_0: 1 | slack_v2c258cfa9b9f4230b9086354f02d92fa_2: 1 | slack_v36d312d834e94dff887c8b1999665c40_2: 1 | slack_v36d312d834e94dff887c8b1999665c40_3: 1 | slack_v4703fcfd96b14340b36a957cc2a69f4e_0: 1 | slack_v4703fcfd96b14340b36a957cc2a69f4e_2: 1 | slack_v4703fcfd96b14340b36a957cc2a69f4e_3: 1 | slack_v57d35241abb34c23b39ffd0627dc221f_0: 1 | slack_v57d35241abb34c23b39ffd0627dc221f_1: 1 | slack_v57d35241abb34c23b39ffd0627dc221f_2: 1 | slack_v57d35241abb34c23b39ffd0627dc221f_3: 1 | slack_v7917bb9f0fb74c56a002945c0e56e0dc_0: 1 | slack_v7aa953d1ba7f4bdb8f5a88c3512e9117_0: 1 | slack_v7aa953d1ba7f4bdb8f5a88c3512e9117_1: 1 | slack_v7aa953d1ba7f4bdb8f5a88c3512e9117_2: 1 | slack_v9ba0b418d3754a27b3634c90e03d0505_2: 1 | slack_v9ba0b418d3754a27b3634c90e03d0505_3: 1 | slack_v9ed498ebbda04fc9adec074a26e1149c_1: 1 | slack_v9ed498ebbda04fc9adec074a26e1149c_2: 1 | slack_vadf76ea37c3143748d483dfa73ee15b6_0: 1 | slack_vadf76ea37c3143748d483dfa73ee15b6_2: 1 | slack_vadf76ea37c3143748d483dfa73ee15b6_3: 1 | slack_vcd643ce0af3c4a169480d603f8b71a9c_2: 1 | slack_ve2baf8f54da944c4907adbf2f84e4e51_0: 1 | slack_ve2baf8f54da944c4907adbf2f84e4e51_1: 1 | slack_ve2baf8f54da944c4907adbf2f84e4e51_2: 1 | slack_ve2baf8f54da944c4907adbf2f84e4e51_3: 1 | slack_ve485183ad0fe430d874f69fe0893f972_0: 1 | slack_ve485183ad0fe430d874f69fe0893f972_1: 1 | slack_ve485183ad0fe430d874f69fe0893f972_2: 1 | slack_ve66ab2d4041b4a2baeb13250cf333aec_0: 1 | slack_ve66ab2d4041b4a2baeb13250cf333aec_1: 1 | slack_vee4eadafde864d19849e2765e83a1bd3_0: 1 | slack_vf068aec55deb441fa2492e6d8ef61f9d_1: 1 | slack_vf89f4605ad0d4242b1234e768ecf4da0_2: 1 | sw0: 1 | sw1: 1 | sw2: 1 | sw3: 1 | sw4: 1 | sw5: 1 | sw6: 1 | Leap 
