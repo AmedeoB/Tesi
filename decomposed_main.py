@@ -25,6 +25,7 @@ cpu_util            1D array        u(v(ji))        CPU utilization of each VM
 data_rate           2D array        d(fl)           data rate of flow (f) on link (l)
 flow_path           bin dictionary  ρ(f,(k,i))      se parte del flow (f) va da k a i (nodi), allora 1, 0 altrimenti
 on                  bin dictionary  on(n1, n2)      link between node n1 and n2 is ON                
+_____________________________________________________________________________________________________________________
 #####################################################################################################################
 """
 
@@ -32,6 +33,8 @@ on                  bin dictionary  on(n1, n2)      link between node n1 and n2 
 # D_WAVE
 import dimod
 import dwave.system
+import dwave.inspector
+import dwave.preprocessing
 
 # OTHERS
 import numpy as np
@@ -42,20 +45,22 @@ import fun_lib as fn
 
 DEBUG = True            # Debug boolean
 ITERATIONS = 1          # Total problem iterations
-TIME_MULT = 1           # CQM Time multiplier fro BQM
+TIME_MULT1 = 1           # CQM Time multiplier 1 for BQM in VM problem
+TIME_MULT2 = 1           # CQM Time multiplier 2 for BQM in path problem
 
 ################# TREE DEFINITION PARAMETERS ###################
 BINARY = False
-DEPTH = 3               # Tree depth
-SERVER_C = 10           # Server capacity
-LINK_C = 5*DEPTH             # Link capacity
+DEPTH = 3                   # Tree depth
+SERVER_C = 10               # Server capacity
+LINK_C = 5*DEPTH            # Link capacity
 LINK_C_DECREASE = 2
-IDLE_PC = 10*DEPTH            # Idle power consumption
-IDLE_PC_DECREASE = 5            # Idle power consumption
-DYN_PC = 2*DEPTH              # Dynamic power consumption
-DYN_PC_DECREASE = 1              # Dynamic power consumption
-REQ_AVG = 8             # Average flow request
-DATAR_AVG = 4           # Average data rate per flow
+IDLE_PC = 10*DEPTH          # Idle power consumption
+IDLE_PC_DECREASE = 5        # Idle power consumption
+DYN_PC = 2*DEPTH            # Dynamic power consumption
+DYN_PC_DECREASE = 1         # Dynamic power consumption
+REQ_AVG = 8                 # Average flow request
+DATAR_AVG = 4               # Average data rate per flow
+LAGRANGE_MUL = IDLE_PC*10   # Lagrange multiplier for cqm -> bqm conversion
 #################################################################
 
 SERVERS = pow(2, DEPTH)                                 # Server number
@@ -224,6 +229,7 @@ for vm in range(VMS):
         == 1)
 
 
+
 print("\n\n\n")
 print("####################### CQM VM Model ###########################")
 print("\n")
@@ -259,13 +265,16 @@ print("####################### BQM VM Model ###########################")
 print("\n")
 
 # From CQM to BQM
-vm_bqm, _ = dimod.cqm_to_bqm(vm_cqm)
+vm_bqm, _ = dimod.cqm_to_bqm(vm_cqm, lagrange_multiplier = LAGRANGE_MUL)
+
+# Roof Duality
+rf_energy, _ = dwave.preprocessing.roof_duality(vm_bqm)
 
 # Create Sampler
 bqm_sampler = dwave.system.LeapHybridSampler()
 
 # Sample Results
-bqm_samples = bqm_sampler.sample(vm_bqm, cqm_time // 10**6 * TIME_MULT)
+bqm_samples = bqm_sampler.sample(vm_bqm, cqm_time // 10**6 * TIME_MULT1)
 
 # Exec Time
 bqm_time = bqm_samples.info.get('run_time')
@@ -280,6 +289,7 @@ bqm_best = bqm_samples.first
 
 # Energy
 print("BQM ENERGY: ", str(bqm_best[1]))
+print("BQM Roof Duality: ", rf_energy)
 
 # Extract variables
 for i in bqm_best[0]:
@@ -404,6 +414,7 @@ for l in range(LINKS):
             <= 0)
 
 
+
 print("\n\n\n")
 print("####################### CQM Path Model ###########################")
 print("\n")
@@ -436,13 +447,13 @@ print("####################### BQM Path Model ###########################")
 print("\n")
 
 # From CQM to BQM
-path_bqm, _ = dimod.cqm_to_bqm(path_cqm)
+path_bqm, _ = dimod.cqm_to_bqm(path_cqm, lagrange_multiplier = LAGRANGE_MUL)
 
-# Create Sampler
-bqm_sampler = dwave.system.LeapHybridSampler()
+# Roof Duality
+rf_energy, _ = dwave.preprocessing.roof_duality(path_bqm)
 
 # Sample Results
-bqm_samples = bqm_sampler.sample(path_bqm, cqm_time // 10**6 * TIME_MULT)
+bqm_samples = bqm_sampler.sample(path_bqm, cqm_time // 10**6 * TIME_MULT2)
 
 # Exec Time
 bqm_time = bqm_samples.info.get('run_time')
@@ -457,8 +468,40 @@ bqm_best = bqm_samples.first
 
 # Energy
 print("BQM ENERGY: ", str(bqm_best[1]))
+print("BQM Roof Duality: ", rf_energy)
 
 # Extract variables
 for i in bqm_best[0]:
     if bqm_best[0].get(i) != 0.0:
         print(i, bqm_best[0].get(i),sep = ": ",end= " | ")
+
+
+
+# print("\n\n\n")
+# print("####################### BQM Full Quantum Path Model ###########################")
+# print("\n")
+
+# # Create Sampler
+# fq_bqm_sampler = dwave.system.EmbeddingComposite(dwave.system.DWaveSampler())
+
+# # Sample Results
+# fq_bqm_samples = fq_bqm_sampler.sample(path_bqm, num_reads=100)
+
+# # Exec Time
+# fq_bqm_time = fq_bqm_samples.info.get('run_time')
+# print("BQM TIME: ", fq_bqm_time, " micros")
+
+# # Extract feasible solution
+# # bqm_feasibles = bqm_samples.filter(lambda sample: sample.is_feasible)
+
+# # Extract best solution
+# # bqm_best = bqm_feasibles.first
+# fq_bqm_best = fq_bqm_samples.first
+
+# # Energy
+# print("Full Quantum BQM ENERGY: ", str(fq_bqm_best[1]))
+
+# # Extract variables
+# for i in fq_bqm_best[0]:
+#     if fq_bqm_best[0].get(i) != 0.0:
+#         print(i, fq_bqm_best[0].get(i),sep = ": ",end= " | ")
