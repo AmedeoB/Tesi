@@ -268,7 +268,8 @@ print("\n")
 vm_bqm, _ = dimod.cqm_to_bqm(vm_cqm, lagrange_multiplier = LAGRANGE_MUL)
 
 # Roof Duality
-rf_energy, _ = dwave.preprocessing.roof_duality(vm_bqm)
+rf_energy, rf_variables = dwave.preprocessing.roof_duality(vm_bqm)
+print("Roof Duality variables: ", rf_variables)
 
 # Create Sampler
 bqm_sampler = dwave.system.LeapHybridSampler()
@@ -289,7 +290,7 @@ bqm_best = bqm_samples.first
 
 # Energy
 print("BQM ENERGY: ", str(bqm_best[1]))
-print("BQM Roof Duality: ", rf_energy)
+print("Roof Duality Energy: ", rf_energy)
 
 # Extract variables
 for i in bqm_best[0]:
@@ -450,7 +451,8 @@ print("\n")
 path_bqm, _ = dimod.cqm_to_bqm(path_cqm, lagrange_multiplier = LAGRANGE_MUL)
 
 # Roof Duality
-rf_energy, _ = dwave.preprocessing.roof_duality(path_bqm)
+rf_energy, rf_variables = dwave.preprocessing.roof_duality(vm_bqm)
+print("Roof Duality variables: ", rf_variables)
 
 # Sample Results
 bqm_samples = bqm_sampler.sample(path_bqm, cqm_time // 10**6 * TIME_MULT2)
@@ -468,7 +470,7 @@ bqm_best = bqm_samples.first
 
 # Energy
 print("BQM ENERGY: ", str(bqm_best[1]))
-print("BQM Roof Duality: ", rf_energy)
+print("Roof Duality Energy: ", rf_energy)
 
 # Extract variables
 for i in bqm_best[0]:
