@@ -42,6 +42,7 @@ import json
 seed()                  # Init random seed
 DEBUG = True            # DEBUG BOOLEAN
 SAVE_DICT = True
+LOAD_DICT = True
 ITERATIONS = 1          # Iterations to compare results
 TIME_MULT = 1
 

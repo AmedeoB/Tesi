@@ -40,13 +40,16 @@ import dwave.preprocessing
 import numpy as np
 import random
 import fun_lib as fn
+import json
 
 """--------------------------------------------------"""
 
 DEBUG = True            # Debug boolean
+SAVE_DICT = False
+LOAD_DICT = False
 ITERATIONS = 1          # Total problem iterations
 TIME_MULT1 = 1           # CQM Time multiplier 1 for BQM in VM problem
-TIME_MULT2 = 1           # CQM Time multiplier 2 for BQM in path problem
+TIME_MULT2 = 3           # CQM Time multiplier 2 for BQM in path problem
 
 ################# TREE DEFINITION PARAMETERS ###################
 BINARY = False
@@ -258,44 +261,49 @@ for i in cqm_best[0]:
     if cqm_best[0].get(i) != 0.0:
         print(i, cqm_best[0].get(i),sep = ": ",end= " | ")
 
+# Save best solution
+if SAVE_DICT:
+        with open("cqm_dict.txt", "w") as fp:
+            json.dump(cqm_best[0], fp)
+            print("CQM Dictionary updated!")
 
 
 print("\n\n\n")
 print("####################### BQM VM Model ###########################")
 print("\n")
 
-# From CQM to BQM
-vm_bqm, _ = dimod.cqm_to_bqm(vm_cqm, lagrange_multiplier = LAGRANGE_MUL)
+# # From CQM to BQM
+# vm_bqm, _ = dimod.cqm_to_bqm(vm_cqm, lagrange_multiplier = LAGRANGE_MUL)
 
-# Roof Duality
-rf_energy, rf_variables = dwave.preprocessing.roof_duality(vm_bqm)
-print("Roof Duality variables: ", rf_variables)
+# # Roof Duality
+# rf_energy, rf_variables = dwave.preprocessing.roof_duality(vm_bqm)
+# print("Roof Duality variables: ", rf_variables)
 
 # Create Sampler
 bqm_sampler = dwave.system.LeapHybridSampler()
 
-# Sample Results
-bqm_samples = bqm_sampler.sample(vm_bqm, cqm_time // 10**6 * TIME_MULT1)
+# # Sample Results
+# bqm_samples = bqm_sampler.sample(vm_bqm, cqm_time // 10**6 * TIME_MULT1)
 
-# Exec Time
-bqm_time = bqm_samples.info.get('run_time')
-print("BQM TIME: ", bqm_time, " micros")
+# # Exec Time
+# bqm_time = bqm_samples.info.get('run_time')
+# print("BQM TIME: ", bqm_time, " micros")
 
-# Extract feasible solution
-# bqm_feasibles = bqm_samples.filter(lambda sample: sample.is_feasible)
+# # Extract feasible solution
+# # bqm_feasibles = bqm_samples.filter(lambda sample: sample.is_feasible)
 
-# Extract best solution
-# bqm_best = bqm_feasibles.first
-bqm_best = bqm_samples.first
+# # Extract best solution
+# # bqm_best = bqm_feasibles.first
+# bqm_best = bqm_samples.first
 
-# Energy
-print("BQM ENERGY: ", str(bqm_best[1]))
-print("Roof Duality Energy: ", rf_energy)
+# # Energy
+# print("BQM ENERGY: ", str(bqm_best[1]))
+# print("Roof Duality Energy: ", rf_energy)
 
-# Extract variables
-for i in bqm_best[0]:
-    if bqm_best[0].get(i) != 0.0:
-        print(i, bqm_best[0].get(i),sep = ": ",end= " | ")
+# # Extract variables
+# for i in bqm_best[0]:
+#     if bqm_best[0].get(i) != 0.0:
+#         print(i, bqm_best[0].get(i),sep = ": ",end= " | ")
 
 
 
@@ -321,6 +329,18 @@ for n1 in range(NODES):
             on["on" + str(n1) + "-" + str(n2)] = dimod.Binary("on" + str(n1) + "-" + str(n2))
 
 
+# Load best solution
+if LOAD_DICT:
+        with open("cqm_dict.txt") as fp:
+            # for line in fp:
+                # cqm_best[0] = json.loads(fp)
+                # command, description = line.strip().split(None, 1)
+                # cqm_best[0][command] = description.strip()
+            cqm_dict = json.loads(fp.read())
+            print("CQM Dictionary loaded!")
+            print(cqm_dict)
+        cqm_best=(cqm_dict, 0)
+
 
 ############### PATH MODEL ########################################
 # Create CQM
@@ -340,22 +360,22 @@ path_cqm.set_objective(obj3 + obj4)
 
 # Constraints
 # (13) For each flow and server, the sum of exiting flow from the server to all adj switch is <= than vms part of that flow     
-for f in range(FLOWS):
-    for s in range(SWITCHES, SWITCHES + SERVERS):           # Start from switches cause nodes are numerated in order -> all switches -> all servers
-        path_cqm.add_constraint( 
-            dimod.quicksum( 
-                flow_path['f' + str(f) + '-n' + str(s) + '-n' + str(sw)] for sw in range(SWITCHES) if adjancy_list[s][sw] == 1) 
-                - cqm_best[0].get("vm" + str(src_dst[f][0]) + "-s" + str(s-SWITCHES)) 
-            <= 0)
+# for f in range(FLOWS):
+#     for s in range(SWITCHES, SWITCHES + SERVERS):           # Start from switches cause nodes are numerated in order -> all switches -> all servers
+#         path_cqm.add_constraint( 
+#             dimod.quicksum( 
+#                 flow_path['f' + str(f) + '-n' + str(s) + '-n' + str(sw)] for sw in range(SWITCHES) if adjancy_list[s][sw] == 1) 
+#                 - cqm_best[0].get("vm" + str(src_dst[f][0]) + "-s" + str(s-SWITCHES)) 
+#             <= 0, label="C13-N"+str(f*SERVERS+s))
 
-# (14) For each flow and server, the sum of entering flow from the server to all adj switch is <= than vms part of that flow     
-for f in range(FLOWS):
-    for s in range(SWITCHES, SWITCHES + SERVERS):
-        path_cqm.add_constraint( 
-            dimod.quicksum( 
-                flow_path['f' + str(f) + '-n' + str(sw) + '-n' + str(s)] for sw in range(SWITCHES) if adjancy_list[sw][s] == 1) 
-                - cqm_best[0].get("vm" + str(src_dst[f][1]) + "-s" + str(s-SWITCHES)) 
-            <= 0) 
+# # (14) For each flow and server, the sum of entering flow from the server to all adj switch is <= than vms part of that flow     
+# for f in range(FLOWS):
+#     for s in range(SWITCHES, SWITCHES + SERVERS):
+#         path_cqm.add_constraint( 
+#             dimod.quicksum( 
+#                 flow_path['f' + str(f) + '-n' + str(sw) + '-n' + str(s)] for sw in range(SWITCHES) if adjancy_list[sw][s] == 1) 
+#                 - cqm_best[0].get("vm" + str(src_dst[f][1]) + "-s" + str(s-SWITCHES)) 
+#             <= 0, label="C14-N"+str(f*SERVERS+s)) 
 
 # (15) For each flow and server, force allocation of all flows     
 for f in range(FLOWS):
@@ -367,7 +387,7 @@ for f in range(FLOWS):
                     flow_path['f' + str(f) + '-n' + str(s) + '-n' + str(sw)] for sw in range(SWITCHES) if adjancy_list[s][sw] == 1) 
                 - dimod.quicksum( 
                     flow_path['f' + str(f) + '-n' + str(sw) + '-n' + str(s)] for sw in range(SWITCHES) if adjancy_list[sw][s] == 1)) 
-            == 0)
+            == 0, label="C15-N"+str(f*SERVERS+s))
 
 # (16) For each switch and flow, entering and exiting flow from the switch are equal
 for sw in range(SWITCHES):
@@ -377,7 +397,7 @@ for sw in range(SWITCHES):
                 flow_path['f' + str(f) + '-n' + str(n) + '-n' + str(sw)]  for n in range(NODES) if adjancy_list[n][sw] == 1) 
             - dimod.quicksum( 
                 flow_path['f' + str(f) + '-n' + str(sw) + '-n' + str(n)] for n in range(NODES) if adjancy_list[sw][n] == 1) 
-            == 0)
+            == 0, label="C16-N"+str(sw*FLOWS+f))
 
 # (17) For each link, the data rate on it is less or equal than its capacity      
 for l in range(LINKS):
@@ -388,7 +408,7 @@ for l in range(LINKS):
                 flow_path['f' + str(f) + '-n' + str(n1) + '-n' + str(n2)] 
                 + flow_path['f' + str(f) + '-n' + str(n2) + '-n' + str(n1)]) for f in range(FLOWS)) 
         - link_capacity[l] * on["on" + str(n1) + "-" + str(n2)] 
-        <= 0)
+        <= 0, label="C17-N"+str(l))
 
 # (18)(19) For each link, the link is ON only if both nodes are ON       
 for l in range(LINKS):
@@ -397,22 +417,22 @@ for l in range(LINKS):
         path_cqm.add_constraint(
             on["on" + str(n1) + "-" + str(n2)] 
             - switch_status[n1] 
-            <= 0)
-    else:
-        path_cqm.add_constraint(
-            on["on" + str(n1) + "-" + str(n2)] 
-            - cqm_best[0].get("s"+str(n1-SWITCHES)) 
-            <= 0)
+            <= 0, label="C18-N"+str(l))
+    # else:
+    #     path_cqm.add_constraint(
+    #         on["on" + str(n1) + "-" + str(n2)] 
+    #         - cqm_best[0].get("s"+str(n1-SWITCHES)) 
+    #         <= 0, label="C18-N"+str(l))
     if n2 < SWITCHES:
         path_cqm.add_constraint(
             on["on" + str(n1) + "-" + str(n2)] 
             - switch_status[n2] 
-            <= 0)
-    else:
-        path_cqm.add_constraint(
-            on["on" + str(n1) + "-" + str(n2)] 
-            - cqm_best[0].get("s"+str(n2-SWITCHES)) 
-            <= 0)
+            <= 0, label="C19-N"+str(l))
+    # else:
+    #     path_cqm.add_constraint(
+    #         on["on" + str(n1) + "-" + str(n2)] 
+    #         - cqm_best[0].get("s"+str(n2-SWITCHES)) 
+    #         <= 0, label="C19-N"+str(l))
 
 
 
@@ -451,8 +471,8 @@ print("\n")
 path_bqm, _ = dimod.cqm_to_bqm(path_cqm, lagrange_multiplier = LAGRANGE_MUL)
 
 # Roof Duality
-rf_energy, rf_variables = dwave.preprocessing.roof_duality(vm_bqm)
-print("Roof Duality variables: ", rf_variables)
+# rf_energy, rf_variables = dwave.preprocessing.roof_duality(vm_bqm)
+# print("Roof Duality variables: ", rf_variables)
 
 # Sample Results
 bqm_samples = bqm_sampler.sample(path_bqm, cqm_time // 10**6 * TIME_MULT2)
@@ -461,16 +481,12 @@ bqm_samples = bqm_sampler.sample(path_bqm, cqm_time // 10**6 * TIME_MULT2)
 bqm_time = bqm_samples.info.get('run_time')
 print("BQM TIME: ", bqm_time, " micros")
 
-# Extract feasible solution
-# bqm_feasibles = bqm_samples.filter(lambda sample: sample.is_feasible)
-
 # Extract best solution
-# bqm_best = bqm_feasibles.first
 bqm_best = bqm_samples.first
 
 # Energy
 print("BQM ENERGY: ", str(bqm_best[1]))
-print("Roof Duality Energy: ", rf_energy)
+# print("Roof Duality Energy: ", rf_energy)
 
 # Extract variables
 for i in bqm_best[0]:
