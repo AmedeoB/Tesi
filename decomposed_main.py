@@ -220,14 +220,14 @@ for s in range(SERVERS):
         dimod.quicksum(
             cpu_util[vm] * vm_status[s][vm] for vm in range(VMS)) 
         - server_capacity[s]*server_status[s] 
-        <= 0)
+        <= 0, label="C11-N"+str(s))
 
 # (12) For each VM, it must be active on one and only one server
 for vm in range(VMS):
     vm_cqm.add_constraint(
         dimod.quicksum(
             vm_status[s][vm] for s in range(SERVERS)) 
-        == 1)
+        == 1, label="C12-N"+str(vm))
 
 
 
