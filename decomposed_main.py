@@ -101,7 +101,7 @@ for lvl in range(DEPTH+1):
     DYN_PC -= DYN_PC_DECREASE
 
 cpu_util = (np.random.normal(REQ_AVG, 1, VMS)).astype(int)         # CPU utilization of each VM
-data_rate = (np.random.normal(DATAR_AVG, 1, (FLOWS, LINKS))).astype(int)      # Data rate of flow f on link l 
+data_rate = (np.random.normal(DATAR_AVG, 1, FLOWS)).astype(int)      # Data rate of flow f on link l 
 
 if DEBUG:
     print("SWITCH Indexes: ", *[k for k in range(SWITCHES)])
@@ -111,9 +111,7 @@ if DEBUG:
     print("IDLE Power Consumption: ", *[s for s in idle_powcons])
     print("DYNAMIC Power Consumption: ", *[s for s in dyn_powcons])
     print("VM's CPU Utilization: ", *[s for s in cpu_util])
-    print("\n### Flow Path Data Rate ###")
-    for links in data_rate:
-        print("Flow ", *np.where(np.all(data_rate == links, axis=1))[0], ": ", *[s for s in links])
+    print("Flow Path Data Rate: ", *[s for s in data_rate])
     print("\n\n")
 
 
@@ -404,7 +402,7 @@ for l in range(LINKS):
     n1,n2 = fn.get_nodes(l, link_dict)
     path_cqm.add_constraint( 
         dimod.quicksum( 
-            data_rate[f][l] * (
+            data_rate[f] * (
                 flow_path['f' + str(f) + '-n' + str(n1) + '-n' + str(n2)] 
                 + flow_path['f' + str(f) + '-n' + str(n2) + '-n' + str(n1)]) for f in range(FLOWS)) 
         - link_capacity[l] * on["on" + str(n1) + "-" + str(n2)] 
