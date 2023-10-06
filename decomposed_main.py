@@ -43,79 +43,12 @@ import fun_lib as fn
 import json
 
 """--------------------------------------------------"""
-
 proxytree = fn.Proxytree()
+proxymanager = fn.Proxymanager(proxytree.IDLE_PC)
 
-DEBUG = True            # Debug boolean
-SAVE_DICT = False
-LOAD_DICT = False
-ITERATIONS = 1          # Total problem iterations
-TIME_MULT1 = 1           # CQM Time multiplier 1 for BQM in VM problem
-TIME_MULT2 = 3           # CQM Time multiplier 2 for BQM in path problem
 
-################# TREE DEFINITION PARAMETERS ###################
-BINARY = False
-DEPTH = 3                   # Tree depth
-SERVER_C = 10               # Server capacity
-LINK_C = 5*DEPTH            # Link capacity
-LINK_C_DECREASE = 2
-IDLE_PC = 10*DEPTH          # Idle power consumption
-IDLE_PC_DECREASE = 5        # Idle power consumption
-DYN_PC = 2*DEPTH            # Dynamic power consumption
-DYN_PC_DECREASE = 1         # Dynamic power consumption
-REQ_AVG = 8                 # Average flow request
-DATAR_AVG = 4               # Average data rate per flow
-LAGRANGE_MUL = IDLE_PC*10   # Lagrange multiplier for cqm -> bqm conversion
-#################################################################
 
-SERVERS = pow(2, DEPTH)                                 # Server number
-SWITCHES = sum(pow(2,i) for i in range(DEPTH))          # Switch number
-VMS = SERVERS                                           # VM number per server
-FLOWS = VMS//2 if VMS%2==0 else VMS//2+1                # Flow number
-NODES = SERVERS + SWITCHES                              # Total Nodes
-if(BINARY):
-    LINKS = 2*SWITCHES                                      # Link number
-else:
-    LINKS = 0
-    for i in range(DEPTH-1):
-        LINKS += 2**i * 2**(i+1)
-    LINKS += 2*(2**(DEPTH-1))
-
-server_capacity = [SERVER_C for i in range(SERVERS)]           # Capacity of each server
-    
-link_capacity = []
-# Switch links
-for lvl in range(DEPTH-1):
-    for link in range(2**(2*lvl+1)):
-        link_capacity.append(LINK_C)
-    LINK_C -= LINK_C_DECREASE
-# Server links
-for link in range(2**DEPTH):
-    link_capacity.append(LINK_C)
-
-idle_powcons = []           # Idle power consumption of each node
-dyn_powcons = []            # Dynamic power of each node
-for lvl in range(DEPTH+1):
-    for node in range(2**lvl):
-        idle_powcons.append(IDLE_PC)
-        dyn_powcons.append(DYN_PC)
-    IDLE_PC -= IDLE_PC_DECREASE
-    DYN_PC -= DYN_PC_DECREASE
-
-cpu_util = (np.random.normal(REQ_AVG, 1, VMS)).astype(int)         # CPU utilization of each VM
-data_rate = (np.random.normal(DATAR_AVG, 1, FLOWS)).astype(int)      # Data rate of flow f on link l 
-
-if DEBUG:
-    print("SWITCH Indexes: ", *[k for k in range(SWITCHES)])
-    print("SERVER Indexes: ", *[s+SWITCHES for s in range(SERVERS)])
-    print("SERVER Capacity: ", *[s for s in server_capacity])
-    print("LINK Capacity: ", *[s for s in link_capacity])
-    print("IDLE Power Consumption: ", *[s for s in idle_powcons])
-    print("DYNAMIC Power Consumption: ", *[s for s in dyn_powcons])
-    print("VM's CPU Utilization: ", *[s for s in cpu_util])
-    print("Flow Path Data Rate: ", *[s for s in data_rate])
-    print("\n\n")
-
+if proxymanager.DEBUG:
     print("SWITCH Indexes: ", *[k for k in range(proxytree.SWITCHES)])
     print("SERVER Indexes: ", *[s+proxytree.SWITCHES for s in range(proxytree.SERVERS)])
     print("SERVER Capacity: ", *[s for s in proxytree.server_capacity])
@@ -126,69 +59,6 @@ if DEBUG:
     print("Flow Path Data Rate: ", *[s for s in proxytree.data_rate])
     print("\n\n")
 
-
-# Create Tree:
-link_dict = {}
-link_counter = 0
-adjancy_list = [[0 for j in range(NODES)] for i in range(NODES)]    # NxN Binary matrix of adjacent nodes
-if(BINARY):
-    for father in range(NODES):
-        for i in range(2):
-            son = father * 2 + 1 + i
-            if (son < NODES):
-
-                adjancy_list[father][son] = 1
-                adjancy_list[son][father] = 1
-                link_dict[str((father,son))] = link_counter
-                link_dict[str((son,father))] = link_counter
-                link_counter += 1
-else:
-    # Create all sw-sw links
-    for lvl in range(DEPTH-1):
-        if lvl == 0:
-            for i in range(1,3):
-                adjancy_list[0][i] = 1
-                adjancy_list[i][0] = 1
-                link_dict[str((0,i))] = link_counter
-                link_dict[str((i,0))] = link_counter
-                link_counter += 1
-        else:
-            first_sw = 2**(lvl) - 1
-            last_sw = first_sw * 2
-            for father in range(first_sw, last_sw + 1):
-                first_son = 2**(lvl+1) - 1
-                last_son = first_son * 2
-                for son in range(first_son, last_son + 1):
-                    adjancy_list[father][son] = 1
-                    adjancy_list[son][father] = 1
-                    link_dict[str((father,son))] = link_counter
-                    link_dict[str((son,father))] = link_counter
-                    link_counter += 1
-    
-    # Last layer first and last switch
-    ll_firstsw = 2**(DEPTH-1) - 1
-    ll_lastsw = ll_firstsw * 2
-    
-    # Create all sw-s links
-    for father in range(ll_firstsw, ll_lastsw + 1):
-        for i in range(2):
-            son = father * 2 + 1 + i
-
-            adjancy_list[father][son] = 1
-            adjancy_list[son][father] = 1
-            link_dict[str((father,son))] = link_counter
-            link_dict[str((son,father))] = link_counter
-            link_counter += 1
-
-if DEBUG:
-    print("### Tree Structure ###")
-    for i in range(len(adjancy_list)):
-        print("\nNodo ", i, " collegato ai nodi:", end="\t")
-        for j in range(len(adjancy_list)):
-            if adjancy_list[i][j] == 1:
-                print(j, " (link ", link_dict.get(str((i,j))) ,")", sep="", end="\t")
-    print("\n\n")
-
     print("### Tree Structure ###")
     for i in range(len(proxytree.adjancy_list)):
         print("\nNodo ", i, " collegato ai nodi:", end="\t")
@@ -196,34 +66,18 @@ if DEBUG:
             if proxytree.adjancy_list[i][j] == 1:
                 print(j, " (link ", proxytree.link_dict.get(str((i,j))) ,")", sep="", end="\t")
     print("\n\n")
-
-
-# Creating communicating VMS
-src_dst = [[0 for j in range(2)] for i in range(FLOWS)]
-index_list = [i for i in range(VMS)]
-random.shuffle(index_list)
-for i in range(FLOWS):
-    for j in range(2):
-        src_dst[i][j] = index_list[i*2 + j]
-
-if DEBUG:
-    print("### VM Paths ###")
-    for path in src_dst:
-        print("Path ", src_dst.index(path), ": ", end="\t")
-        print( *[s for s in path], sep="  -  ")
-    print("\n")
+    
     print("### VM Paths ###")
     for path in proxytree.src_dst:
         print("Path ", proxytree.src_dst.index(path), ": ", end="\t")
         print( *[s for s in path], sep="  -  ")
     print("\n")
 
-exit()
 
 ############### VM MODEL BINARY VARIABLES ###################################
-server_status = [dimod.Binary("s" + str(i)) for i in range(SERVERS)]          # Binary value for each server, 1 ON, 0 OFF
+server_status = [dimod.Binary("s" + str(i)) for i in range(proxytree.SERVERS)]          # Binary value for each server, 1 ON, 0 OFF
 vm_status = [[dimod.Binary("vm" + str(i) + "-s" + str(j)) 
-        for i in range(VMS)] for j in range(SERVERS)]                   # Binary value for each VM on each server, 1 ON, 0 OFF
+        for i in range(proxytree.VMS)] for j in range(proxytree.SERVERS)]                   # Binary value for each VM on each server, 1 ON, 0 OFF
 
 
 
@@ -233,26 +87,26 @@ vm_cqm = dimod.ConstrainedQuadraticModel()
 
 # Objective
 # 1 - SUM of server pow cons
-obj1 = dimod.quicksum(server_status[s] * idle_powcons[s+SWITCHES] for s in range(SERVERS))
+obj1 = dimod.quicksum(server_status[s] * proxytree.idle_powcons[s+proxytree.SWITCHES] for s in range(proxytree.SERVERS))
 # 2 - SUM of vm dyn pow cons
-obj2 = dimod.quicksum(dyn_powcons[s+SWITCHES] * dimod.quicksum(cpu_util[vm] * vm_status[s][vm] for vm in range(VMS)) for s in range(SERVERS))
+obj2 = dimod.quicksum(proxytree.dyn_powcons[s+proxytree.SWITCHES] * dimod.quicksum(proxytree.cpu_util[vm] * vm_status[s][vm] for vm in range(proxytree.VMS)) for s in range(proxytree.SERVERS))
 # Total
 vm_cqm.set_objective(obj1 + obj2)
 
 # Constraints
 # (11) For each server, the CPU utilization of each VM on that server must be less or equal than server's capacity       
-for s in range(SERVERS):
+for s in range(proxytree.SERVERS):
     vm_cqm.add_constraint(
         dimod.quicksum(
-            cpu_util[vm] * vm_status[s][vm] for vm in range(VMS)) 
-        - server_capacity[s]*server_status[s] 
+            proxytree.cpu_util[vm] * vm_status[s][vm] for vm in range(proxytree.VMS)) 
+        - proxytree.server_capacity[s]*server_status[s] 
         <= 0, label="C11-N"+str(s))
 
 # (12) For each VM, it must be active on one and only one server
-for vm in range(VMS):
+for vm in range(proxytree.VMS):
     vm_cqm.add_constraint(
         dimod.quicksum(
-            vm_status[s][vm] for s in range(SERVERS)) 
+            vm_status[s][vm] for s in range(proxytree.SERVERS)) 
         == 1, label="C12-N"+str(vm))
 
 
@@ -286,7 +140,7 @@ for i in cqm_best[0]:
         print(i, cqm_best[0].get(i),sep = ": ",end= " | ")
 
 # Save best solution
-if SAVE_DICT:
+if proxymanager.SAVE_DICT:
         with open("cqm_dict.txt", "w") as fp:
             json.dump(cqm_best[0], fp)
             print("CQM Dictionary updated!")
@@ -297,7 +151,7 @@ print("####################### BQM VM Model ###########################")
 print("\n")
 
 # # From CQM to BQM
-# vm_bqm, _ = dimod.cqm_to_bqm(vm_cqm, lagrange_multiplier = LAGRANGE_MUL)
+# vm_bqm, _ = dimod.cqm_to_bqm(vm_cqm, lagrange_multiplier = proxymanager.LAGRANGE_MUL)
 
 # # Roof Duality
 # rf_energy, rf_variables = dwave.preprocessing.roof_duality(vm_bqm)
@@ -307,7 +161,7 @@ print("\n")
 bqm_sampler = dwave.system.LeapHybridSampler()
 
 # # Sample Results
-# bqm_samples = bqm_sampler.sample(vm_bqm, cqm_time // 10**6 * TIME_MULT1)
+# bqm_samples = bqm_sampler.sample(vm_bqm, cqm_time // 10**6 * proxymanager.TIME_MULT1)
 
 # # Exec Time
 # bqm_time = bqm_samples.info.get('run_time')
@@ -333,28 +187,28 @@ bqm_sampler = dwave.system.LeapHybridSampler()
 
 
 ############### PATH MODEL BINARY VARIABLES ###################################
-switch_status = [dimod.Binary("sw" + str(i)) for i in range(SWITCHES)]        # Binary value for each switch, 1 ON, 0 OFF
+switch_status = [dimod.Binary("sw" + str(i)) for i in range(proxytree.SWITCHES)]        # Binary value for each switch, 1 ON, 0 OFF
 
 # Initialize flow_path dictionary for each possible combination of flow and adjacent node
 # flow_path[f, [n1,n2]] = 1 if part of flow f goes from n1 to n2
 flow_path = {}
-for f in range(FLOWS):
-    for n1 in range(NODES):
-        for n2 in range(NODES):
-            if adjancy_list[n1][n2]:     # Adjancy Condition (lowers variable number)
+for f in range(proxytree.FLOWS):
+    for n1 in range(proxytree.NODES):
+        for n2 in range(proxytree.NODES):
+            if proxytree.adjancy_list[n1][n2]:     # Adjancy Condition (lowers variable number)
                 flow_path['f' + str(f) + '-n' + str(n1) + '-n' + str(n2)] = dimod.Binary("f" + str(f) + "-n" + str(n1) + "-n" + str(n2))
 
 # Initialize dictionary for each adjacent node
 # on[n1,n2] = 1 if the link between n1 and n2 is ON
 on = {}
-for n1 in range(NODES):
-    for n2 in range(n1, NODES):
-        if adjancy_list[n1][n2]:         # Adjancy Condition (lowers variable number)
+for n1 in range(proxytree.NODES):
+    for n2 in range(n1, proxytree.NODES):
+        if proxytree.adjancy_list[n1][n2]:         # Adjancy Condition (lowers variable number)
             on["on" + str(n1) + "-" + str(n2)] = dimod.Binary("on" + str(n1) + "-" + str(n2))
 
 
 # Load best solution
-if LOAD_DICT:
+if proxymanager.LOAD_DICT:
         with open("cqm_dict.txt") as fp:
             # for line in fp:
                 # cqm_best[0] = json.loads(fp)
@@ -372,12 +226,12 @@ path_cqm = dimod.ConstrainedQuadraticModel()
 
 # Objective
 # 3 - SUM of switch idle pow cons
-obj3 = dimod.quicksum(switch_status[sw] * idle_powcons[sw] for sw in range(SWITCHES))
+obj3 = dimod.quicksum(switch_status[sw] * idle_powcons[sw] for sw in range(proxytree.SWITCHES))
 # 4 - SUM of flow path
 # obj4 = dimod.quicksum(flow_path['f' + str(f) + '-n' + str(n1) + '-n' + str(n2)] + flow_path['f' + str(f) + '-n' + str(n2) + '-n' + str(n1)]
                     # for n1 in range(NODES) for n2 in range(NODES) for f in range(FLOWS) if adjancy_list[n1][n2] == 1)
 obj4 = dimod.quicksum( dyn_powcons[sw] * flow_path['f' + str(f) + '-n' + str(n) + '-n' + str(sw)] + flow_path['f' + str(f) + '-n' + str(sw) + '-n' + str(n)]
-                    for n in range(NODES) for f in range(FLOWS) for sw in range(SWITCHES) if adjancy_list[n][sw] == 1)
+                    for n in range(proxytree.NODES) for f in range(proxytree.FLOWS) for sw in range(proxytree.SWITCHES) if proxytree.adjancy_list[n][sw] == 1)
 # Total
 path_cqm.set_objective(obj3 + obj4)
 
@@ -402,42 +256,42 @@ path_cqm.set_objective(obj3 + obj4)
 #             <= 0, label="C14-N"+str(f*SERVERS+s)) 
 
 # (15) For each flow and server, force allocation of all flows     
-for f in range(FLOWS):
-    for s in range(SWITCHES, SWITCHES + SERVERS):
+for f in range(proxytree.FLOWS):
+    for s in range(proxytree.SWITCHES, proxytree.SWITCHES + proxytree.SERVERS):
         path_cqm.add_constraint( 
-            cqm_best[0].get("vm" + str(src_dst[f][0]) + "-s" + str(s-SWITCHES)) - cqm_best[0].get("vm" + str(src_dst[f][1]) + "-s" + str(s-SWITCHES))  
+            cqm_best[0].get("vm" + str(proxytree.src_dst[f][0]) + "-s" + str(s-proxytree.SWITCHES)) - cqm_best[0].get("vm" + str(proxytree.src_dst[f][1]) + "-s" + str(s-proxytree.SWITCHES))  
             - ( 
                 dimod.quicksum( 
-                    flow_path['f' + str(f) + '-n' + str(s) + '-n' + str(sw)] for sw in range(SWITCHES) if adjancy_list[s][sw] == 1) 
+                    flow_path['f' + str(f) + '-n' + str(s) + '-n' + str(sw)] for sw in range(SWITCHES) if proxytree.adjancy_list[s][sw] == 1) 
                 - dimod.quicksum( 
-                    flow_path['f' + str(f) + '-n' + str(sw) + '-n' + str(s)] for sw in range(SWITCHES) if adjancy_list[sw][s] == 1)) 
-            == 0, label="C15-N"+str(f*SERVERS+s))
+                    flow_path['f' + str(f) + '-n' + str(sw) + '-n' + str(s)] for sw in range(SWITCHES) if proxytree.adjancy_list[sw][s] == 1)) 
+            == 0, label="C15-N"+str(f*proxytree.SERVERS+s))
 
 # (16) For each switch and flow, entering and exiting flow from the switch are equal
-for sw in range(SWITCHES):
-    for f in range(FLOWS):
+for sw in range(proxytree.SWITCHES):
+    for f in range(proxytree.FLOWS):
         path_cqm.add_constraint( 
             dimod.quicksum( 
-                flow_path['f' + str(f) + '-n' + str(n) + '-n' + str(sw)]  for n in range(NODES) if adjancy_list[n][sw] == 1) 
+                flow_path['f' + str(f) + '-n' + str(n) + '-n' + str(sw)]  for n in range(proxytree.NODES) if proxytree.adjancy_list[n][sw] == 1) 
             - dimod.quicksum( 
-                flow_path['f' + str(f) + '-n' + str(sw) + '-n' + str(n)] for n in range(NODES) if adjancy_list[sw][n] == 1) 
-            == 0, label="C16-N"+str(sw*FLOWS+f))
+                flow_path['f' + str(f) + '-n' + str(sw) + '-n' + str(n)] for n in range(proxytree.NODES) if proxytree.adjancy_list[sw][n] == 1) 
+            == 0, label="C16-N"+str(sw*proxytree.FLOWS+f))
 
 # (17) For each link, the data rate on it is less or equal than its capacity      
-for l in range(LINKS):
-    n1,n2 = fn.get_nodes(l, link_dict)
+for l in range(proxytree.LINKS):
+    n1,n2 = fn.get_nodes(l, proxytree.link_dict)
     path_cqm.add_constraint( 
         dimod.quicksum( 
-            data_rate[f] * (
+            proxytree.data_rate[f] * (
                 flow_path['f' + str(f) + '-n' + str(n1) + '-n' + str(n2)] 
-                + flow_path['f' + str(f) + '-n' + str(n2) + '-n' + str(n1)]) for f in range(FLOWS)) 
-        - link_capacity[l] * on["on" + str(n1) + "-" + str(n2)] 
+                + flow_path['f' + str(f) + '-n' + str(n2) + '-n' + str(n1)]) for f in range(proxytree.FLOWS)) 
+        - proxytree.link_capacity[l] * on["on" + str(n1) + "-" + str(n2)] 
         <= 0, label="C17-N"+str(l))
 
 # (18)(19) For each link, the link is ON only if both nodes are ON       
-for l in range(LINKS):
-    n1,n2 = fn.get_nodes(l, link_dict)
-    if n1 < SWITCHES:
+for l in range(proxytree.LINKS):
+    n1,n2 = fn.get_nodes(l, proxytree.link_dict)
+    if n1 < proxytree.SWITCHES:
         path_cqm.add_constraint(
             on["on" + str(n1) + "-" + str(n2)] 
             - switch_status[n1] 
@@ -447,7 +301,7 @@ for l in range(LINKS):
     #         on["on" + str(n1) + "-" + str(n2)] 
     #         - cqm_best[0].get("s"+str(n1-SWITCHES)) 
     #         <= 0, label="C18-N"+str(l))
-    if n2 < SWITCHES:
+    if n2 < proxytree.SWITCHES:
         path_cqm.add_constraint(
             on["on" + str(n1) + "-" + str(n2)] 
             - switch_status[n2] 
@@ -492,14 +346,14 @@ print("####################### BQM Path Model ###########################")
 print("\n")
 
 # From CQM to BQM
-path_bqm, _ = dimod.cqm_to_bqm(path_cqm, lagrange_multiplier = LAGRANGE_MUL)
+path_bqm, _ = dimod.cqm_to_bqm(path_cqm, lagrange_multiplier = proxymanager.LAGRANGE_MUL)
 
 # Roof Duality
 # rf_energy, rf_variables = dwave.preprocessing.roof_duality(vm_bqm)
 # print("Roof Duality variables: ", rf_variables)
 
 # Sample Results
-bqm_samples = bqm_sampler.sample(path_bqm, cqm_time // 10**6 * TIME_MULT2)
+bqm_samples = bqm_sampler.sample(path_bqm, cqm_time // 10**6 * proxymanager.TIME_MULT2)
 
 # Exec Time
 bqm_time = bqm_samples.info.get('run_time')

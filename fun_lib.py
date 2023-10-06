@@ -14,7 +14,27 @@ def get_nodes(l, dictionary):
     nodes = nodes.replace(")", "")
     return tuple(map(int, nodes.split(', ')))
 
+
+
+class Proxymanager():
+    '''
+    A class to manage all program constant for debug, time multipliers, 
+    savers, and lagrange multipliers
+    '''
+    def __init__(self, IDLE_PC: int):
+        self.DEBUG = True            # Debug boolean
+        self.SAVE_DICT = False
+        self.LOAD_DICT = False
+        self.TIME_MULT1 = 1           # CQM Time multiplier 1 for BQM in VM problem
+        self.TIME_MULT2 = 3           # CQM Time multiplier 2 for BQM in path problem
+        self.LAGRANGE_MUL = IDLE_PC*10   # Lagrange multiplier for cqm -> bqm conversion
+
+
+
 class Proxytree():
+    '''
+    A class to manage all the constants of the tree and its structures
+    '''
     def __init__(self):
         self.DEPTH = 3
 
@@ -27,7 +47,6 @@ class Proxytree():
         self.DYN_PC_DECREASE = 1         # Dynamic power consumption
         self.REQ_AVG = 8                 # Average flow request
         self.DATAR_AVG = 4               # Average data rate per flow
-        self.LAGRANGE_MUL = self.IDLE_PC*10   # Lagrange multiplier for cqm -> bqm conversion
 
         self.SERVERS = pow(2, self.DEPTH)                                 # Server number
         self.SWITCHES = sum(pow(2,i) for i in range(self.DEPTH))          # Switch number
