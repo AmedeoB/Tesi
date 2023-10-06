@@ -45,7 +45,7 @@ class Proxytree():
         self.IDLE_PC_DECREASE = 5        # Idle power consumption
         self.DYN_PC = 2*self.DEPTH            # Dynamic power consumption
         self.DYN_PC_DECREASE = 1         # Dynamic power consumption
-        self.REQ_AVG = 8                 # Average flow request
+        # self.REQ_AVG = 8                 # Average flow request           (LEGACY: using randint and server capacity)
         self.DATAR_AVG = 4               # Average data rate per flow
 
         self.SERVERS = pow(2, self.DEPTH)                                 # Server number
@@ -62,8 +62,8 @@ class Proxytree():
         self.dyn_powcons = []            # Dynamic power of each node
         self.init_link_capacity()
         self.init_idle_dyn_powcons()
-        self.cpu_util = (np.random.normal(self.REQ_AVG, 1, self.VMS)).astype(int)         # CPU utilization of each VM
-        self.data_rate = (np.random.normal(self.DATAR_AVG, 1, self.FLOWS)).astype(int)      # Data rate of flow f on link l 
+        self.cpu_util = [random.randint(self.SERVER_C//2 , self.SERVER_C-1) for _ in range(self.VMS)] # CPU utilization of each VM
+        self.data_rate = [random.randint(self.DATAR_AVG-1 , self.DATAR_AVG+1) for _ in range(self.FLOWS)]      # Data rate of flow f on link l 
         
         self.link_dict = {}
         self.adjancy_list = [[0 for j in range(self.NODES)] for i in range(self.NODES)] 
@@ -141,3 +141,5 @@ class Proxytree():
         for i in range(self.FLOWS):
             for j in range(2):
                 self.src_dst[i][j] = index_list[i*2 + j]
+
+

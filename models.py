@@ -118,11 +118,11 @@ def bqm_vm_solver(proxytree: fn.Proxytree, proxymanager: fn.Proxymanager, vm_cqm
     Returns a tuple containing the variable dictionary and the execution time
     '''
     # From CQM to BQM
-    vm_bqm, _ = dimod.cqm_to_bqm(vm_cqm, lagrange_multiplier = proxymanager.LAGRANGE_MUL)
+    vm_bqm, inverter = dimod.cqm_to_bqm(vm_cqm, lagrange_multiplier = proxymanager.LAGRANGE_MUL)
 
     # Roof Duality
-    rf_energy, rf_variables = dwave.preprocessing.roof_duality(vm_bqm)
-    print("Roof Duality variables: ", rf_variables)
+    # rf_energy, rf_variables = dwave.preprocessing.roof_duality(vm_bqm)
+    # print("Roof Duality variables: ", rf_variables)
 
     # Create Sampler
     bqm_sampler = dwave.system.LeapHybridSampler()
@@ -140,15 +140,23 @@ def bqm_vm_solver(proxytree: fn.Proxytree, proxymanager: fn.Proxymanager, vm_cqm
     # Extract best solution
     # bqm_best = bqm_feasibles.first
     bqm_best = bqm_samples.first
+    inverted_sample = inverter(bqm_best.sample)
 
     # Energy
     print("BQM ENERGY: ", str(bqm_best[1]))
-    print("Roof Duality Energy: ", rf_energy)
+    # print("Roof Duality Energy: ", rf_energy)
 
     # Extract variables
+    print("\n## BQM Variables ##")
     for i in bqm_best[0]:
         if bqm_best[0].get(i) != 0.0:
             print(i, bqm_best[0].get(i),sep = ": ",end= " | ")
+    print("\n\n## Converted Variables ##")
+    for i in inverted_sample:
+        if inverted_sample.get(i) != 0.0:
+            print(i, inverted_sample.get(i),sep = ": ",end= " | ")
+    print("\n\nFeasible: ", vm_cqm.check_feasible(inverted_sample))
+
 
 
 def path_model(proxytree: fn.Proxytree, proxymanager: fn.Proxymanager, path_cqm: dimod.ConstrainedQuadraticModel, cqm_best):
@@ -316,7 +324,7 @@ def bqm_path_solver(proxytree: fn.Proxytree, proxymanager: fn.Proxymanager, path
     Solves the path planning problem using a BQM Hybrid Solver.
     '''
     # From CQM to BQM
-    path_bqm, _ = dimod.cqm_to_bqm(path_cqm, lagrange_multiplier = proxymanager.LAGRANGE_MUL)
+    path_bqm, inverter = dimod.cqm_to_bqm(path_cqm, lagrange_multiplier = proxymanager.LAGRANGE_MUL)
 
     # Roof Duality
     # rf_energy, rf_variables = dwave.preprocessing.roof_duality(vm_bqm)
@@ -334,14 +342,21 @@ def bqm_path_solver(proxytree: fn.Proxytree, proxymanager: fn.Proxymanager, path
 
     # Extract best solution
     bqm_best = bqm_samples.first
+    inverted_sample = inverter(bqm_best.sample)
 
     # Energy
     print("BQM ENERGY: ", str(bqm_best[1]))
     # print("Roof Duality Energy: ", rf_energy)
 
     # Extract variables
+    print("\n## BQM Variables ##")
     for i in bqm_best[0]:
         if bqm_best[0].get(i) != 0.0:
             print(i, bqm_best[0].get(i),sep = ": ",end= " | ")
+    print("\n\n## Converted Variables ##")
+    for i in inverted_sample:
+        if inverted_sample.get(i) != 0.0:
+            print(i, inverted_sample.get(i),sep = ": ",end= " | ")
+    print("\n\nFeasible: ", path_cqm.check_feasible(inverted_sample))
     
     return

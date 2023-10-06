@@ -2,7 +2,7 @@
 TODO
     
 """
-""" IMPORTS """
+"""------------------- IMPORTS ---------------------"""
 # D_WAVE
 import dimod
 import dwave.system
@@ -17,6 +17,8 @@ import models
 import json
 
 """--------------------------------------------------"""
+
+
 proxytree = fn.Proxytree()
 proxymanager = fn.Proxymanager(proxytree.IDLE_PC)
 
@@ -61,12 +63,11 @@ print("\n")
 cqm_best = models.cqm_vm_solver(proxytree, proxymanager, vm_cqm)
 
 
-# print("\n\n\n")
-# print("####################### BQM VM Model ###########################")
-# print("\n")
+print("\n\n\n")
+print("####################### BQM VM Model ###########################")
+print("\n")
 
-# models.bqm_vm_solver(proxytree, proxymanager, vm_cqm, cqm_best[1])
-
+models.bqm_vm_solver(proxytree, proxymanager, vm_cqm, cqm_best[1])
 
 
 
