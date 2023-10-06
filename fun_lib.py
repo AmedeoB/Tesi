@@ -141,5 +141,3 @@ class Proxytree():
         for i in range(self.FLOWS):
             for j in range(2):
                 self.src_dst[i][j] = index_list[i*2 + j]
-
-

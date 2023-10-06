@@ -21,3 +21,6 @@ Risolvono il problema di vm assignment, il cqm ritorna una tupla contente la bes
 
 ### cqm_path_solver() & bqm_path_solver()
 Risolvono il problema di path planning, il cqm ritorna il tempo impiegato
+
+# TO DO List
+- aggiunto converter.py, va implementato da 0 o corretti i bug di importazione
