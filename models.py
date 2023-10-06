@@ -159,7 +159,7 @@ def bqm_vm_solver(proxytree: fn.Proxytree, proxymanager: fn.Proxymanager, vm_cqm
 
 
 
-def path_model(proxytree: fn.Proxytree, proxymanager: fn.Proxymanager, path_cqm: dimod.ConstrainedQuadraticModel, cqm_best):
+def path_model(proxytree: fn.Proxytree, proxymanager: fn.Proxymanager, path_cqm: dimod.ConstrainedQuadraticModel, cqm_solution):
     '''
     Creates the path planning model as a Constrained Quadratic Model
     '''
@@ -194,7 +194,9 @@ def path_model(proxytree: fn.Proxytree, proxymanager: fn.Proxymanager, path_cqm:
                 cqm_dict = json.loads(fp.read())
                 print("CQM Dictionary loaded!")
                 print(cqm_dict)
-            cqm_best=(cqm_dict, 0)
+            cqm_best=(cqm_dict, cqm_best[1])
+    else:
+        cqm_best = cqm_solution
 
     # Objective
     # 3 - SUM of switch idle pow cons
