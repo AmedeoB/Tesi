@@ -226,11 +226,11 @@ path_cqm = dimod.ConstrainedQuadraticModel()
 
 # Objective
 # 3 - SUM of switch idle pow cons
-obj3 = dimod.quicksum(switch_status[sw] * idle_powcons[sw] for sw in range(proxytree.SWITCHES))
+obj3 = dimod.quicksum(switch_status[sw] * proxytree.idle_powcons[sw] for sw in range(proxytree.SWITCHES))
 # 4 - SUM of flow path
 # obj4 = dimod.quicksum(flow_path['f' + str(f) + '-n' + str(n1) + '-n' + str(n2)] + flow_path['f' + str(f) + '-n' + str(n2) + '-n' + str(n1)]
                     # for n1 in range(NODES) for n2 in range(NODES) for f in range(FLOWS) if adjancy_list[n1][n2] == 1)
-obj4 = dimod.quicksum( dyn_powcons[sw] * flow_path['f' + str(f) + '-n' + str(n) + '-n' + str(sw)] + flow_path['f' + str(f) + '-n' + str(sw) + '-n' + str(n)]
+obj4 = dimod.quicksum( proxytree.dyn_powcons[sw] * flow_path['f' + str(f) + '-n' + str(n) + '-n' + str(sw)] + flow_path['f' + str(f) + '-n' + str(sw) + '-n' + str(n)]
                     for n in range(proxytree.NODES) for f in range(proxytree.FLOWS) for sw in range(proxytree.SWITCHES) if proxytree.adjancy_list[n][sw] == 1)
 # Total
 path_cqm.set_objective(obj3 + obj4)
