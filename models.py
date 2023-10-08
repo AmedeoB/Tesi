@@ -36,6 +36,100 @@ import random
 import fun_lib as fn
 import json
 
+def check_bqm_feasible(bqm_best: dimod.sampleset, cqm_model: dimod.ConstrainedQuadraticModel, inverter: dimod.constrained.CQMToBQMInverter):
+    '''
+    Checks if given sampleset is feasible for the given CQM.
+    Takes 3 variables
+    - dimod.sampleset: the sampleset to check
+    - dimod.ConstrainedQuadraticModel: the CQM for checking
+    - dimod.constrained.CQMToBQMInverter: the converter from the BQM to the CQM
+    '''
+    inverted_sample = inverter(bqm_best.sample)
+    
+    print("\n\n## Converted Variables ##")
+    for i in inverted_sample:
+        if inverted_sample.get(i) != 0.0:
+            print(i, inverted_sample.get(i),sep = ": ",end= " | ")
+    print("\n\nFeasible: ", cqm_model.check_feasible(inverted_sample))
+
+
+def cqm_solver(proxytree: fn.Proxytree, proxymanager: fn.Proxymanager, 
+        cqm_problem: dimod.ConstrainedQuadraticModel, problem_label: str):
+    '''
+    Solves the CQM problem using a CQM Hybrid Solver.
+    Returns a tuple containing the variable dictionary and the execution time
+    '''
+    
+    # Create Sampler
+    cqm_sampler = dwave.system.LeapHybridCQMSampler()
+
+    # Sample results
+    cqm_samples = cqm_sampler.sample_cqm(cqm_problem, label = problem_label)
+
+    # Exec time
+    cqm_time = cqm_samples.info.get('run_time')
+    print("CQM TIME: ", cqm_time, " micros")
+
+    # Extract feasible solution
+    cqm_feasibles = cqm_samples.filter(lambda sample: sample.is_feasible)
+
+    # Extract best solution
+    cqm_best = cqm_feasibles.first
+
+    # Energy
+    print("CQM ENERGY: ", str(cqm_best[1]))
+
+    # Extract variables
+    for i in cqm_best[0]:
+        if cqm_best[0].get(i) != 0.0:
+            print(i, cqm_best[0].get(i),sep = ": ",end= " | ")
+
+    # Save best solution
+    if proxymanager.SAVE_DICT:
+            with open(("cqm_dict_"+problem_label+".txt"), "w") as fp:
+                json.dump(cqm_best[0], fp)
+                print("CQM Dictionary updated!")
+
+    return (cqm_best[0], cqm_time)
+
+
+def bqm_solver(proxytree: fn.Proxytree, proxymanager: fn.Proxymanager, 
+        bqm_problem: dimod.BinaryQuadraticModel, cqm_time, problem_label: str, time_mult = 1):
+    '''
+    Solves the vm assignment problem using a CQM Hybrid Solver.
+    Returns bqm_best solution
+    '''
+    # Roof Duality
+    # rf_energy, rf_variables = dwave.preprocessing.roof_duality(vm_bqm)
+    # print("Roof Duality variables: ", rf_variables)
+
+    # Create Sampler
+    bqm_sampler = dwave.system.LeapHybridSampler()
+
+    # Sample Results
+    bqm_samples = bqm_sampler.sample(bqm_problem, cqm_time // 10**6 * time_mult, label = problem_label)
+
+    # Exec Time
+    bqm_time = bqm_samples.info.get('run_time')
+    print("BQM TIME: ", bqm_time, " micros")
+
+    # Extract best solution
+    # bqm_best = bqm_feasibles.first
+    bqm_best = bqm_samples.first
+
+    # Energy
+    print("BQM ENERGY: ", str(bqm_best[1]))
+    # print("Roof Duality Energy: ", rf_energy)
+
+    # Extract variables
+    print("\n## BQM Variables ##")
+    for i in bqm_best[0]:
+        if bqm_best[0].get(i) != 0.0:
+            print(i, bqm_best[0].get(i),sep = ": ",end= " | ")
+    
+    return bqm_best
+
+
 def vm_model(proxytree: fn.Proxytree, proxymanager: fn.Proxymanager, vm_cqm: dimod.ConstrainedQuadraticModel):
     '''
     Creates the vm assignment model as a Constrained Quadratic Model
@@ -73,97 +167,10 @@ def vm_model(proxytree: fn.Proxytree, proxymanager: fn.Proxymanager, vm_cqm: dim
     return
 
 
-def cqm_vm_solver(proxytree: fn.Proxytree, proxymanager: fn.Proxymanager, vm_cqm: dimod.ConstrainedQuadraticModel):
-    '''
-    Solves the vm assignment problem using a CQM Hybrid Solver.
-    Returns a tuple containing the variable dictionary and the execution time
-    '''
-    
-    # Create Sampler
-    cqm_sampler = dwave.system.LeapHybridCQMSampler()
-
-    # Sample results
-    cqm_samples = cqm_sampler.sample_cqm(vm_cqm)
-
-    # Exec time
-    cqm_time = cqm_samples.info.get('run_time')
-    print("CQM TIME: ", cqm_time, " micros")
-
-    # Extract feasible solution
-    cqm_feasibles = cqm_samples.filter(lambda sample: sample.is_feasible)
-
-    # Extract best solution
-    cqm_best = cqm_feasibles.first
-
-    # Energy
-    print("CQM ENERGY: ", str(cqm_best[1]))
-
-    # Extract variables
-    for i in cqm_best[0]:
-        if cqm_best[0].get(i) != 0.0:
-            print(i, cqm_best[0].get(i),sep = ": ",end= " | ")
-
-    # Save best solution
-    if proxymanager.SAVE_DICT:
-            with open("cqm_dict.txt", "w") as fp:
-                json.dump(cqm_best[0], fp)
-                print("CQM Dictionary updated!")
-
-    return (cqm_best[0], cqm_time)
-
-
-def bqm_vm_solver(proxytree: fn.Proxytree, proxymanager: fn.Proxymanager, vm_cqm: dimod.ConstrainedQuadraticModel, cqm_time):
-    '''
-    Solves the vm assignment problem using a CQM Hybrid Solver.
-    Returns a tuple containing the variable dictionary and the execution time
-    '''
-    # From CQM to BQM
-    vm_bqm, inverter = dimod.cqm_to_bqm(vm_cqm, lagrange_multiplier = proxymanager.LAGRANGE_MUL)
-
-    # Roof Duality
-    # rf_energy, rf_variables = dwave.preprocessing.roof_duality(vm_bqm)
-    # print("Roof Duality variables: ", rf_variables)
-
-    # Create Sampler
-    bqm_sampler = dwave.system.LeapHybridSampler()
-
-    # Sample Results
-    bqm_samples = bqm_sampler.sample(vm_bqm, cqm_time // 10**6 * proxymanager.TIME_MULT1)
-
-    # Exec Time
-    bqm_time = bqm_samples.info.get('run_time')
-    print("BQM TIME: ", bqm_time, " micros")
-
-    # Extract feasible solution
-    # bqm_feasibles = bqm_samples.filter(lambda sample: sample.is_feasible)
-
-    # Extract best solution
-    # bqm_best = bqm_feasibles.first
-    bqm_best = bqm_samples.first
-    inverted_sample = inverter(bqm_best.sample)
-
-    # Energy
-    print("BQM ENERGY: ", str(bqm_best[1]))
-    # print("Roof Duality Energy: ", rf_energy)
-
-    # Extract variables
-    print("\n## BQM Variables ##")
-    for i in bqm_best[0]:
-        if bqm_best[0].get(i) != 0.0:
-            print(i, bqm_best[0].get(i),sep = ": ",end= " | ")
-    print("\n\n## Converted Variables ##")
-    for i in inverted_sample:
-        if inverted_sample.get(i) != 0.0:
-            print(i, inverted_sample.get(i),sep = ": ",end= " | ")
-    print("\n\nFeasible: ", vm_cqm.check_feasible(inverted_sample))
-
-
-
 def path_model(proxytree: fn.Proxytree, proxymanager: fn.Proxymanager, path_cqm: dimod.ConstrainedQuadraticModel, cqm_solution):
     '''
     Creates the path planning model as a Constrained Quadratic Model
     '''
-
     switch_status = [dimod.Binary("sw" + str(i)) for i in range(proxytree.SWITCHES)]        # Binary value for each switch, 1 ON, 0 OFF
 
     # Initialize flow_path dictionary for each possible combination of flow and adjacent node
@@ -186,7 +193,7 @@ def path_model(proxytree: fn.Proxytree, proxymanager: fn.Proxymanager, path_cqm:
 
     # Load best solution from vm model
     if proxymanager.LOAD_DICT:
-            with open("cqm_dict.txt") as fp:
+            with open("cqm_dict_vm_model.txt") as fp:
                 # for line in fp:
                     # cqm_best[0] = json.loads(fp)
                     # command, description = line.strip().split(None, 1)
@@ -289,76 +296,67 @@ def path_model(proxytree: fn.Proxytree, proxymanager: fn.Proxymanager, path_cqm:
     return
 
 
-def cqm_path_solver(proxytree: fn.Proxytree, proxymanager: fn.Proxymanager, path_cqm: dimod.ConstrainedQuadraticModel):
-    '''
-    Solves the path planning problem using a CQM Hybrid Solver.
-    Returns the time needed to solve the problem
-    '''
-    # Create Sampler
-    cqm_sampler = dwave.system.LeapHybridCQMSampler()
+# def cqm_path_solver(proxytree: fn.Proxytree, proxymanager: fn.Proxymanager, path_cqm: dimod.ConstrainedQuadraticModel):
+#     '''
+#     Solves the path planning problem using a CQM Hybrid Solver.
+#     Returns the time needed to solve the problem
+#     '''
+#     # Create Sampler
+#     cqm_sampler = dwave.system.LeapHybridCQMSampler()
 
-    # Sample results
-    cqm_samples = cqm_sampler.sample_cqm(path_cqm)
+#     # Sample results
+#     cqm_samples = cqm_sampler.sample_cqm(path_cqm)
 
-    # Exec time
-    cqm_time = cqm_samples.info.get('run_time')
-    print("CQM TIME: ", cqm_time, " micros")
+#     # Exec time
+#     cqm_time = cqm_samples.info.get('run_time')
+#     print("CQM TIME: ", cqm_time, " micros")
 
-    # Extract feasible solution
-    cqm_feasibles = cqm_samples.filter(lambda sample: sample.is_feasible)
+#     # Extract feasible solution
+#     cqm_feasibles = cqm_samples.filter(lambda sample: sample.is_feasible)
 
-    # Extract best solution
-    cqm_best = cqm_feasibles.first
+#     # Extract best solution
+#     cqm_best = cqm_feasibles.first
 
-    # Energy
-    print("CQM ENERGY: ", str(cqm_best[1]))
+#     # Energy
+#     print("CQM ENERGY: ", str(cqm_best[1]))
 
-    # Extract variables
-    for i in cqm_best[0]:
-        if cqm_best[0].get(i) != 0.0:
-            print(i, cqm_best[0].get(i),sep = ": ",end= " | ")
+#     # Extract variables
+#     for i in cqm_best[0]:
+#         if cqm_best[0].get(i) != 0.0:
+#             print(i, cqm_best[0].get(i),sep = ": ",end= " | ")
 
-    return cqm_time
+#     return cqm_time
 
 
-def bqm_path_solver(proxytree: fn.Proxytree, proxymanager: fn.Proxymanager, path_cqm: dimod.BinaryQuadraticModel, cqm_time):
-    '''
-    Solves the path planning problem using a BQM Hybrid Solver.
-    '''
-    # From CQM to BQM
-    path_bqm, inverter = dimod.cqm_to_bqm(path_cqm, lagrange_multiplier = proxymanager.LAGRANGE_MUL)
+# def bqm_path_solver(proxytree: fn.Proxytree, proxymanager: fn.Proxymanager, path_bqm: dimod.BinaryQuadraticModel, cqm_time):
+#     '''
+#     Solves the path planning problem using a BQM Hybrid Solver.
+#     '''
+#     # Roof Duality
+#     # rf_energy, rf_variables = dwave.preprocessing.roof_duality(vm_bqm)
+#     # print("Roof Duality variables: ", rf_variables)
 
-    # Roof Duality
-    # rf_energy, rf_variables = dwave.preprocessing.roof_duality(vm_bqm)
-    # print("Roof Duality variables: ", rf_variables)
-
-    # Create Sampler
-    bqm_sampler = dwave.system.LeapHybridSampler()
+#     # Create Sampler
+#     bqm_sampler = dwave.system.LeapHybridSampler()
     
-    # Sample Results
-    bqm_samples = bqm_sampler.sample(path_bqm, cqm_time // 10**6 * proxymanager.TIME_MULT2)
+#     # Sample Results
+#     bqm_samples = bqm_sampler.sample(path_bqm, cqm_time // 10**6 * proxymanager.TIME_MULT2)
 
-    # Exec Time
-    bqm_time = bqm_samples.info.get('run_time')
-    print("BQM TIME: ", bqm_time, " micros")
+#     # Exec Time
+#     bqm_time = bqm_samples.info.get('run_time')
+#     print("BQM TIME: ", bqm_time, " micros")
 
-    # Extract best solution
-    bqm_best = bqm_samples.first
-    inverted_sample = inverter(bqm_best.sample)
+#     # Extract best solution
+#     bqm_best = bqm_samples.first
 
-    # Energy
-    print("BQM ENERGY: ", str(bqm_best[1]))
-    # print("Roof Duality Energy: ", rf_energy)
+#     # Energy
+#     print("BQM ENERGY: ", str(bqm_best[1]))
+#     # print("Roof Duality Energy: ", rf_energy)
 
-    # Extract variables
-    print("\n## BQM Variables ##")
-    for i in bqm_best[0]:
-        if bqm_best[0].get(i) != 0.0:
-            print(i, bqm_best[0].get(i),sep = ": ",end= " | ")
-    print("\n\n## Converted Variables ##")
-    for i in inverted_sample:
-        if inverted_sample.get(i) != 0.0:
-            print(i, inverted_sample.get(i),sep = ": ",end= " | ")
-    print("\n\nFeasible: ", path_cqm.check_feasible(inverted_sample))
+#     # Extract variables
+#     print("\n## BQM Variables ##")
+#     for i in bqm_best[0]:
+#         if bqm_best[0].get(i) != 0.0:
+#             print(i, bqm_best[0].get(i),sep = ": ",end= " | ")
     
-    return
+#     return

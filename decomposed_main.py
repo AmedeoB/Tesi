@@ -22,7 +22,7 @@ import json
 proxytree = fn.Proxytree()
 proxymanager = fn.Proxymanager(proxytree.IDLE_PC)
 
-
+# Problem structure debugger
 if proxymanager.DEBUG:
     print("SWITCH Indexes: ", *[k for k in range(proxytree.SWITCHES)])
     print("SERVER Indexes: ", *[s+proxytree.SWITCHES for s in range(proxytree.SERVERS)])
@@ -52,42 +52,56 @@ if proxymanager.DEBUG:
 
 
 ############### VM MODEL ########################################
+# Create problem
 vm_cqm = dimod.ConstrainedQuadraticModel()
+# Variables & Constraints
 models.vm_model(proxytree, proxymanager, vm_cqm)
 
 
 print("\n\n\n")
 print("####################### CQM VM Model ###########################")
 print("\n")
-
-cqm_best = models.cqm_vm_solver(proxytree, proxymanager, vm_cqm)
+# Solve
+vm_cqm_solution = models.cqm_solver(proxytree, proxymanager, vm_cqm, problem_label = "vm_model")
 
 
 print("\n\n\n")
 print("####################### BQM VM Model ###########################")
 print("\n")
-
-models.bqm_vm_solver(proxytree, proxymanager, vm_cqm, cqm_best[1])
+# Convert
+vm_bqm, vm_inverter = dimod.cqm_to_bqm(vm_cqm, lagrange_multiplier = proxymanager.LAGRANGE_MUL)
+# Solve
+vm_bqm_best = models.bqm_solver(proxytree, proxymanager, vm_bqm, cqm_time = vm_cqm_solution[1]
+        , problem_label = "bqm_vm_model", time_mult = proxymanager.TIME_MULT1)
+# Check
+models.check_bqm_feasible(bqm_best = vm_bqm_best, cqm_model = vm_cqm, inverter = vm_inverter)
 
 
 
 ############### PATH MODEL ########################################
+# Create problem
 path_cqm = dimod.ConstrainedQuadraticModel()
-models.path_model(proxytree, proxymanager, path_cqm, cqm_best)
+# Variables & Constraints
+models.path_model(proxytree, proxymanager, path_cqm, vm_cqm_solution)
 
 
 print("\n\n\n")
 print("####################### CQM Path Model ###########################")
 print("\n")
-
-cqm_time = models.cqm_path_solver(proxytree, proxymanager, path_cqm)
+# Solve
+path_cqm_solution = models.cqm_solver(proxytree, proxymanager, path_cqm, "path_model")
 
 
 print("\n\n\n")
 print("####################### BQM Path Model ###########################")
 print("\n")
-
-models.bqm_path_solver(proxytree, proxymanager, path_cqm, cqm_time)
+# Convert
+path_bqm, path_inverter = dimod.cqm_to_bqm(vm_cqm, lagrange_multiplier = proxymanager.LAGRANGE_MUL)
+# Solve
+path_bqm_best = models.bqm_solver(proxytree, proxymanager, path_bqm, cqm_time = path_cqm_solution[1]
+        , problem_label = "bqm_path_model", time_mult = proxymanager.TIME_MULT2)
+# Check
+models.check_bqm_feasible(bqm_best = path_bqm_best, cqm_model = path_cqm, inverter = path_inverter)
 
 
 
