@@ -27,7 +27,8 @@ class Proxymanager():
         self.LOAD_DICT = False
         self.TIME_MULT1 = 1           # CQM Time multiplier 1 for BQM in VM problem
         self.TIME_MULT2 = 1           # CQM Time multiplier 2 for BQM in path problem
-        self.LAGRANGE_MUL = IDLE_PC*10   # Lagrange multiplier for cqm -> bqm conversion
+        self.LAGRANGE_MUL1 = IDLE_PC*10   # Lagrange multiplier for cqm -> bqm conversion
+        self.LAGRANGE_MUL2 = IDLE_PC*10   # Lagrange multiplier for cqm -> bqm conversion
 
 
 

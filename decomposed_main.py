@@ -1,6 +1,6 @@
 """
 TODO
-    
+    - ricontrollare i moltiplicatori di lagrange (ora i consumi vanno in base alla depth)
 """
 """------------------- IMPORTS ---------------------"""
 # D_WAVE
@@ -20,7 +20,7 @@ import json
 
 
 proxytree = fn.Proxytree()
-proxymanager = fn.Proxymanager(proxytree.IDLE_PC)
+proxymanager = fn.Proxymanager(10*proxytree.DEPTH)
 
 # Problem structure debugger
 if proxymanager.DEBUG:
@@ -69,7 +69,7 @@ print("\n\n\n")
 print("####################### BQM VM Model ###########################")
 print("\n")
 # Convert
-vm_bqm, vm_inverter = dimod.cqm_to_bqm(vm_cqm, lagrange_multiplier = proxymanager.LAGRANGE_MUL)
+vm_bqm, vm_inverter = dimod.cqm_to_bqm(vm_cqm, lagrange_multiplier = proxymanager.LAGRANGE_MUL1)
 # Solve
 vm_bqm_best = models.bqm_solver(proxytree, proxymanager, vm_bqm, cqm_time = vm_cqm_solution[1]
         , problem_label = "bqm_vm_model", time_mult = proxymanager.TIME_MULT1)
@@ -96,7 +96,7 @@ print("\n\n\n")
 print("####################### BQM Path Model ###########################")
 print("\n")
 # Convert
-path_bqm, path_inverter = dimod.cqm_to_bqm(vm_cqm, lagrange_multiplier = proxymanager.LAGRANGE_MUL)
+path_bqm, path_inverter = dimod.cqm_to_bqm(path_cqm, lagrange_multiplier = proxymanager.LAGRANGE_MUL2)
 # Solve
 path_bqm_best = models.bqm_solver(proxytree, proxymanager, path_bqm, cqm_time = path_cqm_solution[1]
         , problem_label = "bqm_path_model", time_mult = proxymanager.TIME_MULT2)
