@@ -1,5 +1,6 @@
 {
     "python.pythonPath": "/usr/local/bin/python",
+    "editor.semanticHighlighting.enabled": false,
 
     
 }
