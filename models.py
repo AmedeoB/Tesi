@@ -194,14 +194,10 @@ def path_model(proxytree: fn.Proxytree, proxymanager: fn.Proxymanager, path_cqm:
     # Load best solution from vm model
     if proxymanager.LOAD_DICT:
             with open("cqm_dict_vm_model.txt") as fp:
-                # for line in fp:
-                    # cqm_best[0] = json.loads(fp)
-                    # command, description = line.strip().split(None, 1)
-                    # cqm_best[0][command] = description.strip()
                 cqm_dict = json.loads(fp.read())
                 print("CQM Dictionary loaded!")
                 print(cqm_dict)
-            cqm_best=(cqm_dict, cqm_best[1])
+            cqm_best = (cqm_dict, cqm_solution[1])
     else:
         cqm_best = cqm_solution
 

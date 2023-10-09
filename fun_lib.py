@@ -148,13 +148,14 @@ class Proxymanager():
     A class to manage all program constant for debug, time multipliers, 
     savers, and lagrange multipliers
     '''
-    def __init__(self, proxytree: Proxytree):
-        self.DEBUG = True            # Debug boolean
-        self.SAVE_DICT = False
-        self.LOAD_DICT = False
-        self.TIME_MULT1 = 1           # CQM Time multiplier 1 for BQM in VM problem
-        self.TIME_MULT2 = 1           # CQM Time multiplier 2 for BQM in path problem
-        self.LAGRANGE_MUL1 = proxytree.idle_powcons[-1] * 10   # Lagrange multiplier for cqm -> bqm vm problem conversion | calculated from server idle powcons
-        self.LAGRANGE_MUL2 = proxytree.idle_powcons[0] * 10   # Lagrange multiplier for cqm -> bqm path problem conversion | calculated from root switch idle powcons
+    def __init__(self, proxytree: Proxytree, debug = True, save = True, load = True,
+                time_mul_vm = 1, time_mul_path = 1, lag_mul_vm = 10, lag_mul_path = 10):
+        self.DEBUG = debug            # Debug boolean
+        self.SAVE_DICT = save
+        self.LOAD_DICT = load
+        self.TIME_MULT1 = time_mul_vm           # CQM Time multiplier 1 for BQM in VM problem
+        self.TIME_MULT2 = time_mul_path           # CQM Time multiplier 2 for BQM in path problem
+        self.LAGRANGE_MUL1 = int(proxytree.idle_powcons[-1] * lag_mul_vm)   # Lagrange multiplier for cqm -> bqm vm problem conversion | calculated from server idle powcons
+        self.LAGRANGE_MUL2 = int(proxytree.idle_powcons[0] * lag_mul_path)   # Lagrange multiplier for cqm -> bqm path problem conversion | calculated from root switch idle powcons
 
 

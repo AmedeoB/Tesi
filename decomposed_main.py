@@ -20,7 +20,8 @@ import json
 
 proxytree = fn.Proxytree(depth = 3, server_c = 10, link_c = 5, idle_pc = 10
             , dyn_pc = 2, datar_avg = 4)
-proxymanager = fn.Proxymanager(proxytree)
+proxymanager = fn.Proxymanager(proxytree, save = False, load = False, 
+            lag_mul_vm = 10, lag_mul_path = 10)
 
 # Problem structure debugger
 if proxymanager.DEBUG:
