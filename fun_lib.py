@@ -12,42 +12,34 @@ def get_nodes(l, dictionary):
     nodes = list(dictionary.keys())[index]
     nodes = nodes.replace("(", "")
     nodes = nodes.replace(")", "")
+    
     return tuple(map(int, nodes.split(', ')))
-
-
-
-class Proxymanager():
-    '''
-    A class to manage all program constant for debug, time multipliers, 
-    savers, and lagrange multipliers
-    '''
-    def __init__(self, IDLE_PC: int):
-        self.DEBUG = True            # Debug boolean
-        self.SAVE_DICT = False
-        self.LOAD_DICT = False
-        self.TIME_MULT1 = 1           # CQM Time multiplier 1 for BQM in VM problem
-        self.TIME_MULT2 = 1           # CQM Time multiplier 2 for BQM in path problem
-        self.LAGRANGE_MUL1 = IDLE_PC*10   # Lagrange multiplier for cqm -> bqm conversion
-        self.LAGRANGE_MUL2 = IDLE_PC*10   # Lagrange multiplier for cqm -> bqm conversion
-
 
 
 class Proxytree():
     '''
-    A class to manage all the constants of the tree and its structures
+    A class to manage all the constants of the tree and its structures.
+    Takes in several values:
+    - depth: the tree depth
+    - server_c: the servers capacity
+    - link_c: the links capacity * 
+    - idle_pc: idle powcons of nodes *
+    - dyn_pc: dynamic powcons of nodes *
+    - datar_avg: the average datarate of flows
+    * multiplied by tree levels, changes every level
     '''
-    def __init__(self):
-        self.DEPTH = 3
+    def __init__(self, depth, server_c, link_c, idle_pc, dyn_pc, datar_avg):
+        self.DEPTH = depth
 
-        self.SERVER_C = 10               # Server capacity
-        self.LINK_C = 5*self.DEPTH            # Link capacity
+        self.SERVER_C = server_c               # Server capacity
+        self.LINK_C = link_c*self.DEPTH            # Link capacity
         self.LINK_C_DECREASE = 2
-        self.IDLE_PC = 10*self.DEPTH          # Idle power consumption
+        self.IDLE_PC = idle_pc*self.DEPTH          # Idle power consumption
         self.IDLE_PC_DECREASE = 5        # Idle power consumption
-        self.DYN_PC = 2*self.DEPTH            # Dynamic power consumption
+        self.DYN_PC = dyn_pc*self.DEPTH            # Dynamic power consumption
         self.DYN_PC_DECREASE = 1         # Dynamic power consumption
         # self.REQ_AVG = 8                 # Average flow request           (LEGACY: using randint and server capacity)
-        self.DATAR_AVG = 4               # Average data rate per flow
+        self.DATAR_AVG = datar_avg               # Average data rate per flow
 
         self.SERVERS = pow(2, self.DEPTH)                                 # Server number
         self.SWITCHES = sum(pow(2,i) for i in range(self.DEPTH))          # Switch number
@@ -79,23 +71,29 @@ class Proxytree():
             self.LINKS += 2**i * 2**(i+1)
         self.LINKS += 2*(2**(self.DEPTH-1))
     
+
     def init_link_capacity(self):
+        start_link_c = self.LINK_C
         # Switch links
         for lvl in range(self.DEPTH-1):
             for _ in range(2**(2*lvl+1)):
-                self.link_capacity.append(self.LINK_C)
-            self.LINK_C -= self.LINK_C_DECREASE
+                self.link_capacity.append(start_link_c)
+            start_link_c -= self.LINK_C_DECREASE
         # Server links
         for _ in range(2**self.DEPTH):
-            self.link_capacity.append(self.LINK_C)
+            self.link_capacity.append(start_link_c)
         
+
     def init_idle_dyn_powcons(self):
+        start_idle_pc = self.IDLE_PC
+        start_dyn_pc = self.DYN_PC
         for lvl in range(self.DEPTH+1):
             for _ in range(2**lvl):
-                self.idle_powcons.append(self.IDLE_PC)
-                self.dyn_powcons.append(self.DYN_PC)
-            self.IDLE_PC -= self.IDLE_PC_DECREASE
-            self.DYN_PC -= self.DYN_PC_DECREASE
+                self.idle_powcons.append(start_idle_pc)
+                self.dyn_powcons.append(start_dyn_pc)
+            start_idle_pc -= self.IDLE_PC_DECREASE
+            start_dyn_pc -= self.DYN_PC_DECREASE
+
 
     def init_link_dict_adj_list(self):
         link_counter = 0
@@ -136,9 +134,27 @@ class Proxytree():
                 self.link_dict[str((son,father))] = link_counter
                 link_counter += 1
 
+
     def initi_src_dst(self):
         index_list = [i for i in range(self.VMS)]
         random.shuffle(index_list)
         for i in range(self.FLOWS):
             for j in range(2):
                 self.src_dst[i][j] = index_list[i*2 + j]
+
+
+class Proxymanager():
+    '''
+    A class to manage all program constant for debug, time multipliers, 
+    savers, and lagrange multipliers
+    '''
+    def __init__(self, proxytree: Proxytree):
+        self.DEBUG = True            # Debug boolean
+        self.SAVE_DICT = False
+        self.LOAD_DICT = False
+        self.TIME_MULT1 = 1           # CQM Time multiplier 1 for BQM in VM problem
+        self.TIME_MULT2 = 1           # CQM Time multiplier 2 for BQM in path problem
+        self.LAGRANGE_MUL1 = proxytree.idle_powcons[-1] * 10   # Lagrange multiplier for cqm -> bqm vm problem conversion | calculated from server idle powcons
+        self.LAGRANGE_MUL2 = proxytree.idle_powcons[0] * 10   # Lagrange multiplier for cqm -> bqm path problem conversion | calculated from root switch idle powcons
+
+

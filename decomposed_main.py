@@ -1,6 +1,5 @@
 """
 TODO
-    - ricontrollare i moltiplicatori di lagrange (ora i consumi vanno in base alla depth)
 """
 """------------------- IMPORTS ---------------------"""
 # D_WAVE
@@ -19,8 +18,9 @@ import json
 """--------------------------------------------------"""
 
 
-proxytree = fn.Proxytree()
-proxymanager = fn.Proxymanager(10*proxytree.DEPTH)
+proxytree = fn.Proxytree(depth = 3, server_c = 10, link_c = 5, idle_pc = 10
+            , dyn_pc = 2, datar_avg = 4)
+proxymanager = fn.Proxymanager(proxytree)
 
 # Problem structure debugger
 if proxymanager.DEBUG:
