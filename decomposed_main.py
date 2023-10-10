@@ -1,5 +1,7 @@
 """
 TODO
+- fixare la struttura a classi
+- personalizzare cqm_to_bqm
 """
 """------------------- IMPORTS ---------------------"""
 # D_WAVE
