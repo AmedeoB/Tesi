@@ -16,6 +16,7 @@ import models
 import json
 
 """--------------------------------------------------"""
+from Converter.converter import cqm_to_bqm
 
 
 proxytree = fn.Proxytree(depth = 3, server_c = 10, link_c = 5, idle_pc = 10
@@ -63,14 +64,17 @@ print("\n\n\n")
 print("####################### CQM VM Model ###########################")
 print("\n")
 # Solve
-vm_cqm_solution = models.cqm_solver(proxytree, proxymanager, vm_cqm, problem_label = "vm_model")
+# vm_cqm_solution = models.cqm_solver(proxytree, proxymanager, vm_cqm, problem_label = "vm_model")
 
 
 print("\n\n\n")
 print("####################### BQM VM Model ###########################")
 print("\n")
 # Convert
-vm_bqm, vm_inverter = dimod.cqm_to_bqm(vm_cqm, lagrange_multiplier = proxymanager.LAGRANGE_MUL1)
+# vm_bqm, vm_inverter = dimod.cqm_to_bqm(vm_cqm, lagrange_multiplier = proxymanager.LAGRANGE_MUL1)
+vm_bqm, vm_inverter = cqm_to_bqm(vm_cqm, lagrange_multiplier = proxymanager.LAGRANGE_MUL1)
+print(vm_bqm)
+exit()
 # Solve
 vm_bqm_best = models.bqm_solver(proxytree, proxymanager, vm_bqm, cqm_time = vm_cqm_solution[1]
         , problem_label = "bqm_vm_model", time_mult = proxymanager.TIME_MULT1)

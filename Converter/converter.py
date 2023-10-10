@@ -58,7 +58,6 @@ from dimod.sampleset import as_samples
 from dimod.serialization.fileview import (
     _BytesIO, SpooledTemporaryFile,
     load, read_header, write_header,
-    VartypesSection,
     )
 from dimod.sym import Comparison, Sense
 from dimod.typing import Bias, Variable, SamplesLike
@@ -2042,6 +2041,7 @@ class CQMToBQMInverter:
 # expose that functionality as a function for easier later deprecation.
 def cqm_to_bqm(cqm: ConstrainedQuadraticModel, lagrange_multiplier: Optional[Bias] = None,
                ) -> Tuple[BinaryQuadraticModel, CQMToBQMInverter]:
+    print("Metodo custom")
     """Construct a binary quadratic model from a constrained quadratic model.
 
     Args:
