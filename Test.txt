@@ -5,10 +5,6 @@ Presenta il commento delle constraint "inutili" individuate dal bqm.
 In particolare qui viene acceso il collegamento 1-5 e 1-6 nonostante non sia necessario,
 il resto è tutto corretto rendendo la soluzione fattibile ma non ottima
 
--- SOLUZIONE -- 
-Evidentemente alcune delle condizioni non inutili che sono state commentate sono 
-necessarie ad un risultato ottimo
-
 
 ###############################################################################################################################
 
