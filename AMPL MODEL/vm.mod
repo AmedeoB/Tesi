@@ -16,11 +16,11 @@ var vm_status {SERVERS, VMS} binary, default 0;
 
 
 ### VINCOLI ###
-subject to c11 {s in SERVERS}:
+subject to C11 {s in SERVERS}:
     sum{v in VMS} cpu_util[v]* vm_status[s][v] <= server_capacity[s] * server_status[s]
 ;
 
-subject to c12 {v in VMS}:
+subject to C12 {v in VMS}:
     sum{s in SERVERS} vm_status[s][v] == 1
 ;
 
