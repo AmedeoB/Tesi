@@ -4,4 +4,7 @@ model PATH.MOD;
 data PATH.DAT;
 solve;
 
-!!! inserisci i display !!!
+display energy;
+display switch_status;
+display flow_path;
+display on;
