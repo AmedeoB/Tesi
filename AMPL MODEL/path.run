@@ -1,0 +1,7 @@
+reset;
+option solver gurobi;
+model PATH.MOD;
+data PATH.DAT;
+solve;
+
+!!! inserisci i display !!!

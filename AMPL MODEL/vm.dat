@@ -1,0 +1,46 @@
+set SERVERS := s0 s1 s2 s3 s4 s5 s6 s7;
+set VMS := vm0 vm1 vm2 vm3 vm4 vm5 vm6 vm7;
+
+param server_capacity :=
+s0 10
+s1 10
+s2 10
+s3 10
+s4 10
+s5 10
+s6 10
+s7 10
+;
+
+param idle_powcons := 
+s0 15
+s1 15
+s2 15
+s3 15
+s4 15
+s5 15
+s6 15
+s7 15
+;
+
+param dyn_powcons := 
+s0 3
+s1 3
+s2 3
+s3 3
+s4 3
+s5 3
+s6 3
+s7 3
+;
+
+param cpu_util :=
+vm0 8
+vm1 8
+vm2 8
+vm3 8
+vm4 8
+vm5 8
+vm6 8
+vm7 8
+;
