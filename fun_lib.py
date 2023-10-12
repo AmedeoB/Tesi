@@ -15,6 +15,24 @@ def get_nodes(l, dictionary):
     
     return tuple(map(int, nodes.split(', ')))
 
+def printSection(section_name: str):
+    '''
+    Standard printer for section separation. Automatically 
+    converts to uppercase.
+
+    Args:
+        - section_name: the name of the section
+            type: str
+
+    Returns:
+        - null
+    '''
+    
+    print("\n\n\n")
+    print("####################### " + section_name + " ###########################")
+    print("\n")
+    
+    return
 
 class Proxytree():
     '''

@@ -36,15 +36,23 @@ import random
 import fun_lib as fn
 import json
 
-def check_bqm_feasible(bqm_best: dimod.sampleset, cqm_model: dimod.ConstrainedQuadraticModel, inverter: dimod.constrained.CQMToBQMInverter):
+def check_bqm_feasible(bqm_solution: dimod.sampleset, cqm_model: dimod.ConstrainedQuadraticModel, 
+        inverter: dimod.constrained.CQMToBQMInverter):
     '''
     Checks if given sampleset is feasible for the given CQM.
-    Takes 3 variables
-    - dimod.sampleset: the sampleset to check
-    - dimod.ConstrainedQuadraticModel: the CQM for checking
-    - dimod.constrained.CQMToBQMInverter: the converter from the BQM to the CQM
+
+    Args:
+        - bqm_solution: the sampleset to check 
+            type: dimod.sampleset
+        - cqm_model: the CQM for checking 
+            type: dimod.ConstrainedQuadraticModel
+        - inverter: the converter from the BQM to the CQM 
+            type: dimod.constrained.CQMToBQMInverter
+    
+    Returns:
+        - null
     '''
-    inverted_sample = inverter(bqm_best.sample)
+    inverted_sample = inverter(bqm_solution.sample)
     
     print("\n\n## Converted Variables ##")
     for i in inverted_sample:
@@ -130,9 +138,18 @@ def bqm_solver(proxytree: fn.Proxytree, proxymanager: fn.Proxymanager,
     return bqm_best
 
 
-def vm_model(proxytree: fn.Proxytree, proxymanager: fn.Proxymanager, vm_cqm: dimod.ConstrainedQuadraticModel):
+def vm_model(proxytree: fn.Proxytree, vm_cqm: dimod.ConstrainedQuadraticModel):
     '''
     Creates the vm assignment model as a Constrained Quadratic Model
+
+    Args:
+        - proxytree: the tree structure to generate the model
+            type: fn.Proxytree
+        - vm_cqm: the CQM to fill
+            type: dimod.ConstrainedQuadraticModel
+    
+    Returns:
+        - null
     '''
 
     # Variables
@@ -167,9 +184,23 @@ def vm_model(proxytree: fn.Proxytree, proxymanager: fn.Proxymanager, vm_cqm: dim
     return
 
 
-def path_model(proxytree: fn.Proxytree, proxymanager: fn.Proxymanager, path_cqm: dimod.ConstrainedQuadraticModel, cqm_solution):
+def path_model(proxytree: fn.Proxytree, path_cqm: dimod.ConstrainedQuadraticModel, 
+        cqm_solution = dict(), load = False):
     '''
     Creates the path planning model as a Constrained Quadratic Model
+    
+    Args:
+        - proxytree: the tree structure to generate the model
+            type: fn.Proxytree
+        - path_cqm: the CQM to fill
+            type: dimod.ConstrainedQuadraticModel
+        - cqm_solution: the previous VM assignment solution
+            type: tuple(dict, int)
+        - load: boolean flag for loading saved results
+            type: bool
+    
+    Returns:
+        - null
     '''
     switch_status = [dimod.Binary("sw" + str(i)) for i in range(proxytree.SWITCHES)]        # Binary value for each switch, 1 ON, 0 OFF
 
@@ -191,15 +222,13 @@ def path_model(proxytree: fn.Proxytree, proxymanager: fn.Proxymanager, path_cqm:
                 on["on" + str(n1) + "-" + str(n2)] = dimod.Binary("on" + str(n1) + "-" + str(n2))
 
 
-    # Load best solution from vm model
-    if proxymanager.LOAD_DICT:
+    # Load best solution from file
+    if load:
             with open("cqm_dict_vm_model.txt") as fp:
-                cqm_dict = json.loads(fp.read())
+                cqm_solution = json.loads(fp.read())
                 print("CQM Dictionary loaded!")
-                print(cqm_dict)
-            cqm_best = (cqm_dict, cqm_solution[1])
-    else:
-        cqm_best = cqm_solution
+                print(cqm_solution)
+
 
     # Objective
     # 3 - SUM of switch idle pow cons
@@ -217,28 +246,28 @@ def path_model(proxytree: fn.Proxytree, proxymanager: fn.Proxymanager, path_cqm:
     # (13) For each flow and server, the sum of exiting flow from the server to all adj switch is <= than vms part of that flow     
     for f in range(proxytree.FLOWS):
         for s in range(proxytree.SWITCHES, proxytree.SWITCHES + proxytree.SERVERS):           # Start from switches cause nodes are numerated in order -> all switches -> all servers
-            if cqm_best[0].get("vm" + str(proxytree.src_dst[f][0]) + "-s" + str(s-proxytree.SWITCHES)) == 0:
+            if cqm_solution.get("vm" + str(proxytree.src_dst[f][0]) + "-s" + str(s-proxytree.SWITCHES)) == 0:
                 path_cqm.add_constraint( 
                     dimod.quicksum( 
                         flow_path['f' + str(f) + '-n' + str(s) + '-n' + str(sw)] for sw in range(proxytree.SWITCHES) if proxytree.adjancy_list[s][sw] == 1) 
-                    - cqm_best[0].get("vm" + str(proxytree.src_dst[f][0]) + "-s" + str(s-proxytree.SWITCHES)) 
+                    - cqm_solution.get("vm" + str(proxytree.src_dst[f][0]) + "-s" + str(s-proxytree.SWITCHES)) 
                     <= 0, label="C13-N"+str(f*proxytree.SERVERS+s))
 
     # # (14) For each flow and server, the sum of entering flow from the server to all adj switch is <= than vms part of that flow     
     for f in range(proxytree.FLOWS):
         for s in range(proxytree.SWITCHES, proxytree.SWITCHES + proxytree.SERVERS):
-            if cqm_best[0].get("vm" + str(proxytree.src_dst[f][1]) + "-s" + str(s-proxytree.SWITCHES)) == 0:
+            if cqm_solution.get("vm" + str(proxytree.src_dst[f][1]) + "-s" + str(s-proxytree.SWITCHES)) == 0:
                 path_cqm.add_constraint( 
                     dimod.quicksum( 
                         flow_path['f' + str(f) + '-n' + str(sw) + '-n' + str(s)] for sw in range(proxytree.SWITCHES) if proxytree.adjancy_list[sw][s] == 1) 
-                    - cqm_best[0].get("vm" + str(proxytree.src_dst[f][1]) + "-s" + str(s-proxytree.SWITCHES)) 
+                    - cqm_solution.get("vm" + str(proxytree.src_dst[f][1]) + "-s" + str(s-proxytree.SWITCHES)) 
                     <= 0, label="C14-N"+str(f*proxytree.SERVERS+s)) 
 
     # (15) For each flow and server, force allocation of all flows     
     for f in range(proxytree.FLOWS):
         for s in range(proxytree.SWITCHES, proxytree.SWITCHES + proxytree.SERVERS):
             path_cqm.add_constraint( 
-                cqm_best[0].get("vm" + str(proxytree.src_dst[f][0]) + "-s" + str(s-proxytree.SWITCHES)) - cqm_best[0].get("vm" + str(proxytree.src_dst[f][1]) + "-s" + str(s-proxytree.SWITCHES))  
+                cqm_solution.get("vm" + str(proxytree.src_dst[f][0]) + "-s" + str(s-proxytree.SWITCHES)) - cqm_solution.get("vm" + str(proxytree.src_dst[f][1]) + "-s" + str(s-proxytree.SWITCHES))  
                 - ( 
                     dimod.quicksum( 
                         flow_path['f' + str(f) + '-n' + str(s) + '-n' + str(sw)] for sw in range(proxytree.SWITCHES) if proxytree.adjancy_list[s][sw] == 1) 
