@@ -36,106 +36,145 @@ import random
 import fun_lib as fn
 import json
 
-def check_bqm_feasible(bqm_solution: dimod.sampleset, cqm_model: dimod.ConstrainedQuadraticModel, 
-        inverter: dimod.constrained.CQMToBQMInverter):
+def check_bqm_feasible(bqm_solution: dict, cqm_model: dimod.ConstrainedQuadraticModel, 
+            inverter: dimod.constrained.CQMToBQMInverter):
     '''
     Checks if given sampleset is feasible for the given CQM.
 
     Args:
         - bqm_solution: the sampleset to check 
-            type: dimod.sampleset
+            type: sampleset
         - cqm_model: the CQM for checking 
-            type: dimod.ConstrainedQuadraticModel
+            type: ConstrainedQuadraticModel
         - inverter: the converter from the BQM to the CQM 
-            type: dimod.constrained.CQMToBQMInverter
+            type: CQMToBQMInverter
     
     Returns:
         - null
     '''
-    inverted_sample = inverter(bqm_solution.sample)
+    inverted_sample = inverter(bqm_solution)
     
     print("\n\n## Converted Variables ##")
-    for i in inverted_sample:
-        if inverted_sample.get(i) != 0.0:
-            print(i, inverted_sample.get(i),sep = ": ",end= " | ")
+
+    last_char = ""
+    for var, value in inverted_sample.items():
+        if last_char != var[0]:         # Var separator
+            print(end="\n")
+        if value != 0.0:                # Nonzero var printer
+            print(var, value, sep = ": ",end= " | ")
+        last_char = var[0]          # Update last char to separate vars
+    
     print("\n\nFeasible: ", cqm_model.check_feasible(inverted_sample))
 
 
-def cqm_solver(proxytree: fn.Proxytree, proxymanager: fn.Proxymanager, 
-        cqm_problem: dimod.ConstrainedQuadraticModel, problem_label: str):
+
+def cqm_solver(cqm_problem: dimod.ConstrainedQuadraticModel, problem_label: str, 
+            save = False):
     '''
-    Solves the CQM problem using a CQM Hybrid Solver.
-    Returns a tuple containing the variable dictionary and the execution time
+    Solves the CQM problem using a CQM Hybrid Solver and returns
+    the results.
+
+    Args:
+        - cqm_problem: the CQM to solve
+            type: ConstrainedQuadraticModel
+
+    Returns:
+        - Tuple: containing the solution's dictionary
+        and its execution time
+            type: tuple(dict(), int)
     '''
     
     # Create Sampler
-    cqm_sampler = dwave.system.LeapHybridCQMSampler()
+    sampler = dwave.system.LeapHybridCQMSampler()
 
     # Sample results
-    cqm_samples = cqm_sampler.sample_cqm(cqm_problem, label = problem_label)
+    sampleset = sampler.sample_cqm(cqm_problem, label = problem_label)
 
     # Exec time
-    cqm_time = cqm_samples.info.get('run_time')
-    print("CQM TIME: ", cqm_time, " micros")
+    exec_time = sampleset.info.get('run_time')
+    print("CQM TIME: ", exec_time, " micros")
 
     # Extract feasible solution
-    cqm_feasibles = cqm_samples.filter(lambda sample: sample.is_feasible)
+    feasible_sampleset = sampleset.filter(lambda sample: sample.is_feasible)
 
-    # Extract best solution
-    cqm_best = cqm_feasibles.first
+    # Extract best solution and energy
+    best_solution = feasible_sampleset.first[0]
+    energy = feasible_sampleset.first[1]
 
     # Energy
-    print("CQM ENERGY: ", str(cqm_best[1]))
+    print("CQM ENERGY: ", str(energy))
 
     # Extract variables
-    for i in cqm_best[0]:
-        if cqm_best[0].get(i) != 0.0:
-            print(i, cqm_best[0].get(i),sep = ": ",end= " | ")
+    print("\n## CQM Variables ##")
+    last_char = ""
+    for var, value in best_solution.items():
+        if last_char != var[0]:         # Var separator
+            print(end="\n")
+        if value != 0.0:                # Nonzero var printer
+            print(var, value, sep = ": ",end= " | ")
+        last_char = var[0]          # Update last char to separate vars
 
     # Save best solution
-    if proxymanager.SAVE_DICT:
-            with open(("cqm_dict_"+problem_label+".txt"), "w") as fp:
-                json.dump(cqm_best[0], fp)
-                print("CQM Dictionary updated!")
+    if save:
+        with open(("cqm_dict_"+problem_label+".txt"), "w") as fp:
+            json.dump(best_solution, fp)
+            print(problem_label+" dictionary updated!")
 
-    return (cqm_best[0], cqm_time)
+    return (best_solution, exec_time)
 
 
-def bqm_solver(proxytree: fn.Proxytree, proxymanager: fn.Proxymanager, 
-        bqm_problem: dimod.BinaryQuadraticModel, cqm_time, problem_label: str, time_mult = 1):
+
+def bqm_solver(bqm_problem: dimod.BinaryQuadraticModel, problem_label: str, 
+            cqm_time = 0, time_mult = 1):
     '''
-    Solves the vm assignment problem using a CQM Hybrid Solver.
-    Returns bqm_best solution
+    Solves the BQM problem using a BQM Hybrid Solver and returns
+    the result.
+
+    Args:
+        - cqm_problem: the CQM to solve
+            type: ConstrainedQuadraticModel
+
+    Returns:
+        - best_solution: the solution's dictionary
+            type: dict()
     '''
     # Roof Duality
     # rf_energy, rf_variables = dwave.preprocessing.roof_duality(vm_bqm)
     # print("Roof Duality variables: ", rf_variables)
 
     # Create Sampler
-    bqm_sampler = dwave.system.LeapHybridSampler()
+    sampler = dwave.system.LeapHybridSampler()
 
     # Sample Results
-    bqm_samples = bqm_sampler.sample(bqm_problem, cqm_time // 10**6 * time_mult, label = problem_label)
+    if cqm_time:
+        sampleset = sampler.sample(bqm_problem, cqm_time//10**6 *time_mult, label = problem_label)
+    else:
+        sampleset = sampler.sample(bqm_problem, label = problem_label)
 
     # Exec Time
-    bqm_time = bqm_samples.info.get('run_time')
-    print("BQM TIME: ", bqm_time, " micros")
+    exec_time = sampleset.info.get('run_time')
+    print("BQM TIME: ", exec_time, " micros")
 
-    # Extract best solution
-    # bqm_best = bqm_feasibles.first
-    bqm_best = bqm_samples.first
+    # Extract best solution & energy
+    best_solution = sampleset.first[0]
+    energy = sampleset.first[1]
 
     # Energy
-    print("BQM ENERGY: ", str(bqm_best[1]))
+    print("BQM ENERGY: ", energy)
     # print("Roof Duality Energy: ", rf_energy)
 
     # Extract variables
     print("\n## BQM Variables ##")
-    for i in bqm_best[0]:
-        if bqm_best[0].get(i) != 0.0:
-            print(i, bqm_best[0].get(i),sep = ": ",end= " | ")
+    last_char = ""
+    for var, value in best_solution.items():
+        if last_char != var[0]:         # Var separator
+            print(end="\n")
+        if value != 0.0:                # Nonzero var printer
+            print(var, value, sep = ": ",end= " | ")
+        last_char = var[0]          # Update last char to separate vars
     
-    return bqm_best
+    return best_solution
+
 
 
 def vm_model(proxytree: fn.Proxytree, vm_cqm: dimod.ConstrainedQuadraticModel):
@@ -181,11 +220,10 @@ def vm_model(proxytree: fn.Proxytree, vm_cqm: dimod.ConstrainedQuadraticModel):
                 vm_status[s][vm] for s in range(proxytree.SERVERS)) 
             == 1, label="C12-N"+str(vm))
 
-    return
 
 
 def path_model(proxytree: fn.Proxytree, path_cqm: dimod.ConstrainedQuadraticModel, 
-        cqm_solution = dict(), load = False):
+            cqm_solution = dict(), load = False):
     '''
     Creates the path planning model as a Constrained Quadratic Model
     
@@ -196,7 +234,8 @@ def path_model(proxytree: fn.Proxytree, path_cqm: dimod.ConstrainedQuadraticMode
             type: dimod.ConstrainedQuadraticModel
         - cqm_solution: the previous VM assignment solution
             type: tuple(dict, int)
-        - load: boolean flag for loading saved results
+        - load: boolean var for loading saved results in
+        cqm_dict_vm_model.txt
             type: bool
     
     Returns:
@@ -226,7 +265,7 @@ def path_model(proxytree: fn.Proxytree, path_cqm: dimod.ConstrainedQuadraticMode
     if load:
             with open("cqm_dict_vm_model.txt") as fp:
                 cqm_solution = json.loads(fp.read())
-                print("CQM Dictionary loaded!")
+                print("VM-CQM Dictionary loaded!")
                 print(cqm_solution)
 
 
@@ -319,5 +358,4 @@ def path_model(proxytree: fn.Proxytree, path_cqm: dimod.ConstrainedQuadraticMode
         #         on["on" + str(n1) + "-" + str(n2)] 
         #         - cqm_best[0].get("s"+str(n2-SWITCHES)) 
         #         <= 0, label="C19-N"+str(l))
-    
-    return
+

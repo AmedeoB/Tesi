@@ -6,7 +6,16 @@ def get_nodes(l, dictionary):
     A function that returns a tuple (n1,n2) containing
     the nodes linked by link l and saved in a dictionary
     with structure {(n1,n2) = l}
+
+    Args:
+        - l (int): the link index
+        - dictionary (dict): the dictionary containing
+        the couple
+    
+    Returns:
+        - Tuple(int, int): nodes indexes
     '''
+    
     values = list(dictionary.values())
     index = values.index(l)
     nodes = list(dictionary.keys())[index]
@@ -15,26 +24,25 @@ def get_nodes(l, dictionary):
     
     return tuple(map(int, nodes.split(', ')))
 
+
+
 def printSection(section_name: str):
     '''
-    Standard printer for section separation. Automatically 
-    converts to uppercase.
+    A standard printing formatting for section separation. 
+    Automatically converts text to uppercase.
 
     Args:
-        - section_name: the name of the section
-            type: str
-
-    Returns:
-        - null
+        - section_name (str): the name of the section
     '''
     
     print("\n\n\n")
     print("####################### " + section_name + " ###########################")
     print("\n")
-    
-    return
+
+
 
 class Proxytree():
+    
     '''
     A class to manage all the constants of the tree and its structures.
     Takes in several values:
@@ -46,6 +54,7 @@ class Proxytree():
     - datar_avg: the average datarate of flows
     * multiplied by tree levels, changes every level
     '''
+
     def __init__(self, depth, server_c, link_c, idle_pc, dyn_pc, datar_avg):
         self.DEPTH = depth
 
@@ -162,18 +171,65 @@ class Proxytree():
 
 
 class Proxymanager():
+
     '''
     A class to manage all program constant for debug, time multipliers, 
-    savers, and lagrange multipliers
+    savers, and lagrange multipliers.
+
+    Args:
+        - proxytree (Proxytree): the tree structure to compute lagrange 
+        multipliers
+        - debug (bool, optional, default=False): get debug prints
+        - save_cqm_dict (bool, optional, default=False): boolean 
+        to save CQM results
+        - load_cqm_dict (bool, optional, default=False): boolean 
+        to load CQM results
+        - time_mul_vm (int, optional, default=0): time multiplier 
+        for VM BQM solver
+        - time_mul_path (int, optional, default=0): time multiplier 
+        for path BQM solver
+        - lag_mul_vm (int, optional, default=0): multiplier to compute 
+        lagrange multiplier for VM BQM
+        - lag_mul_path (int, optional, default=0): multiplier to 
+        compute lagrange multiplier for path BQM
     '''
-    def __init__(self, proxytree: Proxytree, debug = True, save = True, load = True,
-                time_mul_vm = 1, time_mul_path = 1, lag_mul_vm = 10, lag_mul_path = 10):
+
+    def __init__(self, proxytree: Proxytree, debug = False, save_cqm_dict = False, 
+                load_cqm_dict = False, time_mul_vm = 0, time_mul_path = 0, 
+                lag_mul_vm = 0, lag_mul_path = 0):
+                
         self.DEBUG = debug            # Debug boolean
-        self.SAVE_DICT = save
-        self.LOAD_DICT = load
-        self.TIME_MULT1 = time_mul_vm           # CQM Time multiplier 1 for BQM in VM problem
-        self.TIME_MULT2 = time_mul_path           # CQM Time multiplier 2 for BQM in path problem
-        self.LAGRANGE_MUL1 = int(proxytree.idle_powcons[-1] * lag_mul_vm)   # Lagrange multiplier for cqm -> bqm vm problem conversion | calculated from server idle powcons
-        self.LAGRANGE_MUL2 = int(proxytree.idle_powcons[0] * lag_mul_path)   # Lagrange multiplier for cqm -> bqm path problem conversion | calculated from root switch idle powcons
+        self.SAVE_DICT = save_cqm_dict
+        self.LOAD_DICT = load_cqm_dict
 
 
+        # BQM Time multiplier for VM assignment solver
+        if time_mul_vm:
+            self.VM_CUSTOM_TIME = True
+        else:
+            self.VM_CUSTOM_TIME = False
+        self.VM_TIME_MULT = time_mul_vm 
+
+        # BQM Time multiplier for Path planner solver
+        if time_mul_path:
+            self.PATH_CUSTOM_TIME = True 
+        else:
+            self.PATH_CUSTOM_TIME = False
+        self.PATH_TIME_MULT = time_mul_path           
+        
+
+        # Lagrange multiplier for CQM to BQM conversion for
+            # VM problem | calculated from server idle powcons
+        if lag_mul_vm:
+            self.VM_CUSTOM_LAGRANGE = True 
+        else:
+            self.VM_CUSTOM_LAGRANGE = True 
+        self.VM_LAGRANGE_MUL = int(proxytree.idle_powcons[-1] * lag_mul_vm)
+
+        # Lagrange multiplier for CQM to BQM conversion for
+            # path problem | calculated from server idle powcons
+        if lag_mul_path:
+            self.PATH_CUSTOM_LAGRANGE = True 
+        else:
+            self.PATH_CUSTOM_LAGRANGE = True 
+        self.PATH_LAGRANGE_MUL = int(proxytree.idle_powcons[0] * lag_mul_path)   # Lagrange multiplier for cqm -> bqm path problem conversion | calculated from root switch idle powcons

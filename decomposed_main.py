@@ -1,7 +1,10 @@
 """
 TODO
-- fixare la struttura a classi
-- personalizzare cqm_to_bqm
+- trovare un modo per rendere opzionali da input i seguenti parametri:
+    > salvataggio del dizionario
+    > load del dizionario
+    > moltiplicatori di lagrange
+    > moltiplicatori di tempo
 """
 """------------------- IMPORTS ---------------------"""
 # D_WAVE
@@ -34,10 +37,13 @@ proxytree = fn.Proxytree(
 
 proxymanager = fn.Proxymanager(
                 proxytree, 
-                save = False, 
-                load = False, 
-                lag_mul_vm = 10, 
-                lag_mul_path = 10
+                debug = True,
+                # save_cqm_dict = False, 
+                # load_cqm_dict = False, 
+                # time_mul_vm = 1,
+                # time_mul_path = 1,
+                # lag_mul_vm = 10, 
+                # lag_mul_path = 10
             )
 
 
@@ -71,41 +77,57 @@ if proxymanager.DEBUG:
 
 
 ############### VM MODEL ########################################
+
 # Create problem
 vm_cqm = dimod.ConstrainedQuadraticModel()
 # Variables & Constraints
 models.vm_model(proxytree, vm_cqm)
 
 
+
 #### CQM Solver ####
 printSection("CQM VM Model")
 
 # Solve
-vm_cqm_solution = models.cqm_solver(proxytree, proxymanager, vm_cqm, problem_label = "vm_model")
+# if proxymanager.SAVE_DICT:
+#     vm_cqm_solution, vm_cqm_time = models.cqm_solver(vm_cqm, "vm_model", save = True)
+# else:
+vm_cqm_solution, vm_cqm_time = models.cqm_solver(vm_cqm, "vm_model")
+
 
 
 #### BQM Solver ####
 printSection("BQM VM Model")
 
 # Convert
-# [LEGACY] # vm_bqm, vm_inverter = dimod.cqm_to_bqm(vm_cqm, lagrange_multiplier = proxymanager.LAGRANGE_MUL1)
-vm_bqm, vm_inverter = cqm_to_bqm(vm_cqm, lagrange_multiplier = proxymanager.LAGRANGE_MUL1)
+# [LEGACY] # vm_bqm, vm_inverter = cqm_to_bqm(vm_cqm, lagrange_multiplier = proxymanager.LAGRANGE_MUL1)
+# if proxymanager.VM_CUSTOM_LAGRANGE:
+#     vm_bqm, vm_inverter = dimod.cqm_to_bqm(vm_cqm, lagrange_multiplier = proxymanager.VM_LAGRANGE_MUL)
+# else:
+vm_bqm, vm_inverter = dimod.cqm_to_bqm(vm_cqm)
+
 # Solve
-vm_bqm_solution = models.bqm_solver(proxytree, proxymanager, vm_bqm, cqm_time = vm_cqm_solution[1]
-        , problem_label = "bqm_vm_model", time_mult = proxymanager.TIME_MULT1)
+# if proxymanager.VM_CUSTOM_TIME:  
+#     vm_bqm_solution = models.bqm_solver(vm_bqm, problem_label = "bqm_vm_model", 
+#                 cqm_time = vm_cqm_time, time_mult = proxymanager.VM_TIME_MULT)
+# else:
+vm_bqm_solution = models.bqm_solver(vm_bqm, problem_label = "bqm_vm_model")
+
 # Check
-models.check_bqm_feasible(bqm_solution = vm_bqm_solution, cqm_model = vm_cqm, inverter = vm_inverter)
+models.check_bqm_feasible(bqm_solution = vm_bqm_solution, cqm_model = vm_cqm, 
+            inverter = vm_inverter)
 
 
 
 ############### PATH MODEL ########################################
+
 # Create problem
 path_cqm = dimod.ConstrainedQuadraticModel()
 # Variables & Constraints
-if proxymanager.LOAD_DICT:
-    models.path_model(proxytree, path_cqm, load = True)
-else:
-    models.path_model(proxytree, path_cqm, cqm_solution = vm_cqm_solution[0])
+# if proxymanager.LOAD_DICT:
+#     models.path_model(proxytree, path_cqm, load = True)
+# else:
+models.path_model(proxytree, path_cqm, cqm_solution = vm_cqm_solution)
 
 
 
@@ -113,20 +135,34 @@ else:
 printSection("CQM Path Model")
 
 # Solve
-path_cqm_solution = models.cqm_solver(proxytree, proxymanager, path_cqm, "path_model")
+# if proxymanager.SAVE_DICT:
+#     path_cqm_solution, path_cqm_time = models.cqm_solver(path_cqm, "path_model", save = True)
+# else:
+path_cqm_solution, path_cqm_time = models.cqm_solver(path_cqm, "path_model")
+
 
 
 #### BQM Solver ####
 printSection("BQM Path Model")
 
 # Convert
-# [LEGACY] # path_bqm, path_inverter = dimod.cqm_to_bqm(path_cqm, lagrange_multiplier = proxymanager.LAGRANGE_MUL2)
-path_bqm, path_inverter = cqm_to_bqm(path_cqm, lagrange_multiplier = proxymanager.LAGRANGE_MUL2)
+# [LEGACY] # path_bqm, path_inverter = cqm_to_bqm(path_cqm, lagrange_multiplier = proxymanager.LAGRANGE_MUL2)
+# if proxymanager.PATH_CUSTOM_LAGRANGE:
+#     path_bqm, path_inverter = dimod.cqm_to_bqm(path_cqm, lagrange_multiplier = proxymanager.PATH_LAGRANGE_MUL)
+# else:
+path_bqm, path_inverter = dimod.cqm_to_bqm(path_cqm)
+
 # Solve
-path_bqm_solution = models.bqm_solver(proxytree, proxymanager, path_bqm, cqm_time = path_cqm_solution[1]
-        , problem_label = "bqm_path_model", time_mult = proxymanager.TIME_MULT2)
+# if proxymanager.VM_CUSTOM_TIME:  
+#     path_bqm_solution = models.bqm_solver(path_bqm, problem_label = "bqm_path_model", 
+#             cqm_time = path_cqm_time, time_mult = proxymanager.PATH_TIME_MULT)
+# else:
+path_bqm_solution = models.bqm_solver(path_bqm, problem_label = "bqm_path_model")
+
+
 # Check
-models.check_bqm_feasible(bqm_solution = path_bqm_solution, cqm_model = path_cqm, inverter = path_inverter)
+models.check_bqm_feasible(bqm_solution = path_bqm_solution, cqm_model = path_cqm, 
+            inverter = path_inverter)
 
 
 
