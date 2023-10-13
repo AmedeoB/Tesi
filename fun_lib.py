@@ -173,13 +173,12 @@ class Proxytree():
 class Proxymanager():
 
     '''
-    A class to manage all program constant for debug, time multipliers, 
+    A class to manage all program constant for  time multipliers, 
     savers, and lagrange multipliers.
 
     Args:
         - proxytree (Proxytree): the tree structure to compute lagrange 
         multipliers
-        - debug (bool, optional, default=False): get debug prints
         - save_cqm_dict (bool, optional, default=False): boolean 
         to save CQM results
         - load_cqm_dict (bool, optional, default=False): boolean 
@@ -194,11 +193,10 @@ class Proxymanager():
         compute lagrange multiplier for path BQM
     '''
 
-    def __init__(self, proxytree: Proxytree, debug = False, save_cqm_dict = False, 
+    def __init__(self, proxytree: Proxytree, save_cqm_dict = False, 
                 load_cqm_dict = False, time_mul_vm = 0, time_mul_path = 0, 
                 lag_mul_vm = 0, lag_mul_path = 0):
                 
-        self.DEBUG = debug            # Debug boolean
         self.SAVE_DICT = save_cqm_dict
         self.LOAD_DICT = load_cqm_dict
 
@@ -223,7 +221,7 @@ class Proxymanager():
         if lag_mul_vm:
             self.VM_CUSTOM_LAGRANGE = True 
         else:
-            self.VM_CUSTOM_LAGRANGE = True 
+            self.VM_CUSTOM_LAGRANGE = False 
         self.VM_LAGRANGE_MUL = int(proxytree.idle_powcons[-1] * lag_mul_vm)
 
         # Lagrange multiplier for CQM to BQM conversion for
@@ -231,5 +229,5 @@ class Proxymanager():
         if lag_mul_path:
             self.PATH_CUSTOM_LAGRANGE = True 
         else:
-            self.PATH_CUSTOM_LAGRANGE = True 
+            self.PATH_CUSTOM_LAGRANGE = False 
         self.PATH_LAGRANGE_MUL = int(proxytree.idle_powcons[0] * lag_mul_path)   # Lagrange multiplier for cqm -> bqm path problem conversion | calculated from root switch idle powcons

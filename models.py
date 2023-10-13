@@ -282,25 +282,31 @@ def path_model(proxytree: fn.Proxytree, path_cqm: dimod.ConstrainedQuadraticMode
 
 
     # Constraints
-    # (13) For each flow and server, the sum of exiting flow from the server to all adj switch is <= than vms part of that flow     
+    # (13) For each flow and server, the sum of exiting flow from the server to all adj switch is = than vms part of that flow
+    # This is the splitted version, the combined one should 
+    #   > remove the if condition 
+    #   > change to <= type constraint
+    #   > add the code line "- cqm_solution.get("vm" + str(proxytree.src_dst[f][0]) + "-s" + str(s-proxytree.SWITCHES))"
     for f in range(proxytree.FLOWS):
         for s in range(proxytree.SWITCHES, proxytree.SWITCHES + proxytree.SERVERS):           # Start from switches cause nodes are numerated in order -> all switches -> all servers
             if cqm_solution.get("vm" + str(proxytree.src_dst[f][0]) + "-s" + str(s-proxytree.SWITCHES)) == 0:
                 path_cqm.add_constraint( 
                     dimod.quicksum( 
-                        flow_path['f' + str(f) + '-n' + str(s) + '-n' + str(sw)] for sw in range(proxytree.SWITCHES) if proxytree.adjancy_list[s][sw] == 1) 
-                    - cqm_solution.get("vm" + str(proxytree.src_dst[f][0]) + "-s" + str(s-proxytree.SWITCHES)) 
-                    <= 0, label="C13-N"+str(f*proxytree.SERVERS+s))
+                        flow_path['f' + str(f) + '-n' + str(s) + '-n' + str(sw)] for sw in range(proxytree.SWITCHES) if proxytree.adjancy_list[s][sw] == 1)
+                    == 0, label="C13-N"+str(f*proxytree.SERVERS+s))
 
-    # # (14) For each flow and server, the sum of entering flow from the server to all adj switch is <= than vms part of that flow     
+    # (14) For each flow and server, the sum of entering flow from the server to all adj switch is = than vms part of that flow
+    # This is the splitted version, the combined one should 
+    #   > remove the if condition 
+    #   > change to <= type constraint
+    #   > add the code line "- cqm_solution.get("vm" + str(proxytree.src_dst[f][1]) + "-s" + str(s-proxytree.SWITCHES))"  
     for f in range(proxytree.FLOWS):
         for s in range(proxytree.SWITCHES, proxytree.SWITCHES + proxytree.SERVERS):
             if cqm_solution.get("vm" + str(proxytree.src_dst[f][1]) + "-s" + str(s-proxytree.SWITCHES)) == 0:
                 path_cqm.add_constraint( 
                     dimod.quicksum( 
                         flow_path['f' + str(f) + '-n' + str(sw) + '-n' + str(s)] for sw in range(proxytree.SWITCHES) if proxytree.adjancy_list[sw][s] == 1) 
-                    - cqm_solution.get("vm" + str(proxytree.src_dst[f][1]) + "-s" + str(s-proxytree.SWITCHES)) 
-                    <= 0, label="C14-N"+str(f*proxytree.SERVERS+s)) 
+                    == 0, label="C14-N"+str(f*proxytree.SERVERS+s)) 
 
     # (15) For each flow and server, force allocation of all flows     
     for f in range(proxytree.FLOWS):
