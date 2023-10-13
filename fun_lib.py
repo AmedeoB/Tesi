@@ -24,9 +24,7 @@ def get_nodes(l, dictionary):
     
     return tuple(map(int, nodes.split(', ')))
 
-
-
-def printSection(section_name: str):
+def print_section(section_name: str):
     '''
     A standard printing formatting for section separation. 
     Automatically converts text to uppercase.
@@ -90,7 +88,7 @@ class Proxytree():
         self.init_link_dict_adj_list()
 
         self.src_dst = [[0 for j in range(2)] for i in range(self.FLOWS)]
-        self.initi_src_dst()
+        self.init_src_dst()
 
 
     def init_links(self):
@@ -162,12 +160,38 @@ class Proxytree():
                 link_counter += 1
 
 
-    def initi_src_dst(self):
+    def init_src_dst(self):
         index_list = [i for i in range(self.VMS)]
         random.shuffle(index_list)
         for i in range(self.FLOWS):
             for j in range(2):
                 self.src_dst[i][j] = index_list[i*2 + j]
+
+
+    def print_tree(self):
+        print("SWITCH Indexes: ", *[k for k in range(self.SWITCHES)])
+        print("SERVER Indexes: ", *[s+self.SWITCHES for s in range(self.SERVERS)])
+        print("SERVER Capacity: ", *[s for s in self.server_capacity])
+        print("LINK Capacity: ", *[s for s in self.link_capacity])
+        print("IDLE Power Consumption: ", *[s for s in self.idle_powcons])
+        print("DYNAMIC Power Consumption: ", *[s for s in self.dyn_powcons])
+        print("VM's CPU Utilization: ", *[s for s in self.cpu_util])
+        print("Flow Path Data Rate: ", *[s for s in self.data_rate])
+        print("\n\n")
+
+        print("### Tree Structure ###")
+        for i in range(len(self.adjancy_list)):
+            print("\nNodo ", i, " collegato ai nodi:", end="\t")
+            for j in range(len(self.adjancy_list)):
+                if self.adjancy_list[i][j] == 1:
+                    print(j, " (link ", self.link_dict.get(str((i,j))) ,")", sep="", end="\t")
+        print("\n\n")
+
+        print("### VM Paths ###")
+        for path in self.src_dst:
+            print("Path ", self.src_dst.index(path), ": ", end="\t")
+            print( *[s for s in path], sep="  -  ")
+        print("\n")
 
 
 class Proxymanager():

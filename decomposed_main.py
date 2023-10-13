@@ -17,19 +17,12 @@ import dwave.inspector
 import dwave.preprocessing
 
 # CUSTOM
-from Converter.converter import cqm_to_bqm
-import fun_lib as fn
 import models
-from fun_lib import printSection
-
-# OTHERS
-import numpy as np
-import random
-import json
+from fun_lib import print_section, Proxytree, Proxymanager
 
 """--------------------------------------------------"""
 
-proxytree = fn.Proxytree(
+proxytree = Proxytree(
                 depth = 3, 
                 server_c = 10, 
                 link_c = 5, 
@@ -38,7 +31,7 @@ proxytree = fn.Proxytree(
                 datar_avg = 4
             )
 
-proxymanager = fn.Proxymanager(
+proxymanager = Proxymanager(
                 proxytree, 
                 # save_cqm_dict = False, 
                 # load_cqm_dict = False, 
@@ -48,32 +41,8 @@ proxymanager = fn.Proxymanager(
                 # lag_mul_path = 10
             )
 
-
-# TREE STRUCTURE
-print("SWITCH Indexes: ", *[k for k in range(proxytree.SWITCHES)])
-print("SERVER Indexes: ", *[s+proxytree.SWITCHES for s in range(proxytree.SERVERS)])
-print("SERVER Capacity: ", *[s for s in proxytree.server_capacity])
-print("LINK Capacity: ", *[s for s in proxytree.link_capacity])
-print("IDLE Power Consumption: ", *[s for s in proxytree.idle_powcons])
-print("DYNAMIC Power Consumption: ", *[s for s in proxytree.dyn_powcons])
-print("VM's CPU Utilization: ", *[s for s in proxytree.cpu_util])
-print("Flow Path Data Rate: ", *[s for s in proxytree.data_rate])
-print("\n\n")
-
-print("### Tree Structure ###")
-for i in range(len(proxytree.adjancy_list)):
-    print("\nNodo ", i, " collegato ai nodi:", end="\t")
-    for j in range(len(proxytree.adjancy_list)):
-        if proxytree.adjancy_list[i][j] == 1:
-            print(j, " (link ", proxytree.link_dict.get(str((i,j))) ,")", sep="", end="\t")
-print("\n\n")
-
-print("### VM Paths ###")
-for path in proxytree.src_dst:
-    print("Path ", proxytree.src_dst.index(path), ": ", end="\t")
-    print( *[s for s in path], sep="  -  ")
-print("\n")
-
+# Print Tree Structure
+proxytree.print_tree()
 
 
 
@@ -87,7 +56,7 @@ models.vm_model(proxytree, vm_cqm)
 
 
 #### CQM Solver ####
-printSection("CQM VM Model")
+print_section("CQM VM Model")
 
 # Solve
 if DEBUG:   print("VM Save dictionary: ", proxymanager.SAVE_DICT)
@@ -99,7 +68,7 @@ else:
 
 
 #### BQM Solver ####
-printSection("BQM VM Model")
+print_section("BQM VM Model")
 
 # Convert
 if DEBUG:   print("VM Custom Lagrange: ", proxymanager.VM_CUSTOM_LAGRANGE)
@@ -136,7 +105,7 @@ else:
 
 
 #### CQM Solver ####
-printSection("CQM Path Model")
+print_section("CQM Path Model")
 
 # Solve
 if DEBUG:   print("PATH Save Dictionary: ", proxymanager.SAVE_DICT)
@@ -148,10 +117,9 @@ else:
 
 
 #### BQM Solver ####
-printSection("BQM Path Model")
+print_section("BQM Path Model")
 
 # Convert
-# [LEGACY] # path_bqm, path_inverter = cqm_to_bqm(path_cqm, lagrange_multiplier = proxymanager.LAGRANGE_MUL2)
 if DEBUG:   print("PATH Custom Lagrange: ", proxymanager.PATH_CUSTOM_LAGRANGE)
 if proxymanager.PATH_CUSTOM_LAGRANGE:
     path_bqm, path_inverter = dimod.cqm_to_bqm(path_cqm, lagrange_multiplier = proxymanager.PATH_LAGRANGE_MUL)
