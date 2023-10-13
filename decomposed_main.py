@@ -2,19 +2,11 @@ DEBUG = True
 
 """
 TODO
-- trovare un modo per rendere opzionali da input i seguenti parametri:
-    > salvataggio del dizionario
-    > load del dizionario
-    > moltiplicatori di lagrange
-    > moltiplicatori di tempo
 """
 
 """------------------- IMPORTS ---------------------"""
 # D_WAVE
 import dimod
-import dwave.system
-import dwave.inspector
-import dwave.preprocessing
 
 # CUSTOM
 import models
@@ -46,7 +38,10 @@ proxytree.print_tree()
 
 
 
-############### VM MODEL ########################################
+
+# ###################################################################
+# |                       VM MODEL                                  |
+# ###################################################################
 
 # Create problem
 vm_cqm = dimod.ConstrainedQuadraticModel()
@@ -54,8 +49,9 @@ vm_cqm = dimod.ConstrainedQuadraticModel()
 models.vm_model(proxytree, vm_cqm)
 
 
-
-#### CQM Solver ####
+####################
+#    CQM Solver    #
+####################
 print_section("CQM VM Model")
 
 # Solve
@@ -67,7 +63,9 @@ else:
 
 
 
-#### BQM Solver ####
+####################
+#    BQM Solver    #
+####################
 print_section("BQM VM Model")
 
 # Convert
@@ -91,7 +89,10 @@ models.check_bqm_feasible(bqm_solution = vm_bqm_solution, cqm_model = vm_cqm,
 
 
 
-############### PATH MODEL ########################################
+
+# ###################################################################
+# |                       PATH MODEL                                |
+# ###################################################################
 
 # Create problem
 path_cqm = dimod.ConstrainedQuadraticModel()
@@ -104,7 +105,9 @@ else:
 
 
 
-#### CQM Solver ####
+####################
+#    CQM Solver    #
+####################
 print_section("CQM Path Model")
 
 # Solve
@@ -116,7 +119,9 @@ else:
 
 
 
-#### BQM Solver ####
+####################
+#    BQM Solver    #
+####################
 print_section("BQM Path Model")
 
 # Convert
@@ -143,31 +148,3 @@ models.check_bqm_feasible(bqm_solution = path_bqm_solution, cqm_model = path_cqm
 
 
 
-# print("\n\n\n")
-# print("####################### BQM Full Quantum Path Model ###########################")
-# print("\n")
-
-# # Create Sampler
-# fq_bqm_sampler = dwave.system.EmbeddingComposite(dwave.system.DWaveSampler())
-
-# # Sample Results
-# fq_bqm_samples = fq_bqm_sampler.sample(path_bqm, num_reads=100)
-
-# # Exec Time
-# fq_bqm_time = fq_bqm_samples.info.get('run_time')
-# print("BQM TIME: ", fq_bqm_time, " micros")
-
-# # Extract feasible solution
-# # bqm_feasibles = bqm_samples.filter(lambda sample: sample.is_feasible)
-
-# # Extract best solution
-# # bqm_best = bqm_feasibles.first
-# fq_bqm_best = fq_bqm_samples.first
-
-# # Energy
-# print("Full Quantum BQM ENERGY: ", str(fq_bqm_best[1]))
-
-# # Extract variables
-# for i in fq_bqm_best[0]:
-#     if fq_bqm_best[0].get(i) != 0.0:
-#         print(i, fq_bqm_best[0].get(i),sep = ": ",end= " | ")

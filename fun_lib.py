@@ -1,59 +1,24 @@
-import numpy as np
+# import numpy as np
 import random
-
-def get_nodes(l, dictionary):
-    '''
-    A function that returns a tuple (n1,n2) containing
-    the nodes linked by link l and saved in a dictionary
-    with structure {(n1,n2) = l}
-
-    Args:
-        - l (int): the link index
-        - dictionary (dict): the dictionary containing
-        the couple
-    
-    Returns:
-        - Tuple(int, int): nodes indexes
-    '''
-    
-    values = list(dictionary.values())
-    index = values.index(l)
-    nodes = list(dictionary.keys())[index]
-    nodes = nodes.replace("(", "")
-    nodes = nodes.replace(")", "")
-    
-    return tuple(map(int, nodes.split(', ')))
-
-def print_section(section_name: str):
-    '''
-    A standard printing formatting for section separation. 
-    Automatically converts text to uppercase.
-
-    Args:
-        - section_name (str): the name of the section
-    '''
-    
-    print("\n\n\n")
-    print("####################### " + section_name + " ###########################")
-    print("\n")
-
 
 
 class Proxytree():
     
     '''
-    A class to manage all the constants of the tree and its structures.
-    Takes in several values:
-    - depth: the tree depth
-    - server_c: the servers capacity
-    - link_c: the links capacity * 
-    - idle_pc: idle powcons of nodes *
-    - dyn_pc: dynamic powcons of nodes *
-    - datar_avg: the average datarate of flows
-    * multiplied by tree levels, changes every level
+    A class to define the tree and manage all the constants and its structure.
+    
+    Args:
+        - depth (int): the tree depth
+        - server_c (int): the servers capacity
+        - link_c (int): the links capacity * 
+        - idle_pc (int): idle powcons of nodes *
+        - dyn_pc (int): dynamic powcons of nodes *
+        - datar_avg (int): the average datarate of flows
+
+    * will be multiplied by tree levels, changes every level
     '''
 
-    def __init__(self, depth, server_c, link_c, idle_pc, dyn_pc, datar_avg):
+    def __init__(self, depth, server_c, link_c, idle_pc, dyn_pc, datar_avg):        
         self.DEPTH = depth
 
         self.SERVER_C = server_c               # Server capacity
@@ -72,32 +37,40 @@ class Proxytree():
         self.FLOWS = self.VMS//2 if self.VMS%2==0 else self.VMS//2+1                # Flow number
         self.NODES = self.SERVERS + self.SWITCHES                              # Total Nodes
         self.LINKS = 0
-        self.init_links()
+        self.__init_links()
 
         self.server_capacity = [self.SERVER_C for i in range(self.SERVERS)]           # Capacity of each server
         self.link_capacity = []
         self.idle_powcons = []           # Idle power consumption of each node
         self.dyn_powcons = []            # Dynamic power of each node
-        self.init_link_capacity()
-        self.init_idle_dyn_powcons()
+        self.__init_link_capacity()
+        self.__init_idle_dyn_powcons()
         self.cpu_util = [random.randint(self.SERVER_C//2 , self.SERVER_C-1) for _ in range(self.VMS)] # CPU utilization of each VM
         self.data_rate = [random.randint(self.DATAR_AVG-1 , self.DATAR_AVG+1) for _ in range(self.FLOWS)]      # Data rate of flow f on link l 
         
         self.link_dict = {}
         self.adjancy_list = [[0 for j in range(self.NODES)] for i in range(self.NODES)] 
-        self.init_link_dict_adj_list()
+        self.__init_link_dict_adj_list()
 
         self.src_dst = [[0 for j in range(2)] for i in range(self.FLOWS)]
-        self.init_src_dst()
+        self.__init_src_dst()
 
 
-    def init_links(self):
+    def __init_links(self):
+        '''
+        Computes links number.
+        '''
+
         for i in range(self.DEPTH-1):
             self.LINKS += 2**i * 2**(i+1)
         self.LINKS += 2*(2**(self.DEPTH-1))
     
 
-    def init_link_capacity(self):
+    def __init_link_capacity(self):
+        '''
+        Initialize link_capacity list
+        '''
+
         start_link_c = self.LINK_C
         # Switch links
         for lvl in range(self.DEPTH-1):
@@ -109,7 +82,11 @@ class Proxytree():
             self.link_capacity.append(start_link_c)
         
 
-    def init_idle_dyn_powcons(self):
+    def __init_idle_dyn_powcons(self):
+        '''
+        Initialize nodes' idle and dynamic powcons lists
+        '''
+
         start_idle_pc = self.IDLE_PC
         start_dyn_pc = self.DYN_PC
         for lvl in range(self.DEPTH+1):
@@ -120,7 +97,13 @@ class Proxytree():
             start_dyn_pc -= self.DYN_PC_DECREASE
 
 
-    def init_link_dict_adj_list(self):
+    def __init_link_dict_adj_list(self):
+        '''
+        Computes the adjancy_list matrix and fills
+        the link_dict dictionary with the nodes couples
+        and associated link number.
+        '''
+        
         link_counter = 0
         # Create all sw-sw links
         for lvl in range(self.DEPTH-1):
@@ -160,7 +143,11 @@ class Proxytree():
                 link_counter += 1
 
 
-    def init_src_dst(self):
+    def __init_src_dst(self):
+        '''
+        Initialize the source-destination matrix.
+        '''
+
         index_list = [i for i in range(self.VMS)]
         random.shuffle(index_list)
         for i in range(self.FLOWS):
@@ -169,6 +156,10 @@ class Proxytree():
 
 
     def print_tree(self):
+        '''
+        Prints the whole tree structure.
+        '''
+
         print("SWITCH Indexes: ", *[k for k in range(self.SWITCHES)])
         print("SERVER Indexes: ", *[s+self.SWITCHES for s in range(self.SERVERS)])
         print("SERVER Capacity: ", *[s for s in self.server_capacity])
@@ -255,3 +246,45 @@ class Proxymanager():
         else:
             self.PATH_CUSTOM_LAGRANGE = False 
         self.PATH_LAGRANGE_MUL = int(proxytree.idle_powcons[0] * lag_mul_path)   # Lagrange multiplier for cqm -> bqm path problem conversion | calculated from root switch idle powcons
+
+
+
+def get_nodes(l, dictionary):
+    '''
+    A function that returns a tuple (n1,n2) containing
+    the nodes linked by link l and saved in a dictionary
+    with structure {(n1,n2) = l}
+
+    Args:
+        - l (int): the link index
+        - dictionary (dict): the dictionary containing
+        the couple
+    
+    Returns:
+        - Tuple(int, int): nodes indexes
+    '''
+    
+    values = list(dictionary.values())
+    index = values.index(l)
+    nodes = list(dictionary.keys())[index]
+    nodes = nodes.replace("(", "")
+    nodes = nodes.replace(")", "")
+    
+    return tuple(map(int, nodes.split(', ')))
+
+
+
+def print_section(section_name: str):
+    '''
+    A standard printing formatting for section separation. 
+    Automatically converts text to uppercase.
+
+    Args:
+        - section_name (str): the name of the section
+    '''
+    
+    print("\n\n\n")
+    print("####################### " + section_name + " ###########################")
+    print("\n")
+
+
