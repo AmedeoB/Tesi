@@ -27,6 +27,7 @@ ________________________________________________________________________________
 # D_WAVE
 import dimod
 import dwave.system
+import hybrid
 # import dwave.inspector
 # import dwave.preprocessing
 
@@ -73,8 +74,11 @@ def cqm_solver(cqm_problem: dimod.ConstrainedQuadraticModel, problem_label: str,
     the results.
 
     Args:
-        - cqm_problem: the CQM to solve
-            type: ConstrainedQuadraticModel
+        - cqm_problem (ConstrainedQuadraticModel): the BQM to 
+        solve
+        - problem_label (str): the problem label
+        - save (bool, optional, default=False): save option
+        for the dictionary
 
     Returns:
         - Tuple: containing the solution's dictionary
@@ -125,17 +129,22 @@ def cqm_solver(cqm_problem: dimod.ConstrainedQuadraticModel, problem_label: str,
 def bqm_solver(bqm_problem: dimod.BinaryQuadraticModel, problem_label: str, 
             cqm_time = 0, time_mult = 1):
     '''
-    Solves the BQM problem using a BQM Hybrid Solver and returns
+    Solves the BQM problem using decomposition and returns
     the result.
 
     Args:
-        - cqm_problem: the CQM to solve
-            type: ConstrainedQuadraticModel
+        - bqm_problem (BinaryQuadraticModel): the BQM to 
+        solve
+        - problem_label (str): the problem label
+        - cqm_time (int, optional, default=0): cqm time
+        to compute custom resolve time
+        - time_mult (int, optional, default=1): custom
+        time multiplier for resolve time
 
     Returns:
         - best_solution: the solution's dictionary
             type: dict()
-    '''
+    '''   
     # Roof Duality
     # rf_energy, rf_variables = dwave.preprocessing.roof_duality(vm_bqm)
     # print("Roof Duality variables: ", rf_variables)
@@ -173,6 +182,72 @@ def bqm_solver(bqm_problem: dimod.BinaryQuadraticModel, problem_label: str,
     
     return best_solution
 
+
+def decomposed_solver(bqm_problem: dimod.BinaryQuadraticModel, problem_label: str, 
+            cqm_time = 0, time_mult = 1):
+    '''
+    Solves the BQM problem using decomposition and returns
+    the result.
+
+    Args:
+        - bqm_problem (BinaryQuadraticModel): the BQM to 
+        solve
+        - problem_label (str): the problem label
+        - cqm_time (int, optional, default=0): cqm time
+        to compute custom resolve time
+        - time_mult (int, optional, default=1): custom
+        time multiplier for resolve time
+
+    Returns:
+        - best_solution: the solution's dictionary
+            type: dict()
+    '''
+    # Define decomposer
+    decomposer = hybrid.EnergyImpactDecomposer(size = 50) 
+    # Define subsampler
+    subsampler = hybrid.QPUSubproblemAutoEmbeddingSampler()
+    # Define composer
+    composer = hybrid.SplatComposer()
+    
+    # Define other parallel solvers
+    # TODO
+    # Define merge ruling
+    # TODO    
+
+    # Define branch
+    branch = (decomposer | subsampler | composer)
+
+    # Define workflow
+    workflow = hybrid.LoopUntilNoImprovement(branch, convergence=3, max_iter= 20)
+
+    # Solve
+    init_state = hybrid.State.from_problem(bqm_problem)
+    solution = workflow.run(init_state).result()
+
+    # Exec Time
+    # exec_time = solution.samples.info.get('run_time')
+    # print("BQM TIME: ", exec_time, " micros")
+
+    # Extract best solution & energy
+    best_solution = solution.samples.first[0]
+    energy = solution.samples.first[1]
+
+    # Energy
+    print("Decomposer BQM ENERGY: ", energy)
+    # print("Roof Duality Energy: ", rf_energy)
+
+    # Extract variables
+    print("\n## Decomposer BQM Variables ##")
+    last_char = ""
+    for var, value in best_solution.items():
+        if last_char != var[0]:         # Var separator
+            print(end="\n")
+        if value != 0.0:                # Nonzero var printer
+            print(var, value, sep = ": ",end= " | ")
+        last_char = var[0]          # Update last char to separate vars
+    
+    return best_solution
+    
 
 
 def vm_model(proxytree: fn.Proxytree, vm_cqm: dimod.ConstrainedQuadraticModel):
@@ -342,26 +417,50 @@ def path_model(proxytree: fn.Proxytree, path_cqm: dimod.ConstrainedQuadraticMode
     # (18)(19) For each link, the link is ON only if both nodes are ON       
     for l in range(proxytree.LINKS):
         n1,n2 = fn.get_nodes(l, proxytree.link_dict)
-        if n1 < proxytree.SWITCHES:
+
+        path_cqm.add_constraint(
+            on["on" + str(n1) + "-" + str(n2)] 
+            - switch_status[n1] 
+            <= 0, label="C18-N"+str(l))
+
+        if n2 < proxytree.SWITCHES:     # If the second node is a switch
             path_cqm.add_constraint(
                 on["on" + str(n1) + "-" + str(n2)] 
-                - switch_status[n1] 
-                <= 0, label="C18-N"+str(l))
+                - switch_status[n2] 
+                <= 0, label="C19-N"+str(l))
+        else:                           # If it's a server
+            path_cqm.add_constraint(
+                on["on" + str(n1) + "-" + str(n2)] 
+                - cqm_solution.get("s"+str(n2-proxytree.SWITCHES)) 
+                == 0, label="C19-N"+str(l))
+
+
+        # -------------------------------------------------
+        # Based on structure formation, n1 will always be a switch
+        # if structure changes, this will be the new conditions
+        # structure. On top of that, this is the decomposed version,
+        # the full one should modify the == to <= in the else.
+        # -------------------------------------------------
+        # if n1 < proxytree.SWITCHES:
+        #     path_cqm.add_constraint(
+        #         on["on" + str(n1) + "-" + str(n2)] 
+        #         - switch_status[n1] 
+        #         <= 0, label="C18-N"+str(l))
         # else:
         #     path_cqm.add_constraint(
         #         on["on" + str(n1) + "-" + str(n2)] 
         #         - cqm_best[0].get("s"+str(n1-SWITCHES)) 
         #         <= 0, label="C18-N"+str(l))
-        if n2 < proxytree.SWITCHES:
-            path_cqm.add_constraint(
-                on["on" + str(n1) + "-" + str(n2)] 
-                - switch_status[n2] 
-                <= 0, label="C19-N"+str(l))
+        # if n2 < proxytree.SWITCHES:
+        #     path_cqm.add_constraint(
+        #         on["on" + str(n1) + "-" + str(n2)] 
+        #         - switch_status[n2] 
+        #         <= 0, label="C19-N"+str(l))
         # else:
         #     path_cqm.add_constraint(
         #         on["on" + str(n1) + "-" + str(n2)] 
         #         - cqm_best[0].get("s"+str(n2-SWITCHES)) 
-        #         <= 0, label="C19-N"+str(l))
+        #         == 0, label="C19-N"+str(l))
 
 
 
