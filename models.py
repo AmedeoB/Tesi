@@ -202,39 +202,38 @@ def decomposed_solver(bqm_problem: dimod.BinaryQuadraticModel, problem_label: st
         - best_solution: the solution's dictionary
             type: dict()
     '''
-    # Define decomposer
-    decomposer = hybrid.EnergyImpactDecomposer(size = 50) 
-    # Define subsampler
-    subsampler = hybrid.QPUSubproblemAutoEmbeddingSampler()
-    # Define composer
-    composer = hybrid.SplatComposer()
+    # # Define decomposer
+    # decomposer = hybrid.EnergyImpactDecomposer(size = 50) 
+    # # Define subsampler
+    # subsampler = hybrid.QPUSubproblemAutoEmbeddingSampler()
+    # # Define composer
+    # composer = hybrid.SplatComposer()
     
     # Define other parallel solvers
     # TODO
     # Define merge ruling
     # TODO    
 
-    # Define branch
-    branch = (decomposer | subsampler | composer)
+    # # Define branch
+    # branch = (decomposer | subsampler | composer)
 
-    # Define workflow
-    workflow = hybrid.LoopUntilNoImprovement(branch, convergence=3, max_iter= 20)
+    # # Define workflow
+    # workflow = hybrid.LoopUntilNoImprovement(branch, convergence=3, max_iter= 20)
 
-    # Solve
-    init_state = hybrid.State.from_problem(bqm_problem)
-    solution = workflow.run(init_state).result()
+    # # Solve
+    # init_state = hybrid.State.from_problem(bqm_problem)
+    # solution = workflow.run(init_state).result()
+    from hybrid.reference.kerberos import KerberosSampler
+    solution = KerberosSampler().sample(bqm_problem, max_iter=100, convergence=5)
 
-    # Exec Time
-    # exec_time = solution.samples.info.get('run_time')
-    # print("BQM TIME: ", exec_time, " micros")
-
-    # Extract best solution & energy
-    best_solution = solution.samples.first[0]
-    energy = solution.samples.first[1]
+    # # Extract best solution & energy
+    # best_solution = solution.samples.first[0]
+    # energy = solution.samples.first[1]
+    best_solution = solution.first.sample
+    energy = solution.first.energy
 
     # Energy
     print("Decomposer BQM ENERGY: ", energy)
-    # print("Roof Duality Energy: ", rf_energy)
 
     # Extract variables
     print("\n## Decomposer BQM Variables ##")
@@ -246,6 +245,10 @@ def decomposed_solver(bqm_problem: dimod.BinaryQuadraticModel, problem_label: st
             print(var, value, sep = ": ",end= " | ")
         last_char = var[0]          # Update last char to separate vars
     
+    # Extract infos
+    print("\n\n## Decomposer BQM Extra Info ##")
+    print(solution.info)
+
     return best_solution
     
 

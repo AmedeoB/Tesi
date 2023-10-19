@@ -2,6 +2,8 @@ DEBUG = False
 
 """
 TODO
+- provare combinazioni diverse di workflow di decomposizione
+- togliere le opzioni di kerberos
 """
 
 """------------------- IMPORTS ---------------------"""
@@ -20,7 +22,8 @@ proxytree = Proxytree(
                 link_c = 5, 
                 idle_pc = 10, 
                 dyn_pc = 2, 
-                datar_avg = 4
+                datar_avg = 4,
+                # random = True
             )
 
 proxymanager = Proxymanager(
@@ -35,7 +38,6 @@ proxymanager = Proxymanager(
 
 # Print Tree Structure
 proxytree.print_tree()
-
 
 
 
@@ -129,20 +131,20 @@ else:
 ####################
 #    BQM Solver    #
 ####################
-# print_section("BQM Path Model")
+print_section("BQM Path Model")
 
-# # Solve
-# if DEBUG:   print("PATH Custom Time: ", proxymanager.VM_CUSTOM_TIME)
-# if proxymanager.VM_CUSTOM_TIME:  
-#     path_bqm_solution = models.bqm_solver(path_bqm, problem_label = "bqm_path_model", 
-#             cqm_time = path_cqm_time, time_mult = proxymanager.PATH_TIME_MULT)
-# else:
-#     path_bqm_solution = models.bqm_solver(path_bqm, problem_label = "bqm_path_model")
+# Solve
+if DEBUG:   print("PATH Custom Time: ", proxymanager.VM_CUSTOM_TIME)
+if proxymanager.VM_CUSTOM_TIME:  
+    path_bqm_solution = models.bqm_solver(path_bqm, problem_label = "bqm_path_model", 
+            cqm_time = path_cqm_time, time_mult = proxymanager.PATH_TIME_MULT)
+else:
+    path_bqm_solution = models.bqm_solver(path_bqm, problem_label = "bqm_path_model")
 
 
-# # Check
-# models.check_bqm_feasible(bqm_solution = path_bqm_solution, cqm_model = path_cqm, 
-#             inverter = path_inverter)
+# Check
+models.check_bqm_feasible(bqm_solution = path_bqm_solution, cqm_model = path_cqm, 
+            inverter = path_inverter)
 
 
 
