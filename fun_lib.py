@@ -18,7 +18,7 @@ class Proxytree():
     * will be multiplied by tree levels, changes every level
     '''
 
-    def __init__(self, depth, server_c, link_c, idle_pc, dyn_pc, datar_avg, random = False):        
+    def __init__(self, depth, server_c, link_c, idle_pc, dyn_pc, datar_avg, random_tree = False):        
         self.DEPTH = depth
 
         self.SERVER_C = server_c               # Server capacity
@@ -45,7 +45,7 @@ class Proxytree():
         self.dyn_powcons = []            # Dynamic power of each node
         self.__init_link_capacity()
         self.__init_idle_dyn_powcons()
-        if random:
+        if random_tree:
             self.cpu_util = [random.randint(self.SERVER_C//2 +1, self.SERVER_C-1) for _ in range(self.VMS)] # CPU utilization of each VM
             self.data_rate = [random.randint(self.DATAR_AVG-1 , self.DATAR_AVG+1) for _ in range(self.FLOWS)]      # Data rate of flow f on link l
         else:
@@ -57,7 +57,7 @@ class Proxytree():
         self.__init_link_dict_adj_list()
 
         self.src_dst = [[0 for j in range(2)] for i in range(self.FLOWS)]
-        self.__init_src_dst(random)
+        self.__init_src_dst(random_tree)
 
 
     def __init_links(self):
@@ -147,13 +147,13 @@ class Proxytree():
                 link_counter += 1
 
 
-    def __init_src_dst(self, random):
+    def __init_src_dst(self, random_tree):
         '''
         Initialize the source-destination matrix.
         '''
 
         index_list = [i for i in range(self.VMS)]
-        if random:  random.shuffle(index_list)
+        if random_tree:  random.shuffle(index_list)
         for i in range(self.FLOWS):
             for j in range(2):
                 self.src_dst[i][j] = index_list[i*2 + j]

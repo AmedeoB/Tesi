@@ -23,7 +23,7 @@ proxytree = Proxytree(
                 idle_pc = 10, 
                 dyn_pc = 2, 
                 datar_avg = 4,
-                # random = True
+                # random_tree = True
             )
 
 proxymanager = Proxymanager(
@@ -38,7 +38,7 @@ proxymanager = Proxymanager(
 
 # Print Tree Structure
 proxytree.print_tree()
-
+exit()
 
 
 # ###################################################################
