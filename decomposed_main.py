@@ -38,7 +38,6 @@ proxymanager = Proxymanager(
 
 # Print Tree Structure
 proxytree.print_tree()
-exit()
 
 
 # ###################################################################

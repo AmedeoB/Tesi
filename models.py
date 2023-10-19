@@ -224,7 +224,9 @@ def decomposed_solver(bqm_problem: dimod.BinaryQuadraticModel, problem_label: st
     # init_state = hybrid.State.from_problem(bqm_problem)
     # solution = workflow.run(init_state).result()
     from hybrid.reference.kerberos import KerberosSampler
-    solution = KerberosSampler().sample(bqm_problem, max_iter=100, convergence=5)
+    solution = KerberosSampler().sample(bqm_problem, 
+                    dimod.SampleSet.from_samples_bqm(hybrid.min_sample(bqm_problem), bqm_problem), 
+                    max_iter=300, convergence=10)
 
     # # Extract best solution & energy
     # best_solution = solution.samples.first[0]
