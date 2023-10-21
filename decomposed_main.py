@@ -28,8 +28,8 @@ proxytree = Proxytree(
 
 proxymanager = Proxymanager(
                 proxytree, 
-                # save_cqm_dict = False, 
-                # load_cqm_dict = False, 
+                # save_cqm_dict = True, 
+                load_cqm_dict = True, 
                 # time_mul_vm = 1,
                 # time_mul_path = 1,
                 # lag_mul_vm = 10, 
@@ -53,21 +53,21 @@ models.vm_model(proxytree, vm_cqm)
 ####################
 #    CQM Solver    #
 ####################
-print_section("CQM VM Model")
+# print_section("CQM VM Model")
 
-# Solve
-if DEBUG:   print("VM Save dictionary: ", proxymanager.SAVE_DICT)
-if proxymanager.SAVE_DICT:
-    vm_cqm_solution, vm_cqm_time = models.cqm_solver(vm_cqm, "vm_model", save = True)
-else:
-    vm_cqm_solution, vm_cqm_time = models.cqm_solver(vm_cqm, "vm_model")
+# # Solve
+# if DEBUG:   print("VM Save dictionary: ", proxymanager.SAVE_DICT)
+# if proxymanager.SAVE_DICT:
+#     vm_cqm_solution, vm_cqm_time = models.cqm_solver(vm_cqm, "vm_model", save = True)
+# else:
+#     vm_cqm_solution, vm_cqm_time = models.cqm_solver(vm_cqm, "vm_model")
 
-# Convert to BQM
-if DEBUG:   print("VM Custom Lagrange: ", proxymanager.VM_CUSTOM_LAGRANGE)
-if proxymanager.VM_CUSTOM_LAGRANGE:
-    vm_bqm, vm_inverter = dimod.cqm_to_bqm(vm_cqm, lagrange_multiplier = proxymanager.VM_LAGRANGE_MUL)
-else:
-    vm_bqm, vm_inverter = dimod.cqm_to_bqm(vm_cqm)
+# # Convert to BQM
+# if DEBUG:   print("VM Custom Lagrange: ", proxymanager.VM_CUSTOM_LAGRANGE)
+# if proxymanager.VM_CUSTOM_LAGRANGE:
+#     vm_bqm, vm_inverter = dimod.cqm_to_bqm(vm_cqm, lagrange_multiplier = proxymanager.VM_LAGRANGE_MUL)
+# else:
+#     vm_bqm, vm_inverter = dimod.cqm_to_bqm(vm_cqm)
 
 
 
@@ -109,14 +109,14 @@ else:
 ####################
 #    CQM Solver    #
 ####################
-print_section("CQM Path Model")
+# print_section("CQM Path Model")
 
-# Solve
-if DEBUG:   print("PATH Save Dictionary: ", proxymanager.SAVE_DICT)
-if proxymanager.SAVE_DICT:
-    path_cqm_solution, path_cqm_time = models.cqm_solver(path_cqm, "path_model", save = True)
-else:
-    path_cqm_solution, path_cqm_time = models.cqm_solver(path_cqm, "path_model")
+# # Solve
+# if DEBUG:   print("PATH Save Dictionary: ", proxymanager.SAVE_DICT)
+# if proxymanager.SAVE_DICT:
+#     path_cqm_solution, path_cqm_time = models.cqm_solver(path_cqm, "path_model", save = True)
+# else:
+#     path_cqm_solution, path_cqm_time = models.cqm_solver(path_cqm, "path_model")
 
 # Convert to BQM
 if DEBUG:   print("PATH Custom Lagrange: ", proxymanager.PATH_CUSTOM_LAGRANGE)

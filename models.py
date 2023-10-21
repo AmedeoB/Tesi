@@ -204,8 +204,12 @@ def decomposed_solver(bqm_problem: dimod.BinaryQuadraticModel, problem_label: st
     # Define decomposer
     decomposer = hybrid.EnergyImpactDecomposer(
                         size= 50, 
-                        rolling_history= 0.50,
-                        traversal='bfs') 
+                        rolling_history= 0.8,
+                        # traversal='pfs'
+                        )
+    # decomposer = hybrid.RandomSubproblemDecomposer(
+    #                         size= 50,
+    #             ) 
     # Define subsampler
     subsampler = hybrid.QPUSubproblemAutoEmbeddingSampler()
     # Define composer
@@ -218,20 +222,22 @@ def decomposed_solver(bqm_problem: dimod.BinaryQuadraticModel, problem_label: st
     merger = hybrid.ArgMin()    
 
     # Define branch
-    branches = hybrid.RacingBranches(
-                    classic_subsampler, 
-                    decomposer | subsampler | composer
-                    ) | merger
+    branches = (decomposer | subsampler | composer)
+    # branches = hybrid.RacingBranches(
+    #                 classic_subsampler, 
+    #                 decomposer | subsampler | composer
+    #                 ) | merger
 
     # Define workflow
     workflow = hybrid.LoopUntilNoImprovement(
                         branches, 
-                        convergence=3, 
-                        # max_iter= 20,
+                        convergence= 10, 
+                        max_iter= 100,
                         )
 
     # Solve
-    init_state = hybrid.State.from_problem(bqm_problem)
+    # init_state = hybrid.State.from_problem(bqm_problem)
+    init_state = hybrid.State.from_sample(hybrid.min_sample(bqm_problem), bqm_problem)
     solution = workflow.run(init_state).result()
     # [Kerberos]
     # from hybrid.reference.kerberos import KerberosSampler
@@ -262,6 +268,8 @@ def decomposed_solver(bqm_problem: dimod.BinaryQuadraticModel, problem_label: st
     # Extract infos
     print("\n\n## Decomposer BQM Extra Info ##")
     print(solution.info)
+    # print(solution)
+    
 
     return best_solution
     

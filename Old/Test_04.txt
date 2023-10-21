@@ -1,0 +1,26 @@
+Sono stati testati vari setup
+
+SETUP 1
+    - branch composto
+        - tabusampler
+        - decomposer energetico | qpu | composer
+con una convergenza di 10 e massimo 100 iterazioni, non ha dato risultati,
+spesso lasciando ogni variabile a 0. Questo è stato con ognuna delle 3 tecniche
+di decomposizione (energia, bfs, pfs)
+
+SETUP 2
+    - decomposer random | qpu | composer
+con una convergenza di 10 e massimo 100 iterazioni, ha dato un risultato vago, con un valore
+energetico altissimo, ma almeno ha acceso variabili
+
+SETUP 3
+    - decomposer energetico
+    - stato iniziale col minimo valore per le var del bqm
+ancora un risultato con valore energetico troppo alto
+
+
+
+OSSERVAZIONI
+ - è possibile che il problema non sia convertito adeguamente, e quindi poi non riesce a procedere
+ se combinato con altri branch tramite il merger argmin (ma è l'unico merger) ???
+ 
