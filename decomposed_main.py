@@ -74,19 +74,19 @@ else:
 ####################
 #    BQM Solver    #
 ####################
-print_section("BQM VM Model")
+# print_section("BQM VM Model")
 
-# Solve
-if DEBUG:   print("VM Custom Time: ", proxymanager.VM_CUSTOM_TIME)
-if proxymanager.VM_CUSTOM_TIME:  
-    vm_bqm_solution = models.bqm_solver(vm_bqm, problem_label = "bqm_vm_model", 
-                cqm_time = vm_cqm_time, time_mult = proxymanager.VM_TIME_MULT)
-else:
-    vm_bqm_solution = models.bqm_solver(vm_bqm, problem_label = "bqm_vm_model")
+# # Solve
+# if DEBUG:   print("VM Custom Time: ", proxymanager.VM_CUSTOM_TIME)
+# if proxymanager.VM_CUSTOM_TIME:  
+#     vm_bqm_solution = models.bqm_solver(vm_bqm, problem_label = "bqm_vm_model", 
+#                 cqm_time = vm_cqm_time, time_mult = proxymanager.VM_TIME_MULT)
+# else:
+#     vm_bqm_solution = models.bqm_solver(vm_bqm, problem_label = "bqm_vm_model")
 
-# Check
-models.check_bqm_feasible(bqm_solution = vm_bqm_solution, cqm_model = vm_cqm, 
-            inverter = vm_inverter)
+# # Check
+# models.check_bqm_feasible(bqm_solution = vm_bqm_solution, cqm_model = vm_cqm, 
+#             inverter = vm_inverter)
 
 
 
@@ -130,20 +130,20 @@ else:
 ####################
 #    BQM Solver    #
 ####################
-print_section("BQM Path Model")
+# print_section("BQM Path Model")
 
-# Solve
-if DEBUG:   print("PATH Custom Time: ", proxymanager.VM_CUSTOM_TIME)
-if proxymanager.VM_CUSTOM_TIME:  
-    path_bqm_solution = models.bqm_solver(path_bqm, problem_label = "bqm_path_model", 
-            cqm_time = path_cqm_time, time_mult = proxymanager.PATH_TIME_MULT)
-else:
-    path_bqm_solution = models.bqm_solver(path_bqm, problem_label = "bqm_path_model")
+# # Solve
+# if DEBUG:   print("PATH Custom Time: ", proxymanager.VM_CUSTOM_TIME)
+# if proxymanager.VM_CUSTOM_TIME:  
+#     path_bqm_solution = models.bqm_solver(path_bqm, problem_label = "bqm_path_model", 
+#             cqm_time = path_cqm_time, time_mult = proxymanager.PATH_TIME_MULT)
+# else:
+#     path_bqm_solution = models.bqm_solver(path_bqm, problem_label = "bqm_path_model")
 
 
-# Check
-models.check_bqm_feasible(bqm_solution = path_bqm_solution, cqm_model = path_cqm, 
-            inverter = path_inverter)
+# # Check
+# models.check_bqm_feasible(bqm_solution = path_bqm_solution, cqm_model = path_cqm, 
+#             inverter = path_inverter)
 
 
 
@@ -155,13 +155,8 @@ print_section("Decomposed BQM Path Model")
 
 # Solve
 if DEBUG:   print("Decomposed PATH Custom Time: ", proxymanager.VM_CUSTOM_TIME)
-if proxymanager.VM_CUSTOM_TIME:  
-    path_decomposed_solution = models.decomposed_solver(path_bqm, 
-            problem_label = "bqm_decomposed_path_model", cqm_time = path_cqm_time, 
-            time_mult = proxymanager.PATH_TIME_MULT)
-else:
-    path_decomposed_solution = models.decomposed_solver(path_bqm, 
-            problem_label = "bqm_decomposed_path_model")
+path_decomposed_solution = models.decomposed_solver(path_bqm, 
+        problem_label = "bqm_decomposed_path_model")
 
 
 # Check

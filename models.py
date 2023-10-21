@@ -183,8 +183,7 @@ def bqm_solver(bqm_problem: dimod.BinaryQuadraticModel, problem_label: str,
     return best_solution
 
 
-def decomposed_solver(bqm_problem: dimod.BinaryQuadraticModel, problem_label: str, 
-            cqm_time = 0, time_mult = 1):
+def decomposed_solver(bqm_problem: dimod.BinaryQuadraticModel, problem_label: str):
     '''
     Solves the BQM problem using decomposition and returns
     the result.
@@ -202,37 +201,50 @@ def decomposed_solver(bqm_problem: dimod.BinaryQuadraticModel, problem_label: st
         - best_solution: the solution's dictionary
             type: dict()
     '''
-    # # Define decomposer
-    # decomposer = hybrid.EnergyImpactDecomposer(size = 50) 
-    # # Define subsampler
-    # subsampler = hybrid.QPUSubproblemAutoEmbeddingSampler()
-    # # Define composer
-    # composer = hybrid.SplatComposer()
+    # Define decomposer
+    decomposer = hybrid.EnergyImpactDecomposer(
+                        size= 50, 
+                        rolling_history= 0.50,
+                        traversal='bfs') 
+    # Define subsampler
+    subsampler = hybrid.QPUSubproblemAutoEmbeddingSampler()
+    # Define composer
+    composer = hybrid.SplatComposer()
     
     # Define other parallel solvers
-    # TODO
+    classic_subsampler = hybrid.InterruptableTabuSampler() 
+    
     # Define merge ruling
-    # TODO    
+    merger = hybrid.ArgMin()    
 
-    # # Define branch
-    # branch = (decomposer | subsampler | composer)
+    # Define branch
+    branches = hybrid.RacingBranches(
+                    classic_subsampler, 
+                    decomposer | subsampler | composer
+                    ) | merger
 
-    # # Define workflow
-    # workflow = hybrid.LoopUntilNoImprovement(branch, convergence=3, max_iter= 20)
+    # Define workflow
+    workflow = hybrid.LoopUntilNoImprovement(
+                        branches, 
+                        convergence=3, 
+                        # max_iter= 20,
+                        )
 
-    # # Solve
-    # init_state = hybrid.State.from_problem(bqm_problem)
-    # solution = workflow.run(init_state).result()
-    from hybrid.reference.kerberos import KerberosSampler
-    solution = KerberosSampler().sample(bqm_problem, 
-                    dimod.SampleSet.from_samples_bqm(hybrid.min_sample(bqm_problem), bqm_problem), 
-                    max_iter=300, convergence=10)
+    # Solve
+    init_state = hybrid.State.from_problem(bqm_problem)
+    solution = workflow.run(init_state).result()
+    # [Kerberos]
+    # from hybrid.reference.kerberos import KerberosSampler
+    # solution = KerberosSampler().sample(bqm_problem, 
+    #                 dimod.SampleSet.from_samples_bqm(hybrid.min_sample(bqm_problem), bqm_problem), 
+    #                 max_iter=300, convergence=10)
 
-    # # Extract best solution & energy
-    # best_solution = solution.samples.first[0]
-    # energy = solution.samples.first[1]
-    best_solution = solution.first.sample
-    energy = solution.first.energy
+    # Extract best solution & energy
+    best_solution = solution.samples.first[0]
+    energy = solution.samples.first[1]
+    # [Kerberos]
+    # best_solution = solution.first.sample
+    # energy = solution.first.energy
 
     # Energy
     print("Decomposer BQM ENERGY: ", energy)
