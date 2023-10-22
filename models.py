@@ -115,7 +115,7 @@ def cqm_solver(cqm_problem: dimod.ConstrainedQuadraticModel, problem_label: str,
         if value != 0.0:                # Nonzero var printer
             print(var, value, sep = ": ",end= " | ")
         last_char = var[0]          # Update last char to separate vars
-
+    print(end= "\n")
     # Save best solution
     if save:
         with open(("cqm_dict_"+problem_label+".txt"), "w") as fp:
@@ -179,6 +179,7 @@ def bqm_solver(bqm_problem: dimod.BinaryQuadraticModel, problem_label: str,
         if value != 0.0:                # Nonzero var printer
             print(var, value, sep = ": ",end= " | ")
         last_char = var[0]          # Update last char to separate vars
+    print(end= "\n")
     
     return best_solution
 
@@ -264,6 +265,7 @@ def decomposed_solver(bqm_problem: dimod.BinaryQuadraticModel, problem_label: st
         if value != 0.0:                # Nonzero var printer
             print(var, value, sep = ": ",end= " | ")
         last_char = var[0]          # Update last char to separate vars
+    print(end= "\n")
     
     # Extract infos
     print("\n\n## Decomposer BQM Extra Info ##")
