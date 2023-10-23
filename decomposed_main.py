@@ -53,21 +53,21 @@ models.vm_model(proxytree, vm_cqm)
 ####################
 #    CQM Solver    #
 ####################
-print_section("CQM VM Model")
+# print_section("CQM VM Model")
 
-# Solve
-if DEBUG:   print("VM Save dictionary: ", proxymanager.SAVE_DICT)
-if proxymanager.SAVE_DICT:
-    vm_cqm_solution, vm_cqm_time = models.cqm_solver(vm_cqm, "vm_model", save = True)
-else:
-    vm_cqm_solution, vm_cqm_time = models.cqm_solver(vm_cqm, "vm_model")
+# # Solve
+# if DEBUG:   print("VM Save dictionary: ", proxymanager.SAVE_DICT)
+# if proxymanager.SAVE_DICT:
+#     vm_cqm_solution, vm_cqm_time = models.cqm_solver(vm_cqm, "vm_model", save = True)
+# else:
+#     vm_cqm_solution, vm_cqm_time = models.cqm_solver(vm_cqm, "vm_model")
 
-# Convert to BQM
-if DEBUG:   print("VM Custom Lagrange: ", proxymanager.VM_CUSTOM_LAGRANGE)
-if proxymanager.VM_CUSTOM_LAGRANGE:
-    vm_bqm, vm_inverter = dimod.cqm_to_bqm(vm_cqm, lagrange_multiplier = proxymanager.VM_LAGRANGE_MUL)
-else:
-    vm_bqm, vm_inverter = dimod.cqm_to_bqm(vm_cqm)
+# # Convert to BQM
+# if DEBUG:   print("VM Custom Lagrange: ", proxymanager.VM_CUSTOM_LAGRANGE)
+# if proxymanager.VM_CUSTOM_LAGRANGE:
+#     vm_bqm, vm_inverter = dimod.cqm_to_bqm(vm_cqm, lagrange_multiplier = proxymanager.VM_LAGRANGE_MUL)
+# else:
+#     vm_bqm, vm_inverter = dimod.cqm_to_bqm(vm_cqm)
 
 
 ####################

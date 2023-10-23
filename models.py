@@ -212,15 +212,17 @@ def decomposed_solver(bqm_problem: dimod.BinaryQuadraticModel, problem_label: st
     #                         size= 50,
     #             ) 
     # Define subsampler
-    subsampler = hybrid.QPUSubproblemAutoEmbeddingSampler()
+    subsampler = hybrid.QPUSubproblemAutoEmbeddingSampler(
+                    qpu_sampler=dwave.system.DWaveSampler()
+    )
     # Define composer
     composer = hybrid.SplatComposer()
     
     # Define other parallel solvers
-    classic_subsampler = hybrid.InterruptableTabuSampler() 
+    # classic_subsampler = hybrid.InterruptableTabuSampler() 
     
     # Define merge ruling
-    merger = hybrid.ArgMin()    
+    # merger = hybrid.ArgMin()    
 
     # Define branch
     branches = (decomposer | subsampler | composer)
@@ -232,8 +234,8 @@ def decomposed_solver(bqm_problem: dimod.BinaryQuadraticModel, problem_label: st
     # Define workflow
     workflow = hybrid.LoopUntilNoImprovement(
                         branches, 
-                        convergence= 10, 
-                        max_iter= 100,
+                        convergence= 3, 
+                        max_iter= 10,
                         )
 
     # Solve
@@ -323,7 +325,7 @@ def vm_model(proxytree: fn.Proxytree, vm_cqm: dimod.ConstrainedQuadraticModel):
 
 
 def path_model(proxytree: fn.Proxytree, path_cqm: dimod.ConstrainedQuadraticModel, 
-            cqm_solution = dict(), load = False):
+            cqm_solution = {}, load = False):
     '''
     Creates the path planning model as a Constrained Quadratic Model
     

@@ -1,0 +1,105 @@
+Testato nuovo sampler per il subsampler
+    - leapHybridBQMsampler
+
+output errore:
+
+Traceback (most recent call last):
+  File "/workspaces/Tesi/decomposed_main.py", line 157, in <module>
+    path_decomposed_solution = models.decomposed_solver(path_bqm, 
+  File "/workspaces/Tesi/models.py", line 244, in decomposed_solver
+    solution = workflow.run(init_state).result()
+  File "/home/codespace/.python/current/lib/python3.10/concurrent/futures/_base.py", line 458, in result
+    return self.__get_result()
+  File "/home/codespace/.python/current/lib/python3.10/concurrent/futures/_base.py", line 403, in __get_result
+    raise self._exception
+  File "/home/codespace/.python/current/lib/python3.10/concurrent/futures/thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+  File "/home/codespace/.python/current/lib/python3.10/site-packages/hybrid/core.py", line 413, in dispatch
+    new_state = self.next(state, **kwargs)
+  File "/home/codespace/.python/current/lib/python3.10/site-packages/hybrid/core.py", line 525, in next
+    result = orig_next(self, state, **runopts)
+  File "/home/codespace/.python/current/lib/python3.10/site-packages/hybrid/flow.py", line 818, in next
+    output_state = self.runnable.run(input_state, **runopts).result()
+  File "/home/codespace/.python/current/lib/python3.10/concurrent/futures/_base.py", line 451, in result
+    return self.__get_result()
+  File "/home/codespace/.python/current/lib/python3.10/concurrent/futures/_base.py", line 403, in __get_result
+    raise self._exception
+  File "/home/codespace/.python/current/lib/python3.10/site-packages/hybrid/concurrency.py", line 55, in submit
+    return Present(result=fn(*args, **kwargs))
+  File "/home/codespace/.python/current/lib/python3.10/site-packages/hybrid/core.py", line 413, in dispatch
+    new_state = self.next(state, **kwargs)
+  File "/home/codespace/.python/current/lib/python3.10/site-packages/hybrid/flow.py", line 133, in next
+    return state.result()
+  File "/home/codespace/.python/current/lib/python3.10/concurrent/futures/_base.py", line 451, in result
+    return self.__get_result()
+  File "/home/codespace/.python/current/lib/python3.10/concurrent/futures/_base.py", line 403, in __get_result
+    raise self._exception
+  File "/home/codespace/.python/current/lib/python3.10/site-packages/hybrid/concurrency.py", line 55, in submit
+    return Present(result=fn(*args, **kwargs))
+  File "/home/codespace/.python/current/lib/python3.10/site-packages/hybrid/core.py", line 403, in dispatch
+    return self.error(exc)
+  File "/home/codespace/.python/current/lib/python3.10/site-packages/hybrid/core.py", line 375, in error
+    raise exc
+  File "/home/codespace/.python/current/lib/python3.10/site-packages/hybrid/core.py", line 400, in dispatch
+    state = future.result()
+  File "/home/codespace/.python/current/lib/python3.10/concurrent/futures/_base.py", line 451, in result
+    return self.__get_result()
+  File "/home/codespace/.python/current/lib/python3.10/concurrent/futures/_base.py", line 403, in __get_result
+    raise self._exception
+  File "/home/codespace/.python/current/lib/python3.10/site-packages/hybrid/concurrency.py", line 55, in submit
+    return Present(result=fn(*args, **kwargs))
+  File "/home/codespace/.python/current/lib/python3.10/site-packages/hybrid/core.py", line 413, in dispatch
+    new_state = self.next(state, **kwargs)
+  File "/home/codespace/.python/current/lib/python3.10/site-packages/hybrid/samplers.py", line 245, in next
+    return state.updated(subsamples=response)
+  File "/home/codespace/.python/current/lib/python3.10/site-packages/hybrid/core.py", line 147, in updated
+    return State(merge(self, kwargs, max_depth=1, op=overwrite))
+  File "/home/codespace/.python/current/lib/python3.10/site-packages/plucky/__init__.py", line 181, in merge
+    result[key] = deepcopy(b[key])
+  File "/home/codespace/.python/current/lib/python3.10/copy.py", line 172, in deepcopy
+    y = _reconstruct(x, memo, *rv)
+  File "/home/codespace/.python/current/lib/python3.10/copy.py", line 271, in _reconstruct
+    state = deepcopy(state, memo)
+  File "/home/codespace/.python/current/lib/python3.10/copy.py", line 146, in deepcopy
+    y = copier(x, memo)
+  File "/home/codespace/.python/current/lib/python3.10/copy.py", line 231, in _deepcopy_dict
+    y[deepcopy(key, memo)] = deepcopy(value, memo)
+  File "/home/codespace/.python/current/lib/python3.10/copy.py", line 146, in deepcopy
+    y = copier(x, memo)
+  File "/home/codespace/.python/current/lib/python3.10/copy.py", line 238, in _deepcopy_method
+    return type(x)(x.__func__, deepcopy(x.__self__, memo))
+  File "/home/codespace/.python/current/lib/python3.10/copy.py", line 172, in deepcopy
+    y = _reconstruct(x, memo, *rv)
+  File "/home/codespace/.python/current/lib/python3.10/copy.py", line 271, in _reconstruct
+    state = deepcopy(state, memo)
+  File "/home/codespace/.python/current/lib/python3.10/copy.py", line 146, in deepcopy
+    y = copier(x, memo)
+  File "/home/codespace/.python/current/lib/python3.10/copy.py", line 231, in _deepcopy_dict
+    y[deepcopy(key, memo)] = deepcopy(value, memo)
+  File "/home/codespace/.python/current/lib/python3.10/copy.py", line 172, in deepcopy
+    y = _reconstruct(x, memo, *rv)
+  File "/home/codespace/.python/current/lib/python3.10/copy.py", line 271, in _reconstruct
+    state = deepcopy(state, memo)
+  File "/home/codespace/.python/current/lib/python3.10/copy.py", line 146, in deepcopy
+    y = copier(x, memo)
+  File "/home/codespace/.python/current/lib/python3.10/copy.py", line 231, in _deepcopy_dict
+    y[deepcopy(key, memo)] = deepcopy(value, memo)
+  File "/home/codespace/.python/current/lib/python3.10/copy.py", line 172, in deepcopy
+    y = _reconstruct(x, memo, *rv)
+  File "/home/codespace/.python/current/lib/python3.10/copy.py", line 271, in _reconstruct
+    state = deepcopy(state, memo)
+  File "/home/codespace/.python/current/lib/python3.10/copy.py", line 146, in deepcopy
+    y = copier(x, memo)
+  File "/home/codespace/.python/current/lib/python3.10/copy.py", line 231, in _deepcopy_dict
+    y[deepcopy(key, memo)] = deepcopy(value, memo)
+  File "/home/codespace/.python/current/lib/python3.10/copy.py", line 172, in deepcopy
+    y = _reconstruct(x, memo, *rv)
+  File "/home/codespace/.python/current/lib/python3.10/copy.py", line 271, in _reconstruct
+    state = deepcopy(state, memo)
+  File "/home/codespace/.python/current/lib/python3.10/copy.py", line 146, in deepcopy
+    y = copier(x, memo)
+  File "/home/codespace/.python/current/lib/python3.10/copy.py", line 231, in _deepcopy_dict
+    y[deepcopy(key, memo)] = deepcopy(value, memo)
+  File "/home/codespace/.python/current/lib/python3.10/copy.py", line 161, in deepcopy
+    rv = reductor(4)
+TypeError: cannot pickle '_thread.lock' object
