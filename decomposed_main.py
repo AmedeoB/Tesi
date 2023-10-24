@@ -2,8 +2,26 @@ DEBUG = False
 
 """
 TODO
-- provare combinazioni diverse di workflow di decomposizione
-- togliere le opzioni di kerberos
+UTILITIES GENERALI
+    - funzione di stampa dell'albero
+
+CONFRONTO CLASSICO VS QUANTUM
+    - libreria ibm calcolo classic
+
+DECOMPOSERS
+    - settare la var globale per le info
+    - provare combinazioni diverse di workflow di decomposizione
+        > singolo branch con component decomposer 
+            # usa il numero della vm come key? Altrimenti il tipo di var
+        > singolo branch con randomconstraintDecomposer con la lista delle quadratiche
+            # come ottenere la lista delle quadratiche?
+        > multipli branch combinati con greedyPathMerge (guarda YT)
+        > branch tabu | component | random
+        > branch tabu | constraint | random
+        > branch tabu | component | constaint | random
+        > branch senza tabu ma bloccante
+    - provare altri setup quantum
+    - togliere le opzioni di kerberos
 """
 
 """------------------- IMPORTS ---------------------"""
