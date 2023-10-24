@@ -1,3 +1,5 @@
+DEBUG = False
+
 """
 ################################### MODEL VARIABLES DICTIONARY ######################################################
 _____________________________________________________________________________________________________________________
@@ -34,6 +36,7 @@ import hybrid
 # OTHERS
 import fun_lib as fn
 import json
+
 
 def check_bqm_feasible(bqm_solution: dict, cqm_model: dimod.ConstrainedQuadraticModel, 
             inverter: dimod.constrained.CQMToBQMInverter):
@@ -183,6 +186,15 @@ def bqm_solver(bqm_problem: dimod.BinaryQuadraticModel, problem_label: str,
     
     return best_solution
 
+def merge_substates(_, substates):
+    '''
+    Minimal function to merge substates in a multiple
+    substates per cycle environment
+    '''
+
+    a, b = substates
+    return a.updated(subsamples=hybrid.hstack_samplesets(a.subsamples, b.subsamples))
+
 
 def decomposed_solver(bqm_problem: dimod.BinaryQuadraticModel, problem_label: str):
     '''
@@ -203,18 +215,24 @@ def decomposed_solver(bqm_problem: dimod.BinaryQuadraticModel, problem_label: st
             type: dict()
     '''
     # Define decomposer
-    decomposer = hybrid.EnergyImpactDecomposer(
-                        size= 50, 
-                        rolling_history= 0.8,
-                        # traversal='pfs'
+    # decomposer = hybrid.EnergyImpactDecomposer(
+    #                     size= 50, 
+    #                     rolling_history= 0.15,
+    #                     # traversal='pfs'
+    #                     )
+    decomposer = hybrid.Unwind(
+                        hybrid.ComponentDecomposer(
                         )
-    # decomposer = hybrid.RandomSubproblemDecomposer(
-    #                         size= 50,
-    #             ) 
+                ) 
     # Define subsampler
-    subsampler = hybrid.QPUSubproblemAutoEmbeddingSampler(
-                    qpu_sampler=dwave.system.DWaveSampler()
-    )
+    # subsampler = hybrid.QPUSubproblemAutoEmbeddingSampler(
+    #                 # qpu_sampler=dwave.system.DWaveSampler()
+    # )
+    subsampler = hybrid.Map(
+                        hybrid.QPUSubproblemAutoEmbeddingSampler()
+                ) | hybrid.Reduce (
+                        hybrid.Lambda(merge_substates)
+                )
     # Define composer
     composer = hybrid.SplatComposer()
     
@@ -234,24 +252,30 @@ def decomposed_solver(bqm_problem: dimod.BinaryQuadraticModel, problem_label: st
     # Define workflow
     workflow = hybrid.LoopUntilNoImprovement(
                         branches, 
-                        convergence= 3, 
-                        max_iter= 10,
+                        # convergence= 3, 
+                        max_iter= 5,
                         )
+    
+    # Print structure
+    if DEBUG: hybrid.print_structure(workflow)
 
     # Solve
     # init_state = hybrid.State.from_problem(bqm_problem)
-    init_state = hybrid.State.from_sample(hybrid.min_sample(bqm_problem), bqm_problem)
+    init_state = hybrid.State.from_sample(hybrid.random_sample(bqm_problem), bqm_problem)
     solution = workflow.run(init_state).result()
-    # [Kerberos]
+    # [Kerberos] [LEGACY]
     # from hybrid.reference.kerberos import KerberosSampler
     # solution = KerberosSampler().sample(bqm_problem, 
     #                 dimod.SampleSet.from_samples_bqm(hybrid.min_sample(bqm_problem), bqm_problem), 
     #                 max_iter=300, convergence=10)
 
+    # Print timers
+    hybrid.print_counters(workflow)
+
     # Extract best solution & energy
     best_solution = solution.samples.first[0]
     energy = solution.samples.first[1]
-    # [Kerberos]
+    # [Kerberos] [LEGACY]
     # best_solution = solution.first.sample
     # energy = solution.first.energy
 
