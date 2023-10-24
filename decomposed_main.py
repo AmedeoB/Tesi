@@ -10,7 +10,11 @@ CONFRONTO CLASSICO VS QUANTUM
 
 DECOMPOSERS
     - settare la var globale per le info
+    - impostare il time limit come per il BQM?
+    - tenta un origin_embedding per il primo state
     - provare combinazioni diverse di workflow di decomposizione
+        > provare trackmin con i singoli branch
+        > singolo branch con sublattice decomposer
         > singolo branch con component decomposer 
             # usa il numero della vm come key? Altrimenti il tipo di var
         > singolo branch con randomconstraintDecomposer con la lista delle quadratiche
