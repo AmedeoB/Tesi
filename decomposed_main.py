@@ -14,7 +14,8 @@ DECOMPOSERS
     - tenta un origin_embedding per il primo state
     - provare combinazioni diverse di workflow di decomposizione
         > provare trackmin con i singoli branch
-        > singolo branch con sublattice decomposer
+        X singolo branch con sublattice decomposer
+            ! testato e non riesce a decomporre
         > singolo branch con component decomposer 
             # usa il numero della vm come key? Altrimenti il tipo di var
         > singolo branch con randomconstraintDecomposer con la lista delle quadratiche
@@ -84,12 +85,12 @@ models.vm_model(proxytree, vm_cqm)
 # else:
 #     vm_cqm_solution, vm_cqm_time = models.cqm_solver(vm_cqm, "vm_model")
 
-# # Convert to BQM
-# if DEBUG:   print("VM Custom Lagrange: ", proxymanager.VM_CUSTOM_LAGRANGE)
-# if proxymanager.VM_CUSTOM_LAGRANGE:
-#     vm_bqm, vm_inverter = dimod.cqm_to_bqm(vm_cqm, lagrange_multiplier = proxymanager.VM_LAGRANGE_MUL)
-# else:
-#     vm_bqm, vm_inverter = dimod.cqm_to_bqm(vm_cqm)
+# Convert to BQM
+if DEBUG:   print("VM Custom Lagrange: ", proxymanager.VM_CUSTOM_LAGRANGE)
+if proxymanager.VM_CUSTOM_LAGRANGE:
+    vm_bqm, vm_inverter = dimod.cqm_to_bqm(vm_cqm, lagrange_multiplier = proxymanager.VM_LAGRANGE_MUL)
+else:
+    vm_bqm, vm_inverter = dimod.cqm_to_bqm(vm_cqm)
 
 
 ####################
@@ -123,7 +124,8 @@ if DEBUG:   print("PATH Load Dictionary: ", proxymanager.LOAD_DICT)
 if proxymanager.LOAD_DICT:
     models.path_model(proxytree, path_cqm, load = True)
 else:
-    models.path_model(proxytree, path_cqm, cqm_solution = vm_cqm_solution)
+    models.path_model(proxytree, path_cqm, vm_solution = vm_cqm_solution)
+
 
 
 
@@ -174,8 +176,6 @@ else:
 #####################
 print_section("Decomposed BQM Path Model")
 
-# Solve
-if DEBUG:   print("Decomposed PATH Custom Time: ", proxymanager.VM_CUSTOM_TIME)
 path_decomposed_solution = models.decomposed_solver(path_bqm, 
         problem_label = "bqm_decomposed_path_model")
 

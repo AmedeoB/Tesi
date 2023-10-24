@@ -186,6 +186,8 @@ def bqm_solver(bqm_problem: dimod.BinaryQuadraticModel, problem_label: str,
     
     return best_solution
 
+
+
 def merge_substates(_, substates):
     '''
     Minimal function to merge substates in a multiple
@@ -194,6 +196,7 @@ def merge_substates(_, substates):
 
     a, b = substates
     return a.updated(subsamples=hybrid.hstack_samplesets(a.subsamples, b.subsamples))
+
 
 
 def decomposed_solver(bqm_problem: dimod.BinaryQuadraticModel, problem_label: str):
@@ -214,70 +217,67 @@ def decomposed_solver(bqm_problem: dimod.BinaryQuadraticModel, problem_label: st
         - best_solution: the solution's dictionary
             type: dict()
     '''
-    # Define decomposer
-    # decomposer = hybrid.EnergyImpactDecomposer(
-    #                     size= 50, 
-    #                     rolling_history= 0.15,
-    #                     # traversal='pfs'
+    # Decomposer
+    decomposer = hybrid.ComponentDecomposer()
+    decomposer_random = hybrid.RandomSubproblemDecomposer(size= 10)
+    # decomposer = hybrid.Unwind( 
+    #                 hybrid.SublatticeDecomposer()
+    #             )
+
+    # Subsampler
+    qpu = dwave.system.DWaveSampler()
+    subsampler = hybrid.QPUSubproblemAutoEmbeddingSampler(
+                    qpu_sampler=qpu
+    )
+    # subsampler = hybrid.Map(
+    #                     hybrid.QPUSubproblemAutoEmbeddingSampler(
+    #                         qpu_sampler= qpu,
     #                     )
-    decomposer = hybrid.Unwind(
-                        hybrid.ComponentDecomposer(
-                        )
-                ) 
-    # Define subsampler
-    # subsampler = hybrid.QPUSubproblemAutoEmbeddingSampler(
-    #                 # qpu_sampler=dwave.system.DWaveSampler()
-    # )
-    subsampler = hybrid.Map(
-                        hybrid.QPUSubproblemAutoEmbeddingSampler()
-                ) | hybrid.Reduce (
-                        hybrid.Lambda(merge_substates)
-                )
-    # Define composer
+    #             ) | hybrid.Reduce (
+    #                     hybrid.Lambda(merge_substates)
+    #             )
+    
+    # Composer
     composer = hybrid.SplatComposer()
     
-    # Define other parallel solvers
-    # classic_subsampler = hybrid.InterruptableTabuSampler() 
+    # Parallel solvers
+    classic_branch = hybrid.InterruptableTabuSampler() 
     
-    # Define merge ruling
-    # merger = hybrid.ArgMin()    
+    # Merger
+    merger = hybrid.ArgMin()
+    # merger = hybrid.GreedyPathMerge()    
 
-    # Define branch
-    branches = (decomposer | subsampler | composer)
-    # branches = hybrid.RacingBranches(
-    #                 classic_subsampler, 
-    #                 decomposer | subsampler | composer
-    #                 ) | merger
+    # Branch
+    qpu_branch = (decomposer | subsampler | composer) | hybrid.TrackMin(output= True)
+    random_branch = (decomposer_random | subsampler | composer) | hybrid.TrackMin(output= True)
+    parallel_branches = hybrid.RacingBranches(
+                    classic_branch, 
+                    qpu_branch,
+                    random_branch,
+                    ) | merger
 
     # Define workflow
     workflow = hybrid.LoopUntilNoImprovement(
-                        branches, 
+                        parallel_branches, 
                         # convergence= 3, 
-                        max_iter= 5,
+                        # max_iter= 5, 
+                        max_time= 3,
                         )
-    
-    # Print structure
-    if DEBUG: hybrid.print_structure(workflow)
 
     # Solve
-    # init_state = hybrid.State.from_problem(bqm_problem)
-    init_state = hybrid.State.from_sample(hybrid.random_sample(bqm_problem), bqm_problem)
+    origin_embeddings = hybrid.make_origin_embeddings(qpu, )
+    init_state = hybrid.State.from_sample(
+                        hybrid.random_sample(bqm_problem), 
+                        bqm_problem,
+                        origin_embeddings= origin_embeddings)
     solution = workflow.run(init_state).result()
-    # [Kerberos] [LEGACY]
-    # from hybrid.reference.kerberos import KerberosSampler
-    # solution = KerberosSampler().sample(bqm_problem, 
-    #                 dimod.SampleSet.from_samples_bqm(hybrid.min_sample(bqm_problem), bqm_problem), 
-    #                 max_iter=300, convergence=10)
 
     # Print timers
-    hybrid.print_counters(workflow)
+    # hybrid.print_counters(workflow)
 
     # Extract best solution & energy
     best_solution = solution.samples.first[0]
     energy = solution.samples.first[1]
-    # [Kerberos] [LEGACY]
-    # best_solution = solution.first.sample
-    # energy = solution.first.energy
 
     # Energy
     print("Decomposer BQM ENERGY: ", energy)
@@ -303,7 +303,7 @@ def decomposed_solver(bqm_problem: dimod.BinaryQuadraticModel, problem_label: st
     
 
 
-def vm_model(proxytree: fn.Proxytree, vm_cqm: dimod.ConstrainedQuadraticModel):
+def vm_model(proxytree: fn.Proxytree, cqm: dimod.ConstrainedQuadraticModel):
     '''
     Creates the vm assignment model as a Constrained Quadratic Model
 
@@ -328,12 +328,12 @@ def vm_model(proxytree: fn.Proxytree, vm_cqm: dimod.ConstrainedQuadraticModel):
     # 2 - SUM of vm dyn pow cons
     obj2 = dimod.quicksum(proxytree.dyn_powcons[s+proxytree.SWITCHES] * dimod.quicksum(proxytree.cpu_util[vm] * vm_status[s][vm] for vm in range(proxytree.VMS)) for s in range(proxytree.SERVERS))
     # Total
-    vm_cqm.set_objective(obj1 + obj2)
+    cqm.set_objective(obj1 + obj2)
 
     # Constraints
     # (11) For each server, the CPU utilization of each VM on that server must be less or equal than server's capacity       
     for s in range(proxytree.SERVERS):
-        vm_cqm.add_constraint(
+        cqm.add_constraint(
             dimod.quicksum(
                 proxytree.cpu_util[vm] * vm_status[s][vm] for vm in range(proxytree.VMS)) 
             - proxytree.server_capacity[s]*server_status[s] 
@@ -341,15 +341,16 @@ def vm_model(proxytree: fn.Proxytree, vm_cqm: dimod.ConstrainedQuadraticModel):
 
     # (12) For each VM, it must be active on one and only one server
     for vm in range(proxytree.VMS):
-        vm_cqm.add_constraint(
+        cqm.add_constraint(
             dimod.quicksum(
                 vm_status[s][vm] for s in range(proxytree.SERVERS)) 
             == 1, label="C12-N"+str(vm))
+    
 
 
 
-def path_model(proxytree: fn.Proxytree, path_cqm: dimod.ConstrainedQuadraticModel, 
-            cqm_solution = {}, load = False):
+def path_model(proxytree: fn.Proxytree, cqm: dimod.ConstrainedQuadraticModel, 
+            vm_solution = {}, load = False):
     '''
     Creates the path planning model as a Constrained Quadratic Model
     
@@ -390,9 +391,10 @@ def path_model(proxytree: fn.Proxytree, path_cqm: dimod.ConstrainedQuadraticMode
     # Load best solution from file
     if load:
             with open("cqm_dict_vm_model.txt") as fp:
-                cqm_solution = json.loads(fp.read())
+                vm_solution = json.loads(fp.read())
                 print("VM-CQM Dictionary loaded!")
-                print(cqm_solution)
+                print(vm_solution)
+                print("\n\n")
 
 
     # Objective
@@ -404,7 +406,7 @@ def path_model(proxytree: fn.Proxytree, path_cqm: dimod.ConstrainedQuadraticMode
     obj4 = dimod.quicksum( proxytree.dyn_powcons[sw] * flow_path['f' + str(f) + '-n' + str(n) + '-n' + str(sw)] + flow_path['f' + str(f) + '-n' + str(sw) + '-n' + str(n)]
                         for n in range(proxytree.NODES) for f in range(proxytree.FLOWS) for sw in range(proxytree.SWITCHES) if proxytree.adjancy_list[n][sw] == 1)
     # Total
-    path_cqm.set_objective(obj3 + obj4)
+    cqm.set_objective(obj3 + obj4)
 
 
     # Constraints
@@ -415,8 +417,8 @@ def path_model(proxytree: fn.Proxytree, path_cqm: dimod.ConstrainedQuadraticMode
     #   > add the code line "- cqm_solution.get("vm" + str(proxytree.src_dst[f][0]) + "-s" + str(s-proxytree.SWITCHES))"
     for f in range(proxytree.FLOWS):
         for s in range(proxytree.SWITCHES, proxytree.SWITCHES + proxytree.SERVERS):           # Start from switches cause nodes are numerated in order -> all switches -> all servers
-            if cqm_solution.get("vm" + str(proxytree.src_dst[f][0]) + "-s" + str(s-proxytree.SWITCHES)) == 0:
-                path_cqm.add_constraint( 
+            if vm_solution.get("vm" + str(proxytree.src_dst[f][0]) + "-s" + str(s-proxytree.SWITCHES)) == 0:
+                cqm.add_constraint( 
                     dimod.quicksum( 
                         flow_path['f' + str(f) + '-n' + str(s) + '-n' + str(sw)] for sw in range(proxytree.SWITCHES) if proxytree.adjancy_list[s][sw] == 1)
                     == 0, label="C13-N"+str(f*proxytree.SERVERS+s))
@@ -428,8 +430,8 @@ def path_model(proxytree: fn.Proxytree, path_cqm: dimod.ConstrainedQuadraticMode
     #   > add the code line "- cqm_solution.get("vm" + str(proxytree.src_dst[f][1]) + "-s" + str(s-proxytree.SWITCHES))"  
     for f in range(proxytree.FLOWS):
         for s in range(proxytree.SWITCHES, proxytree.SWITCHES + proxytree.SERVERS):
-            if cqm_solution.get("vm" + str(proxytree.src_dst[f][1]) + "-s" + str(s-proxytree.SWITCHES)) == 0:
-                path_cqm.add_constraint( 
+            if vm_solution.get("vm" + str(proxytree.src_dst[f][1]) + "-s" + str(s-proxytree.SWITCHES)) == 0:
+                cqm.add_constraint( 
                     dimod.quicksum( 
                         flow_path['f' + str(f) + '-n' + str(sw) + '-n' + str(s)] for sw in range(proxytree.SWITCHES) if proxytree.adjancy_list[sw][s] == 1) 
                     == 0, label="C14-N"+str(f*proxytree.SERVERS+s)) 
@@ -437,8 +439,8 @@ def path_model(proxytree: fn.Proxytree, path_cqm: dimod.ConstrainedQuadraticMode
     # (15) For each flow and server, force allocation of all flows     
     for f in range(proxytree.FLOWS):
         for s in range(proxytree.SWITCHES, proxytree.SWITCHES + proxytree.SERVERS):
-            path_cqm.add_constraint( 
-                cqm_solution.get("vm" + str(proxytree.src_dst[f][0]) + "-s" + str(s-proxytree.SWITCHES)) - cqm_solution.get("vm" + str(proxytree.src_dst[f][1]) + "-s" + str(s-proxytree.SWITCHES))  
+            cqm.add_constraint( 
+                vm_solution.get("vm" + str(proxytree.src_dst[f][0]) + "-s" + str(s-proxytree.SWITCHES)) - vm_solution.get("vm" + str(proxytree.src_dst[f][1]) + "-s" + str(s-proxytree.SWITCHES))  
                 - ( 
                     dimod.quicksum( 
                         flow_path['f' + str(f) + '-n' + str(s) + '-n' + str(sw)] for sw in range(proxytree.SWITCHES) if proxytree.adjancy_list[s][sw] == 1) 
@@ -449,7 +451,7 @@ def path_model(proxytree: fn.Proxytree, path_cqm: dimod.ConstrainedQuadraticMode
     # (16) For each switch and flow, entering and exiting flow from the switch are equal
     for sw in range(proxytree.SWITCHES):
         for f in range(proxytree.FLOWS):
-            path_cqm.add_constraint( 
+            cqm.add_constraint( 
                 dimod.quicksum( 
                     flow_path['f' + str(f) + '-n' + str(n) + '-n' + str(sw)]  for n in range(proxytree.NODES) if proxytree.adjancy_list[n][sw] == 1) 
                 - dimod.quicksum( 
@@ -459,7 +461,7 @@ def path_model(proxytree: fn.Proxytree, path_cqm: dimod.ConstrainedQuadraticMode
     # (17) For each link, the data rate on it is less or equal than its capacity      
     for l in range(proxytree.LINKS):
         n1,n2 = fn.get_nodes(l, proxytree.link_dict)
-        path_cqm.add_constraint( 
+        cqm.add_constraint( 
             dimod.quicksum( 
                 proxytree.data_rate[f] * (
                     flow_path['f' + str(f) + '-n' + str(n1) + '-n' + str(n2)] 
@@ -471,20 +473,20 @@ def path_model(proxytree: fn.Proxytree, path_cqm: dimod.ConstrainedQuadraticMode
     for l in range(proxytree.LINKS):
         n1,n2 = fn.get_nodes(l, proxytree.link_dict)
 
-        path_cqm.add_constraint(
+        cqm.add_constraint(
             on["on" + str(n1) + "-" + str(n2)] 
             - switch_status[n1] 
             <= 0, label="C18-N"+str(l))
 
         if n2 < proxytree.SWITCHES:     # If the second node is a switch
-            path_cqm.add_constraint(
+            cqm.add_constraint(
                 on["on" + str(n1) + "-" + str(n2)] 
                 - switch_status[n2] 
                 <= 0, label="C19-N"+str(l))
         else:                           # If it's a server
-            path_cqm.add_constraint(
+            cqm.add_constraint(
                 on["on" + str(n1) + "-" + str(n2)] 
-                - cqm_solution.get("s"+str(n2-proxytree.SWITCHES)) 
+                - vm_solution.get("s"+str(n2-proxytree.SWITCHES)) 
                 == 0, label="C19-N"+str(l))
 
 
