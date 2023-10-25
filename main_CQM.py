@@ -4,6 +4,8 @@ DEBUG = True
 TODO
     - nuovo proxymanager solo per cqm
     - nuovo cqm_solver con una migliore analisi del risultato
+    - move print functions to fun lib
+    - make full import of fun lib
 '''
 
 
