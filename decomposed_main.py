@@ -37,6 +37,9 @@ import dimod
 import models
 from fun_lib import print_section, Proxytree, Proxymanager
 
+# TESTING
+from test_decomposer import *
+
 """--------------------------------------------------"""
 
 proxytree = Proxytree(
@@ -174,12 +177,14 @@ else:
 #####################
 # Decomposed Solver #
 #####################
-print_section("Decomposed BQM Path Model")
+decomposer_test(path_bqm)
 
-path_decomposed_solution = models.decomposed_solver(path_bqm, 
-        problem_label = "bqm_decomposed_path_model")
+# print_section("Decomposed BQM Path Model")
+
+# path_decomposed_solution = models.decomposed_solver(path_bqm, 
+#         problem_label = "bqm_decomposed_path_model")
 
 
-# Check
-models.check_bqm_feasible(bqm_solution = path_decomposed_solution, cqm_model = path_cqm, 
-            inverter = path_inverter)
+# # Check
+# models.check_bqm_feasible(bqm_solution = path_decomposed_solution, cqm_model = path_cqm, 
+#             inverter = path_inverter)
