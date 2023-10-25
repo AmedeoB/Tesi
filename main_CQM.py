@@ -3,6 +3,7 @@ DEBUG = True
 '''
 TODO
     - nuovo proxymanager solo per cqm
+    - nuovo cqm_solver con una migliore analisi del risultato
 '''
 
 
@@ -46,6 +47,7 @@ proxytree.print_tree()
 # ###################################################################
 # |                       VM MODEL                                  |
 # ###################################################################
+print_section("VM Model")
 
 # Create problem
 vm_cqm = dimod.ConstrainedQuadraticModel()
@@ -54,12 +56,10 @@ models.vm_model(proxytree, vm_cqm)
 
 if DEBUG:
     print_model_structure("vm model", vm_cqm)
-exit()
 
 ####################
 #    CQM Solver    #
 ####################
-print_section("CQM VM Model")
 
 # Solve
 if DEBUG:   print("VM Save dictionary: ", proxymanager.SAVE_DICT)
@@ -73,6 +73,7 @@ else:
 # ###################################################################
 # |                       PATH MODEL                                |
 # ###################################################################
+print_section("CQM Path Model")
 
 # Create problem
 path_cqm = dimod.ConstrainedQuadraticModel()
@@ -83,13 +84,14 @@ if proxymanager.LOAD_DICT:
 else:
     models.path_model(proxytree, path_cqm, vm_solution = vm_cqm_solution)
 
+if DEBUG:
+    print_model_structure("path model", path_cqm)
 
 
 
 ####################
 #    CQM Solver    #
 ####################
-print_section("CQM Path Model")
 
 # Solve
 if DEBUG:   print("PATH Save Dictionary: ", proxymanager.SAVE_DICT)

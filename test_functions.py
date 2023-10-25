@@ -31,6 +31,7 @@ def print_model_structure(name: str, model: dimod.ConstrainedQuadraticModel,
             printer += "\n"
             cols = 0
     print(printer)
+    
     printer = "Constraints Dictionary:\n"
     cols = 0
     for i in model.constraints:
@@ -40,8 +41,6 @@ def print_model_structure(name: str, model: dimod.ConstrainedQuadraticModel,
             printer += "\n"
             cols = 0
     print(printer)
-    
-    print(model.objective)
 
 
 

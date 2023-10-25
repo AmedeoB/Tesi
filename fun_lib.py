@@ -287,8 +287,9 @@ def print_section(section_name: str):
         - section_name (str): the name of the section
     '''
     
-    print("\n\n\n")
-    print("####################### " + section_name + " ###########################")
-    print("\n")
+    print(
+        f"####################### {section_name.upper()} ###########################"
+        f"\n"
+    )
 
 
