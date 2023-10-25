@@ -1,0 +1,44 @@
+AttributeError: 'RandomConstraintDecomposer' object has no attribute 'constraint_graph'
+    non sono riuscito ad utilizzare questo decomposer in alcun modo
+    ne aumentando il subproblem ne convertendo in vari modi il set
+
+subLatticeDecomposer
+    non produce sottinsiemi
+
+ComponentDecomposer
+    non decompone mai, ricrea il problema come sottoproblema
+
+EnergyImpactDecomposer && tabu
+    V1 - init state = from_problem | size 50 | time 3
+        risultato: tutto spento
+    V2 - init state = min sample | size 50 | time 3
+        risultato: tutto spento
+    V3 - init state = max sample | size 50 | time 3
+        risultato: riduce le variabili accese
+    V4 - init state = max sample | size 50 | time 10
+        risultato: produce un risultato identico al precedente
+    V5 - init state = random sample | size 50 | time 10
+        risultato: riduce in modo anomalo
+
+EnergyImpactDecomposer da solo
+    V1 - init state = min_sample | size 50 | time 10
+        risultato: produce un risultato, infattibile, poche var
+        energia (40k)
+    V2 - init state = min_sample | size 50 | time 30
+        risultato: le variabili aumentano, ancora infattibile
+        energia scesa (18k)
+    V3 - init state = max_sample | size 50 | time 30
+        risultato: elabora il problema, energia 27k, ancora infattibile
+    V4 - init state = min_sample | size 50 | time 30 | rolling history 20%
+        risultato: altamente infattibile, energia 47k
+    V5 - init state = min_sample | size 50 | time 30 | rolling history 50%
+        risultato: altamente infattibile, energia 30k, nessun
+        miglioramento degno di nota
+    V6 - init state = min_sample | size 80 | time 10 | rolling history 50%
+        risultato: altamente infattibile, energia 48k
+    V7 - init state = min_sample | size 30 | time 10 | rolling history 50% | iter 5
+        risultato: tutto spento
+    V8 - init state = min_sample | size 30 | time 10 | rolling history 50%
+        risultato: tutto spento
+    V9 - init state = min_sample | size 30 | time 30 | rolling history 50%
+        risultato: tutto spento

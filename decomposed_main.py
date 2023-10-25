@@ -9,24 +9,22 @@ CONFRONTO CLASSICO VS QUANTUM
     - libreria ibm calcolo classic
 
 DECOMPOSERS
-    - settare la var globale per le info
-    - impostare il time limit come per il BQM?
-    - tenta un origin_embedding per il primo state
-    - provare combinazioni diverse di workflow di decomposizione
-        > provare trackmin con i singoli branch
+    X settare la var globale per le info
+    X impostare il time limit come per il BQM?
+    X tenta un origin_embedding per il primo state
+    x provare combinazioni diverse di workflow di decomposizione
+        x provare trackmin con i singoli branch
         X singolo branch con sublattice decomposer
             ! testato e non riesce a decomporre
-        > singolo branch con component decomposer 
-            # usa il numero della vm come key? Altrimenti il tipo di var
-        > singolo branch con randomconstraintDecomposer con la lista delle quadratiche
-            # come ottenere la lista delle quadratiche?
-        > multipli branch combinati con greedyPathMerge (guarda YT)
-        > branch tabu | component | random
-        > branch tabu | constraint | random
-        > branch tabu | component | constaint | random
-        > branch senza tabu ma bloccante
-    - provare altri setup quantum
-    - togliere le opzioni di kerberos
+        X singolo branch con component decomposer 
+            ! non decompone
+        X singolo branch con randomconstraintDecomposer con la lista delle quadratiche
+            ! mi da un errore
+        x multipli branch combinati con greedyPathMerge (guarda YT)
+        x branch tabu | component | random
+        x branch tabu | constraint | random
+        x branch tabu | component | constaint | random
+        x branch senza tabu ma bloccante
 """
 
 """------------------- IMPORTS ---------------------"""
@@ -177,7 +175,7 @@ else:
 #####################
 # Decomposed Solver #
 #####################
-decomposer_test(path_bqm)
+test_decomposed_solver(path_bqm)
 
 # print_section("Decomposed BQM Path Model")
 
