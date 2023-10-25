@@ -1,32 +1,5 @@
 DEBUG = False
 
-"""
-TODO
-UTILITIES GENERALI
-    - funzione di stampa dell'albero
-
-CONFRONTO CLASSICO VS QUANTUM
-    - libreria ibm calcolo classic
-
-DECOMPOSERS
-    X settare la var globale per le info
-    X impostare il time limit come per il BQM?
-    X tenta un origin_embedding per il primo state
-    x provare combinazioni diverse di workflow di decomposizione
-        x provare trackmin con i singoli branch
-        X singolo branch con sublattice decomposer
-            ! testato e non riesce a decomporre
-        X singolo branch con component decomposer 
-            ! non decompone
-        X singolo branch con randomconstraintDecomposer con la lista delle quadratiche
-            ! mi da un errore
-        x multipli branch combinati con greedyPathMerge (guarda YT)
-        x branch tabu | component | random
-        x branch tabu | constraint | random
-        x branch tabu | component | constaint | random
-        x branch senza tabu ma bloccante
-"""
-
 """------------------- IMPORTS ---------------------"""
 # D_WAVE
 import dimod
@@ -36,7 +9,7 @@ import models
 from fun_lib import print_section, Proxytree, Proxymanager
 
 # TESTING
-from test_decomposer import *
+from test_functions import *
 
 """--------------------------------------------------"""
 
