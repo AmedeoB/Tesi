@@ -1,47 +1,7 @@
 import dimod
 import hybrid
 import dwave.system as system
-
-def print_model_structure(name: str, model: dimod.ConstrainedQuadraticModel, 
-        columns = 10):
-    '''
-    Simple function to print cqm model structure.
-
-    Args:
-        name (str): name of the cqm model
-        model (ConstrainedQuadraticModel): CQM
-        columns (int, optional, default = 10): print columns for 
-        dictionary
-    '''
-    print(
-        f"\n# {name.upper()} STRUCTURE #"
-        f"\nLinear Variables:       {model.num_variables()}"
-        f"\nQuadratic Variables:    {model.num_quadratic_variables()}"
-        f"\nBiases:                 {model.num_biases()}"
-        f"\nConstraints:            {model.num_constraints()}"
-        f"\nSoft Constraints:       {model.num_soft_constraints()}"
-    )
-
-    printer = "Variables Dictionary:\n"
-    cols = 0
-    for i in model.variables:
-        printer += str(i)+"\t"
-        cols += 1
-        if cols == columns:
-            printer += "\n"
-            cols = 0
-    print(printer)
-    
-    printer = "Constraints Dictionary:\n"
-    cols = 0
-    for i in model.constraints:
-        printer += str(i)+"\t"
-        cols += 1
-        if cols == columns:
-            printer += "\n"
-            cols = 0
-    print(printer)
-
+import json
 
 
 

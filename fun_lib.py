@@ -1,5 +1,6 @@
 # import numpy as np
 import random
+import dimod
 
 
 class Proxytree():
@@ -293,3 +294,81 @@ def print_section(section_name: str):
     )
 
 
+def print_model_structure(name: str, model: dimod.ConstrainedQuadraticModel, 
+        columns = 10):
+    '''
+    Simple function to print cqm model structure.
+
+    Args:
+        name (str): name of the cqm model
+        model (ConstrainedQuadraticModel): CQM
+        columns (int, optional, default = 10): print columns for 
+        dictionary
+    '''
+    print(
+        f"\n# {name.upper()} STRUCTURE #"
+        f"\nLinear Variables:       {model.num_variables()}"
+        f"\nQuadratic Variables:    {model.num_quadratic_variables()}"
+        f"\nBiases:                 {model.num_biases()}"
+        f"\nConstraints:            {model.num_constraints()}"
+        f"\nSoft Constraints:       {model.num_soft_constraints()}"
+    )
+
+    printer = "Variables Dictionary:\n"
+    cols = 0
+    for i in model.variables:
+        printer += str(i)+"\t"
+        if cols == columns:
+            printer += "\n"
+            cols = 0
+    print(printer)
+    
+    printer = "Constraints Dictionary:\n"
+    cols = 0
+    for i in model.constraints:
+        printer += str(i)+"\t"
+        cols += 1
+        if cols == columns:
+            printer += "\n"
+            cols = 0
+    print(printer)
+
+
+
+def print_cqm_extrainfo(sample: set, infoset: set, problem_label: str,
+            save = True, columns = 10):
+    '''
+    '''
+    zeroprinter = "\n# VARIABLES OFF #\n"
+    activeprinter = "\n# VARIABLES ON #\n"
+    zerocols, activecols = 0, 0
+    for name, value in sample.items():
+        if value == 0.0:
+            zeroprinter += f"{name}\t"
+            zerocols += 1
+        elif value == 1.0:
+            activeprinter += f"{name}\t"
+            activecols += 1
+        else:
+            activeprinter += f"{name}: {value}\t"
+            activecols += 1
+        if zerocols == columns:
+            zeroprinter += "\n"
+            zerocols = 0
+        if activecols == columns:
+            activeprinter += "\n"
+            activecols = 0
+
+    zeroprinter+="\n"
+    activeprinter+="\n"
+    print(zeroprinter + activeprinter)
+
+    if save:
+        with open((f"{problem_label}_info.txt"), "w") as fp:
+            json.dump(infoset, fp)
+            print(f"{problem_label} info updated!")
+
+    infoprinter = "\n# EXTRA INFO #\n"
+    for name, value in infoset.items():
+        infoprinter += f"{name}: {value}\n"
+    print(infoprinter+"\n")

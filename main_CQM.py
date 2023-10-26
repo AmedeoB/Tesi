@@ -15,7 +15,7 @@ import dimod
 
 # CUSTOM
 import models
-from fun_lib import print_section, Proxytree, Proxymanager
+from fun_lib import *
 
 # TESTING
 from test_functions import *
@@ -66,9 +66,10 @@ if DEBUG:
 # Solve
 if DEBUG:   print("VM Save dictionary: ", proxymanager.SAVE_DICT)
 if proxymanager.SAVE_DICT:
-    vm_cqm_solution, vm_cqm_time = models.cqm_solver(vm_cqm, "vm_model", save = True)
+    vm_cqm_solution, vm_cqm_info = models.detailed_cqm_solver(vm_cqm, "vm_model", save = True)
 else:
-    vm_cqm_solution, vm_cqm_time = models.cqm_solver(vm_cqm, "vm_model")
+    vm_cqm_solution, vm_cqm_info = models.detailed_cqm_solver(vm_cqm, "vm_model")
+if DEBUG:   print_cqm_extrainfo(vm_cqm_solution, vm_cqm_info, "vm_model")
 
 
 
@@ -90,7 +91,6 @@ if DEBUG:
     print_model_structure("path model", path_cqm)
 
 
-
 ####################
 #    CQM Solver    #
 ####################
@@ -98,6 +98,7 @@ if DEBUG:
 # Solve
 if DEBUG:   print("PATH Save Dictionary: ", proxymanager.SAVE_DICT)
 if proxymanager.SAVE_DICT:
-    path_cqm_solution, path_cqm_time = models.cqm_solver(path_cqm, "path_model", save = True)
+    path_cqm_solution, path_cqm_info = models.detailed_cqm_solver(path_cqm, "path_model", save = True)
 else:
-    path_cqm_solution, path_cqm_time = models.cqm_solver(path_cqm, "path_model")
+    path_cqm_solution, path_cqm_info = models.detailed_cqm_solver(path_cqm, "path_model")
+if DEBUG:   print_cqm_extrainfo(path_cqm_solution, path_cqm_info, "path_model")

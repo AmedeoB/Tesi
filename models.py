@@ -127,6 +127,66 @@ def cqm_solver(cqm_problem: dimod.ConstrainedQuadraticModel, problem_label: str,
 
     return (best_solution, exec_time)
 
+def detailed_cqm_solver(cqm_problem: dimod.ConstrainedQuadraticModel, problem_label: str, 
+            save = False):
+    '''
+    Solves the CQM problem using a CQM Hybrid Solver and returns
+    the results.
+
+    Args:
+        - cqm_problem (ConstrainedQuadraticModel): the BQM to 
+        solve
+        - problem_label (str): the problem label
+        - save (bool, optional, default=False): save option
+        for the dictionary
+
+    Returns:
+        - Tuple: containing the solution sample and execution info
+    '''
+
+    # Sampler
+    sampler = dwave.system.LeapHybridCQMSampler()
+
+    # Results
+    sampleset = sampler.sample_cqm(cqm_problem, label = problem_label)
+
+    # Exec time & Info
+    problem_info = sampleset.info
+    exec_time = problem_info.get('run_time')
+
+    # Extract feasible solution
+    feasible_sampleset = sampleset.filter(lambda sample: sample.is_feasible)
+
+    # Extract best solution and energy
+    best_solution = feasible_sampleset.first[0]
+    energy = feasible_sampleset.first[1]
+
+    # Save best solution
+    if save:
+        with open((f"cqm_dict_{problem_label}.txt"), "w") as fp:
+            json.dump(best_solution, fp)
+            print(f"{problem_label} solution updated!")
+
+    # Print
+    print(
+        f"# CQM SOLUTION #"
+        f"\nCQM EXEC TIME:  {exec_time} micros"
+        f"\nCQM ENERGY:     {energy}"
+    )
+
+    # # Extract variables
+    # print("\n## CQM Variables ##")
+    # last_char = ""
+    # for var, value in best_solution.items():
+    #     if last_char != var[0]:         # Var separator
+    #         print(end="\n")
+    #     if value != 0.0:                # Nonzero var printer
+    #         print(var, value, sep = ": ",end= " | ")
+    #     last_char = var[0]          # Update last char to separate vars
+    # print(end= "\n")
+    
+
+    return (best_solution, problem_info)
 
 
 def bqm_solver(bqm_problem: dimod.BinaryQuadraticModel, problem_label: str, 
