@@ -254,6 +254,43 @@ class Proxymanager():
 
 
 
+class CQMmanager():
+    '''
+    A class to manage all main_CQM constant
+
+    Args:
+        - save_solution_vm (bool, optional, default=False): save
+            vm assignment solution
+        - save_info_vm (bool, optional, default=False): save 
+            vm assignment info
+        - load_solution (bool, optional, default=False): load
+            vm assignment solution from file
+        - save_solution_path (bool, optional, default=False): save 
+            path planner solution
+        - save_info_path (bool, optional, default=False): save 
+            path planner info
+    '''
+    def __init__(self, save_solution_vm = False, save_info_vm = False, 
+        load_solution = False, save_solution_path = False, save_info_path = False):
+        self.SAVE_VM_SOL = save_solution_vm
+        self.SAVE_VM_INFO = save_info_vm
+        self.LOAD_SOL = load_solution
+        self.SAVE_PATH_SOL = save_solution_path
+        self.SAVE_PATH_INFO = save_info_path
+    
+    def print_manager(self):
+        print(
+            f"# CQM Manager Structure #"
+            f"\nSave VM Solution:   {self.SAVE_VM_SOL}"
+            f"\nSave VM Info:       {self.SAVE_VM_INFO}"
+            f"\nLoad VM Solution:   {self.LOAD_SOL}"
+            f"\nSave PATH Solution: {self.SAVE_PATH_SOL}"
+            f"\nSave PATH Info:     {self.SAVE_PATH_INFO}"
+        )
+        
+
+
+
 def get_nodes(l, dictionary):
     '''
     A function that returns a tuple (n1,n2) containing
@@ -335,8 +372,8 @@ def print_model_structure(name: str, model: dimod.ConstrainedQuadraticModel,
 
 
 
-def print_cqm_extrainfo(sample: set, infoset: set, problem_label: str,
-            save = True, columns = 10):
+def print_cqm_extrainfo(sample: set, infoset: set, problem_label: str, 
+            columns = 10):
     '''
     '''
     zeroprinter = "\n# VARIABLES OFF #\n"
@@ -358,15 +395,9 @@ def print_cqm_extrainfo(sample: set, infoset: set, problem_label: str,
         if activecols == columns:
             activeprinter += "\n"
             activecols = 0
-
     zeroprinter+="\n"
     activeprinter+="\n"
     print(zeroprinter + activeprinter)
-
-    if save:
-        with open((f"{problem_label}_info.txt"), "w") as fp:
-            json.dump(infoset, fp)
-            print(f"{problem_label} info updated!")
 
     infoprinter = "\n# EXTRA INFO #\n"
     for name, value in infoset.items():

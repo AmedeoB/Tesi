@@ -2,10 +2,10 @@ DEBUG = True
 
 '''
 TODO
-    - nuovo proxymanager solo per cqm
-    - nuovo cqm_solver con una migliore analisi del risultato
-    - move print functions to fun lib
-    - make full import of fun lib
+    X nuovo proxymanager solo per cqm
+    X nuovo cqm_solver con una migliore analisi del risultato
+    X move print functions to fun lib
+    X make full import of fun lib
 '''
 
 
@@ -32,18 +32,17 @@ proxytree = Proxytree(
                 # random_tree = True
             )
 
-proxymanager = Proxymanager(
-                proxytree, 
-                # save_cqm_dict = True, 
-                load_cqm_dict = True, 
-                # time_mul_vm = 1,
-                # time_mul_path = 1,
-                # lag_mul_vm = 10, 
-                # lag_mul_path = 10
+manager = CQMmanager(
+                # save_solution_vm = True, 
+                # save_info_vm = True, 
+                # load_solution = True, 
+                # save_solution_path = True, 
+                # save_info_path = True
             )
 
 # Print Tree Structure
 proxytree.print_tree()
+if DEBUG:   manager.print_manager()
 
 
 # ###################################################################
@@ -56,19 +55,16 @@ vm_cqm = dimod.ConstrainedQuadraticModel()
 # Variables & Constraints
 models.vm_model(proxytree, vm_cqm)
 
-if DEBUG:
-    print_model_structure("vm model", vm_cqm)
+if DEBUG: print_model_structure("vm model", vm_cqm)
 
 ####################
 #    CQM Solver    #
 ####################
 
 # Solve
-if DEBUG:   print("VM Save dictionary: ", proxymanager.SAVE_DICT)
-if proxymanager.SAVE_DICT:
-    vm_cqm_solution, vm_cqm_info = models.detailed_cqm_solver(vm_cqm, "vm_model", save = True)
-else:
-    vm_cqm_solution, vm_cqm_info = models.detailed_cqm_solver(vm_cqm, "vm_model")
+vm_cqm_solution, vm_cqm_info = models.detailed_cqm_solver(vm_cqm, "vm_model", 
+                    save_solution = manager.SAVE_VM_SOL, save_info= manager.SAVE_VM_INFO)
+
 if DEBUG:   print_cqm_extrainfo(vm_cqm_solution, vm_cqm_info, "vm_model")
 
 
@@ -81,14 +77,10 @@ print_section("CQM Path Model")
 # Create problem
 path_cqm = dimod.ConstrainedQuadraticModel()
 # Variables & Constraints
-if DEBUG:   print("PATH Load Dictionary: ", proxymanager.LOAD_DICT)
-if proxymanager.LOAD_DICT:
-    models.path_model(proxytree, path_cqm, load = True)
-else:
-    models.path_model(proxytree, path_cqm, vm_solution = vm_cqm_solution)
+models.path_model(proxytree, path_cqm, vm_solution = vm_cqm_solution, 
+            load = manager.LOAD_SOL)
 
-if DEBUG:
-    print_model_structure("path model", path_cqm)
+if DEBUG: print_model_structure("path model", path_cqm)
 
 
 ####################
@@ -96,9 +88,7 @@ if DEBUG:
 ####################
 
 # Solve
-if DEBUG:   print("PATH Save Dictionary: ", proxymanager.SAVE_DICT)
-if proxymanager.SAVE_DICT:
-    path_cqm_solution, path_cqm_info = models.detailed_cqm_solver(path_cqm, "path_model", save = True)
-else:
-    path_cqm_solution, path_cqm_info = models.detailed_cqm_solver(path_cqm, "path_model")
+path_cqm_solution, path_cqm_info = models.detailed_cqm_solver(path_cqm, "path_model", 
+                    save_solution = manager.SAVE_PATH_SOL, save_info= manager.SAVE_PATH_INFO)
+
 if DEBUG:   print_cqm_extrainfo(path_cqm_solution, path_cqm_info, "path_model")

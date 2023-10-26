@@ -128,7 +128,7 @@ def cqm_solver(cqm_problem: dimod.ConstrainedQuadraticModel, problem_label: str,
     return (best_solution, exec_time)
 
 def detailed_cqm_solver(cqm_problem: dimod.ConstrainedQuadraticModel, problem_label: str, 
-            save = False):
+            save_solution = False, save_info = False):
     '''
     Solves the CQM problem using a CQM Hybrid Solver and returns
     the results.
@@ -137,8 +137,10 @@ def detailed_cqm_solver(cqm_problem: dimod.ConstrainedQuadraticModel, problem_la
         - cqm_problem (ConstrainedQuadraticModel): the BQM to 
         solve
         - problem_label (str): the problem label
-        - save (bool, optional, default=False): save option
-        for the dictionary
+        - save_solution (bool, optional, default=False): save option
+        for the solution dictionary
+        - save_info (bool, optional, default=False): save option
+        for the info dictionary
 
     Returns:
         - Tuple: containing the solution sample and execution info
@@ -161,11 +163,16 @@ def detailed_cqm_solver(cqm_problem: dimod.ConstrainedQuadraticModel, problem_la
     best_solution = feasible_sampleset.first[0]
     energy = feasible_sampleset.first[1]
 
-    # Save best solution
-    if save:
-        with open((f"cqm_dict_{problem_label}.txt"), "w") as fp:
+    # Save best solution & info
+    if save_solution:
+        with open((f"{problem_label}_solution.txt"), "w") as fp:
             json.dump(best_solution, fp)
             print(f"{problem_label} solution updated!")
+    
+    if save_info:
+        with open((f"{problem_label}_info.txt"), "w") as fp:
+            json.dump(problem_info, fp)
+            print(f"{problem_label} info updated!")
 
     # Print
     print(
@@ -450,7 +457,7 @@ def path_model(proxytree: fn.Proxytree, cqm: dimod.ConstrainedQuadraticModel,
 
     # Load best solution from file
     if load:
-            with open("cqm_dict_vm_model.txt") as fp:
+            with open("vm_model_solution.txt") as fp:
                 vm_solution = json.loads(fp.read())
                 print("VM-CQM Dictionary loaded!")
                 print(vm_solution)
