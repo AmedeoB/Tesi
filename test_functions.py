@@ -2,7 +2,19 @@ import dimod
 import hybrid
 import dwave.system as system
 import json
-
+def testwriter():
+    testset = {
+        "brand": "Ford",
+        "model": "Mustang",
+        "year": 1964
+    }
+    
+    with open((f"test.txt"), "w") as fp:
+            json.dump(testset, fp)
+    with open((f"CQM LOGS/test.txt"), "w") as fp:
+            json.dump(testset, fp)
+    with open((f"CQM LOGS/test/test.txt"), "w") as fp:
+            json.dump(testset, fp)
 
 
 def print_decomposition(decomposer_name: str, subproblem):
@@ -134,3 +146,5 @@ def test_decomposed_solver(bqm: dimod.BinaryQuadraticModel):
     # Extract infos
     print("\n\n## Decomposer BQM Extra Info ##")
     print(final_state.info)
+
+testwriter()
