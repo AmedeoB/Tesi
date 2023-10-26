@@ -326,7 +326,7 @@ def print_section(section_name: str):
     '''
     
     print(
-        f"####################### {section_name.upper()} ###########################"
+        f"\n####################### {section_name.upper()} ###########################"
         f"\n"
     )
 
@@ -355,6 +355,7 @@ def print_model_structure(name: str, model: dimod.ConstrainedQuadraticModel,
     cols = 0
     for i in model.variables:
         printer += str(i)+"\t"
+        cols += 1
         if cols == columns:
             printer += "\n"
             cols = 0

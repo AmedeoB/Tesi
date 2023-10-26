@@ -2,10 +2,10 @@ DEBUG = True
 
 '''
 TODO
-    X nuovo proxymanager solo per cqm
-    X nuovo cqm_solver con una migliore analisi del risultato
-    X move print functions to fun lib
-    X make full import of fun lib
+    - spostare saver direttamente alle cartelle in CQM LOGS in base
+        alla depth
+    - spostare loader direttamente alle cartelle in CQM LOGS in base
+        alla depth
 '''
 
 
@@ -23,7 +23,7 @@ from test_functions import *
 """--------------------------------------------------"""
 
 proxytree = Proxytree(
-                depth = 3, 
+                depth = 5, 
                 server_c = 10, 
                 link_c = 5, 
                 idle_pc = 10, 
@@ -33,11 +33,11 @@ proxytree = Proxytree(
             )
 
 manager = CQMmanager(
-                # save_solution_vm = True, 
-                # save_info_vm = True, 
+                save_solution_vm = True, 
+                save_info_vm = True, 
                 # load_solution = True, 
-                # save_solution_path = True, 
-                # save_info_path = True
+                save_solution_path = True, 
+                save_info_path = True
             )
 
 # Print Tree Structure

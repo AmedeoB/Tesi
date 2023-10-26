@@ -176,7 +176,7 @@ def detailed_cqm_solver(cqm_problem: dimod.ConstrainedQuadraticModel, problem_la
 
     # Print
     print(
-        f"# CQM SOLUTION #"
+        f"\n# CQM SOLUTION #"
         f"\nCQM EXEC TIME:  {exec_time} micros"
         f"\nCQM ENERGY:     {energy}"
     )
