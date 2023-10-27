@@ -8,14 +8,13 @@ def testwriter():
         "model": "Mustang",
         "year": 1964
     }
-    
-    with open((f"test.txt"), "w") as fp:
+    depth=4
+    name="test"
+    with open((f"CQM LOGS/depth_{depth}/{name}.txt"), "w") as fp:
             json.dump(testset, fp)
-    with open((f"CQM LOGS/test.txt"), "w") as fp:
-            json.dump(testset, fp)
-    with open((f"CQM LOGS/test/test.txt"), "w") as fp:
-            json.dump(testset, fp)
-
+    with open(f"CQM LOGS/depth_{depth}/{name}.txt") as fp:
+                dictionary = json.loads(fp.read())
+                print(dictionary)
 
 def print_decomposition(decomposer_name: str, subproblem):
     print("\n\n")

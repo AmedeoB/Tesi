@@ -1,9 +1,0 @@
-reset;
-option solver gurobi;
-model VM.MOD;
-data VM.DAT;
-solve;
-
-display energy;
-display server_status;
-display vm_status;

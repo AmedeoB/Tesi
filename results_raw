@@ -1,0 +1,54 @@
+CONFRONTO DEPTH 3 & 5
+    DEPTH 3
+        VM:     "qpu_access_time": 31842    "charge_time": 5000000      "run_time": 5065853
+        PATH:   "qpu_access_time": 16008    "charge_time": 5000000      "run_time": 5147975
+
+    DEPTH 4
+        VM:     "qpu_access_time": 32037    "charge_time": 5000000      "run_time": 5124798
+        PATH:   "qpu_access_time": 16039    "charge_time": 5000000      "run_time": 5002071
+
+    DEPTH 5
+        VM:     "qpu_access_time": 32116    "charge_time": 5000000      "run_time": 5685434
+        PATH:   "qpu_access_time": 16056    "charge_time": 5000000      "run_time": 10808853
+
+    DEPTH 6
+        VM:     "qpu_access_time": 32043, "charge_time": 5000000, "run_time": 5173820
+        PATH:   "qpu_access_time": 16054, "charge_time": 11804986, "run_time": 15488662
+
+    DEPTH 7
+        VM:     "qpu_access_time": 16040, "charge_time": 5000000, "run_time": 7676343
+        PATH: 
+
+    DEPTH 8
+        VM: 
+        PATH: 
+
+    DEPTH 9
+        VM: 
+        PATH: 
+
+    DEPTH 10
+        VM: 
+        PATH: 
+        
+    DEPTH 11
+        VM: 
+        PATH: 
+        
+    DEPTH 12
+        VM: 
+        PATH: 
+        
+    DEPTH 13
+        VM: 
+        PATH: 
+        
+    DEPTH 14
+        VM: 
+        PATH: 
+        
+    DEPTH 15
+        VM: 
+        PATH: 
+        
+    

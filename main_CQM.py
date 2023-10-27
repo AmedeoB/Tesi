@@ -1,11 +1,8 @@
-DEBUG = True
+DEBUG = False
 
 '''
 TODO
-    - spostare saver direttamente alle cartelle in CQM LOGS in base
-        alla depth
-    - spostare loader direttamente alle cartelle in CQM LOGS in base
-        alla depth
+    - remove full import from fun_lib and make single imports
 '''
 
 
@@ -23,7 +20,7 @@ from test_functions import *
 """--------------------------------------------------"""
 
 proxytree = Proxytree(
-                depth = 5, 
+                depth = 7, 
                 server_c = 10, 
                 link_c = 5, 
                 idle_pc = 10, 
@@ -63,7 +60,8 @@ if DEBUG: print_model_structure("vm model", vm_cqm)
 
 # Solve
 vm_cqm_solution, vm_cqm_info = models.detailed_cqm_solver(vm_cqm, "vm_model", 
-                    save_solution = manager.SAVE_VM_SOL, save_info= manager.SAVE_VM_INFO)
+                    proxytree.DEPTH, save_solution = manager.SAVE_VM_SOL,
+                    save_info= manager.SAVE_VM_INFO)
 
 if DEBUG:   print_cqm_extrainfo(vm_cqm_solution, vm_cqm_info, "vm_model")
 
@@ -89,6 +87,7 @@ if DEBUG: print_model_structure("path model", path_cqm)
 
 # Solve
 path_cqm_solution, path_cqm_info = models.detailed_cqm_solver(path_cqm, "path_model", 
-                    save_solution = manager.SAVE_PATH_SOL, save_info= manager.SAVE_PATH_INFO)
+                    proxytree.DEPTH, save_solution = manager.SAVE_PATH_SOL,
+                    save_info= manager.SAVE_PATH_INFO)
 
 if DEBUG:   print_cqm_extrainfo(path_cqm_solution, path_cqm_info, "path_model")
