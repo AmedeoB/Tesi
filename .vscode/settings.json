@@ -1,6 +1,58 @@
 {
     "python.pythonPath": "/usr/local/bin/python",
     "editor.semanticHighlighting.enabled": false,
+    "editor.tokenColorCustomizations": {
+        "types": "#34eb9b",
+        "functions": {
+            "fontStyle": "italic",
+            "foreground": "#e2e895"
+        },
+        "numbers": "#89d0db",
+        "keywords": "#89a4f5",
+        "textMateRules": [
+            {
+                "scope": "variable.language",
+                "settings": {
+                    "foreground": "#fcf267"
+                }
+            },
+            {
+                "scope": "variable.parameter",
+                "settings": {
+                    "foreground": "#00ffbf"
+                }
+            },
+            {
+                "scope": "keyword.operator",
+                "settings": {
+                    "foreground": "#e3e3b3"
+                }
+            },
+            {
+                "scope": "keyword.control",
+                "settings": {
+                    "foreground": "#d59dfc"
+                }
+            },
+            {
+                "scope": "constant",
+                "settings": {
+                    "fontStyle": "italic",
+                    "foreground": "#6d65db"
+                }
+            },
+
+            {
+                "scope": "meta.function-call.generic.python",
+                "settings": {
+                    "fontStyle": "italic",
+                    "foreground": "#e2e895"
+                }
+            },
+        ],
+        "comments": "#68be65",
+        "strings": "#f1a848",
+},
 
     
 }
