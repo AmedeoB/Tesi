@@ -21,6 +21,14 @@ proxytree = Proxytree(
                 # random_tree = True
             )
 
+
+
+
+
+############
+# VM MODEL #
+#####################################################################################################
+
 # Create model
 model = CpoModel()
 
@@ -83,8 +91,15 @@ print(
     f"\nEnergy: {solution.get_objective_value()}"
     f"\nSolve Time: {solution.get_solve_time()}"
 )
-solution.a
+
 print("\n# VARIABLES \n")
 for var in solution.get_all_var_solutions():
     if var.get_value() != 0:
         print(f"{var.get_name()}: {var.get_value()}")
+
+#####################################################################################################
+
+
+##############
+# PATH MODEL #
+#####################################################################################################
