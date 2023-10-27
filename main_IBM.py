@@ -26,12 +26,12 @@ model = CpoModel()
 
 # Create column index of each queen
 server_status = [
-    model.binary_var(name= "s{}".format(s))
+    model.binary_var(name= "s{}".format(s)) # pylint: disable=no-member
     for s in range(proxytree.SERVERS)
 ]
 vm_status = [
     [
-        model.binary_var(name= "vm{}-s{}".format(vm, s)) 
+        model.binary_var(name= "vm{}-s{}".format(vm, s)) # pylint: disable=no-member
         for vm in range(proxytree.VMS) 
     ] for s in range(proxytree.SERVERS)
 ]
@@ -83,7 +83,7 @@ print(
     f"\nEnergy: {solution.get_objective_value()}"
     f"\nSolve Time: {solution.get_solve_time()}"
 )
-
+solution.a
 print("\n# VARIABLES \n")
 for var in solution.get_all_var_solutions():
     if var.get_value() != 0:
