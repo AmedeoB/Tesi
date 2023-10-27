@@ -3,6 +3,7 @@ DEBUG = False
 '''
 TODO
     - remove full import from fun_lib and make single imports
+    - save energy levels
 '''
 
 
