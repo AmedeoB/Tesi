@@ -20,7 +20,7 @@ from test_functions import *
 """--------------------------------------------------"""
 
 proxytree = Proxytree(
-                depth = 7, 
+                depth = 3, 
                 server_c = 10, 
                 link_c = 5, 
                 idle_pc = 10, 
@@ -54,11 +54,10 @@ models.vm_model(proxytree, vm_cqm)
 
 if DEBUG: print_model_structure("vm model", vm_cqm)
 
-####################
-#    CQM Solver    #
-####################
 
-# Solve
+#######################
+#    Hybrid Solver    #
+#######################
 vm_cqm_solution, vm_cqm_info = models.detailed_cqm_solver(vm_cqm, "vm_model", 
                     proxytree.DEPTH, save_solution = manager.SAVE_VM_SOL,
                     save_info= manager.SAVE_VM_INFO)
@@ -81,11 +80,9 @@ models.path_model(proxytree, path_cqm, vm_solution = vm_cqm_solution,
 if DEBUG: print_model_structure("path model", path_cqm)
 
 
-####################
-#    CQM Solver    #
-####################
-
-# Solve
+#######################
+#    Hybrid Solver    #
+#######################
 path_cqm_solution, path_cqm_info = models.detailed_cqm_solver(path_cqm, "path_model", 
                     proxytree.DEPTH, save_solution = manager.SAVE_PATH_SOL,
                     save_info= manager.SAVE_PATH_INFO)

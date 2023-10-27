@@ -127,6 +127,8 @@ def cqm_solver(cqm_problem: dimod.ConstrainedQuadraticModel, problem_label: str,
 
     return (best_solution, exec_time)
 
+
+
 def detailed_cqm_solver(cqm_problem: dimod.ConstrainedQuadraticModel, problem_label: str, 
             depth: int, save_solution = False, save_info = False):
     '''
@@ -180,21 +182,10 @@ def detailed_cqm_solver(cqm_problem: dimod.ConstrainedQuadraticModel, problem_la
         f"\n# CQM SOLUTION #"
         f"\nCQM EXEC TIME:  {exec_time} micros"
         f"\nCQM ENERGY:     {energy}"
-    )
-
-    # # Extract variables
-    # print("\n## CQM Variables ##")
-    # last_char = ""
-    # for var, value in best_solution.items():
-    #     if last_char != var[0]:         # Var separator
-    #         print(end="\n")
-    #     if value != 0.0:                # Nonzero var printer
-    #         print(var, value, sep = ": ",end= " | ")
-    #     last_char = var[0]          # Update last char to separate vars
-    # print(end= "\n")
-    
+    )    
 
     return (best_solution, problem_info)
+
 
 
 def bqm_solver(bqm_problem: dimod.BinaryQuadraticModel, problem_label: str, 
