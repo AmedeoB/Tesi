@@ -2,19 +2,30 @@ import dimod
 import hybrid
 import dwave.system as system
 import json
-def testwriter():
-    testset = {
-        "brand": "Ford",
-        "model": "Mustang",
-        "year": 1964
-    }
-    depth=4
-    name="test"
-    with open((f"CQM LOGS/depth_{depth}/{name}.txt"), "w") as fp:
-            json.dump(testset, fp)
-    with open(f"CQM LOGS/depth_{depth}/{name}.txt") as fp:
-                dictionary = json.loads(fp.read())
-                print(dictionary)
+from os.path import exists
+
+def dict_filter(pair):
+    key, _ = pair
+    return "time" in key 
+
+def info_writer(dictionary: dict, path: str):
+   
+    writeheads = False
+    if not exists(path): writeheads = True
+    
+    with open(path,"a") as file:
+        # Keys
+        if writeheads:
+            for k in dictionary.keys():
+                file.write(f"{k}\t")
+            file.write(f"\n")
+        
+        # Values
+        for v in dictionary.values():
+            file.write(f"{v}\t")
+        file.write(f"\n")
+
+
 
 def print_decomposition(decomposer_name: str, subproblem):
     print("\n\n")
@@ -110,7 +121,7 @@ def test_decomposed_solver(bqm: dimod.BinaryQuadraticModel):
 
     merger = hybrid.GreedyPathMerge()
 
-    qpu_branch = (decomposer | subsampler | composer) | hybrid.TrackMin()
+    qpu_branch = (decomposer | subsampler | composer) | hybrid.TrackMin()   # pylint: disable=unsupported-binary-operation
     parallel_branches = hybrid.Race(
                             classic_branch,
                             qpu_branch
@@ -145,5 +156,3 @@ def test_decomposed_solver(bqm: dimod.BinaryQuadraticModel):
     # Extract infos
     print("\n\n## Decomposer BQM Extra Info ##")
     print(final_state.info)
-
-testwriter()

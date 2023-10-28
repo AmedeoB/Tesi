@@ -1,6 +1,8 @@
 '''
 TODO
     - remove full import from fun_lib and make single imports
+    - academia version for depth 5+
+    - move save function from test lib to funlib
 '''
 """--------------------------------- IMPORTS ------------------------------------"""
 # DOCPLEX
@@ -13,7 +15,7 @@ from fun_lib_IBM import *
 """------------------------------------------------------------------------------"""
 
 proxytree = Proxytree(
-                depth = 3, 
+                depth = 5, 
                 server_c = 10, 
                 link_c = 5, 
                 idle_pc = 10, 
@@ -21,7 +23,7 @@ proxytree = Proxytree(
                 datar_avg = 4,
                 # random_tree = True
             )
-
+ITERATIONS = 10
 
 
 
@@ -35,7 +37,8 @@ vm_model = CpoModel()
 vm_cplex_model(vm_model, proxytree)        
 
 # Solve
-vm_solution = cplex_solver(vm_model)
+for _ in range(ITERATIONS):
+    vm_solution = cplex_solver(vm_model, proxytree.DEPTH, "vm_model", save_solution=True)
 
 #####################################################################################################
 
@@ -49,4 +52,5 @@ path_model = CpoModel()
 path_cplex_model(path_model, proxytree, vm_solution)        
 
 # Solve
-path_solution = cplex_solver(path_model)
+for _ in range(ITERATIONS):
+    path_solution = cplex_solver(path_model, proxytree.DEPTH, "path_model", save_solution=True)

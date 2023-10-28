@@ -37,6 +37,9 @@ import hybrid
 import fun_lib as fn
 import json
 
+# TEST
+from test_functions import *
+
 
 def check_bqm_feasible(bqm_solution: dict, cqm_model: dimod.ConstrainedQuadraticModel, 
             inverter: dimod.constrained.CQMToBQMInverter):
@@ -177,6 +180,15 @@ def detailed_cqm_solver(cqm_problem: dimod.ConstrainedQuadraticModel, problem_la
             json.dump(problem_info, fp)
             print(f"{problem_label} info updated!")
 
+    # TEST ##############################
+    new_dict = dict(filter(dict_filter, problem_info.items()))
+    for k,v in new_dict.items():
+        new_dict[k] = v / 10**6     # Convert timers to seconds for better readability
+    new_dict["energy"] = energy
+    path = f"CQM LOGS/depth_{depth}/{problem_label}_infotest.txt"
+    info_writer(new_dict, path)
+    #####################################
+
     # Print
     print(
         f"\n# CQM SOLUTION #"
@@ -307,8 +319,8 @@ def decomposed_solver(bqm_problem: dimod.BinaryQuadraticModel, problem_label: st
     # merger = hybrid.GreedyPathMerge()    
 
     # Branch
-    qpu_branch = (decomposer | subsampler | composer) | hybrid.TrackMin(output= True)
-    random_branch = (decomposer_random | subsampler | composer) | hybrid.TrackMin(output= True)
+    qpu_branch = (decomposer | subsampler | composer) | hybrid.TrackMin(output= True)   # pylint: disable=unsupported-binary-operation
+    random_branch = (decomposer_random | subsampler | composer) | hybrid.TrackMin(output= True) # pylint: disable=unsupported-binary-operation
     parallel_branches = hybrid.RacingBranches(
                     classic_branch, 
                     qpu_branch,

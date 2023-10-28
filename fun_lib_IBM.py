@@ -2,8 +2,12 @@
 from docplex.cp.model import CpoModel, minimize
 from docplex.cp.solution import CpoSolveResult
 
+# OTHER
+import json
+
 # CUSTOM
 import fun_lib as fn
+from test_functions import *
 
 
 def to_dictionary(solution: CpoSolveResult):
@@ -17,11 +21,11 @@ def to_dictionary(solution: CpoSolveResult):
     return sorted_dictionary
 
 
-def cplex_solver(model: CpoModel, time_limit = 10):
+def cplex_solver(model: CpoModel, depth: int, problem_label: str, 
+        time_limit = 10, save_solution = False):
     
     print("Solving...")
     solution = model.solve(TimeLimit= time_limit)
-    # solution.print_solution()
 
     print(
         f"\n# SOLUTION #\n"
@@ -35,6 +39,19 @@ def cplex_solver(model: CpoModel, time_limit = 10):
     for key, val in sol_dictionary.items():
         if val != 0:
             print(f"{key}: {val}")
+
+    # Save solution
+    if save_solution:
+        with open((f"IBM LOGS/depth_{depth}/{problem_label}_solution.txt"), "w") as fp:
+            json.dump(sol_dictionary, fp)
+            print(f"{problem_label} solution updated!")
+    
+    # Save values
+    dictionary = {}
+    dictionary["status"] = solution.get_solve_status() 
+    dictionary["time"] = solution.get_solve_time()
+    dictionary["energy"] = solution.get_objective_value()
+    info_writer(dictionary, f"IBM LOGS/depth_{depth}/{problem_label}_info.txt")
 
 
     return sol_dictionary
