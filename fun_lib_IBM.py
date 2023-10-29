@@ -22,10 +22,12 @@ def to_dictionary(solution: CpoSolveResult):
 
 
 def cplex_solver(model: CpoModel, depth: int, problem_label: str, 
-        time_limit = 10, save_solution = False):
+        time_limit = 30, save_solution = False):
     
     print("Solving...")
-    solution = model.solve(TimeLimit= time_limit)
+    solution = model.solve(
+                    TimeLimit= time_limit
+                )
 
     print(
         f"\n# SOLUTION #\n"
@@ -52,6 +54,7 @@ def cplex_solver(model: CpoModel, depth: int, problem_label: str,
     dictionary["time"] = solution.get_solve_time()
     dictionary["energy"] = solution.get_objective_value()
     info_writer(dictionary, f"IBM LOGS/depth_{depth}/{problem_label}_info.txt")
+
 
 
     return sol_dictionary

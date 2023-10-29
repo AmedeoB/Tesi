@@ -3,6 +3,9 @@ TODO
     - remove full import from fun_lib and make single imports
     - academia version for depth 5+
     - move save function from test lib to funlib
+    - find way to set custom automatic timer and others
+        stoppers
+    - install python 3.10
 '''
 """--------------------------------- IMPORTS ------------------------------------"""
 # DOCPLEX
@@ -15,7 +18,7 @@ from fun_lib_IBM import *
 """------------------------------------------------------------------------------"""
 
 proxytree = Proxytree(
-                depth = 5, 
+                depth = 12, 
                 server_c = 10, 
                 link_c = 5, 
                 idle_pc = 10, 

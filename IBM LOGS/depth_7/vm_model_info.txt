@@ -1,0 +1,11 @@
+status	time	energy	
+Feasible	10.135	9856	
+Feasible	10.144	9856	
+Feasible	10.176	9856	
+Feasible	10.174	9856	
+Feasible	10.181	9856	
+Feasible	10.179	9856	
+Feasible	10.11	9856	
+Feasible	10.184	9856	
+Feasible	10.18	9856	
+Feasible	10.182	9856	
