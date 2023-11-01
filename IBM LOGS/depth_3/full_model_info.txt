@@ -1,0 +1,2 @@
+status	time	energy	
+Optimal	3.815	364	

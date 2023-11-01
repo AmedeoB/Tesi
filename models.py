@@ -589,37 +589,5 @@ def path_model(proxytree: fn.Proxytree, cqm: dimod.ConstrainedQuadraticModel,
         #         == 0, label="C19-N"+str(l))
 
 
-
-
-
-
-# ###################################################################################
-#                         QUANTUM SAMPLER CODE
-# ###################################################################################
-# print("\n\n\n")
-# print("####################### BQM Full Quantum Path Model ###########################")
-# print("\n")
-# Create Sampler
-# fq_bqm_sampler = dwave.system.EmbeddingComposite(dwave.system.DWaveSampler())
-
-# # Sample Results
-# fq_bqm_samples = fq_bqm_sampler.sample(path_bqm, num_reads=100)
-
-# # Exec Time
-# fq_bqm_time = fq_bqm_samples.info.get('run_time')
-# print("BQM TIME: ", fq_bqm_time, " micros")
-
-# # Extract feasible solution
-# # bqm_feasibles = bqm_samples.filter(lambda sample: sample.is_feasible)
-
-# # Extract best solution
-# # bqm_best = bqm_feasibles.first
-# fq_bqm_best = fq_bqm_samples.first
-
-# # Energy
-# print("Full Quantum BQM ENERGY: ", str(fq_bqm_best[1]))
-
-# # Extract variables
-# for i in fq_bqm_best[0]:
-#     if fq_bqm_best[0].get(i) != 0.0:
-#         print(i, fq_bqm_best[0].get(i),sep = ": ",end= " | ")
+def full_model(proxytree: fn.Proxytree, cqm: dimod.ConstrainedQuadraticModel):
+    

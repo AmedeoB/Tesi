@@ -1,0 +1,2 @@
+status	time	energy		
+Feasible	4.956	952	

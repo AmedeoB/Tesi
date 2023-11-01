@@ -1,6 +1,7 @@
 # DOCPLEX
 from docplex.cp.model import CpoModel, minimize
 from docplex.cp.solution import CpoSolveResult
+from docplex.cp.solver.solver_listener import AutoStopListener
 
 # OTHER
 import json
@@ -8,6 +9,8 @@ import json
 # CUSTOM
 import fun_lib as fn
 from test_functions import *
+
+
 
 
 def to_dictionary(solution: CpoSolveResult):
@@ -21,12 +24,18 @@ def to_dictionary(solution: CpoSolveResult):
     return sorted_dictionary
 
 
-def cplex_solver(model: CpoModel, depth: int, problem_label: str, 
-        time_limit = 30, save_solution = False):
+def cplex_solver(model: CpoModel, depth: int, problem_label: str, save_solution = False):
     
+    # Params
+    TIME= 300
+    SOLS= 10
+
+    model.add_solver_listener(AutoStopListener(qsc_time= 60))
+
     print("Solving...")
     solution = model.solve(
-                    TimeLimit= time_limit
+                    TimeLimit= TIME,
+                    # SolutionLimit= SOLS,
                 )
 
     print(
