@@ -257,10 +257,11 @@ def path_cplex_model(model: CpoModel, tree: fn.Proxytree, vm_solution: dict):
                 for sw in range(tree.SWITCHES)
             )
             + sum(
-                (
-                    tree.dyn_powcons[sw] * flow_path['f' + str(f) + '-n' + str(n) + '-n' + str(sw)] 
-                    + flow_path['f' + str(f) + '-n' + str(sw) + '-n' + str(n)]
-                )
+                    (tree.dyn_powcons[sw] 
+                    * (
+                        flow_path['f' + str(f) + '-n' + str(n) + '-n' + str(sw)] 
+                        + flow_path['f' + str(f) + '-n' + str(sw) + '-n' + str(n)]
+                    ))
                 for n in range(tree.NODES) 
                 for f in range(tree.FLOWS) 
                 for sw in range(tree.SWITCHES) 
@@ -443,10 +444,11 @@ def full_cplex_model(model: CpoModel, tree: fn.Proxytree):
                 for sw in range(tree.SWITCHES)
             )
             + sum(
-                (
-                    tree.dyn_powcons[sw] * flow_path['f' + str(f) + '-n' + str(n) + '-n' + str(sw)] 
-                    + flow_path['f' + str(f) + '-n' + str(sw) + '-n' + str(n)]
-                )
+                    (tree.dyn_powcons[sw] 
+                    * (
+                        flow_path['f' + str(f) + '-n' + str(n) + '-n' + str(sw)] 
+                        + flow_path['f' + str(f) + '-n' + str(sw) + '-n' + str(n)]
+                    ))
                 for n in range(tree.NODES) 
                 for f in range(tree.FLOWS) 
                 for sw in range(tree.SWITCHES) 

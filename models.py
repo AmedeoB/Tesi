@@ -381,7 +381,7 @@ def vm_model(proxytree: fn.Proxytree, cqm: dimod.ConstrainedQuadraticModel):
     Args:
         - proxytree: the tree structure to generate the model
             type: fn.Proxytree
-        - vm_cqm: the CQM to fill
+        - cqm: the CQM to fill
             type: dimod.ConstrainedQuadraticModel
     
     Returns:
@@ -428,9 +428,9 @@ def path_model(proxytree: fn.Proxytree, cqm: dimod.ConstrainedQuadraticModel,
     Args:
         - proxytree: the tree structure to generate the model
             type: fn.Proxytree
-        - path_cqm: the CQM to fill
+        - cqm: the CQM to fill
             type: dimod.ConstrainedQuadraticModel
-        - cqm_solution: the previous VM assignment solution
+        - vm_solution: the previous VM assignment solution
             type: tuple(dict, int)
         - load: boolean var for loading saved results in
         cqm_dict_vm_model.txt
@@ -472,10 +472,17 @@ def path_model(proxytree: fn.Proxytree, cqm: dimod.ConstrainedQuadraticModel,
     # 3 - SUM of switch idle pow cons
     obj3 = dimod.quicksum(switch_status[sw] * proxytree.idle_powcons[sw] for sw in range(proxytree.SWITCHES))
     # 4 - SUM of flow path
-    # obj4 = dimod.quicksum(flow_path['f' + str(f) + '-n' + str(n1) + '-n' + str(n2)] + flow_path['f' + str(f) + '-n' + str(n2) + '-n' + str(n1)]
-                        # for n1 in range(NODES) for n2 in range(NODES) for f in range(FLOWS) if adjancy_list[n1][n2] == 1)
-    obj4 = dimod.quicksum( proxytree.dyn_powcons[sw] * flow_path['f' + str(f) + '-n' + str(n) + '-n' + str(sw)] + flow_path['f' + str(f) + '-n' + str(sw) + '-n' + str(n)]
-                        for n in range(proxytree.NODES) for f in range(proxytree.FLOWS) for sw in range(proxytree.SWITCHES) if proxytree.adjancy_list[n][sw] == 1)
+    obj4 = dimod.quicksum(
+        proxytree.dyn_powcons[sw] 
+        * (
+            flow_path['f' + str(f) + '-n' + str(n) + '-n' + str(sw)] 
+            + flow_path['f' + str(f) + '-n' + str(sw) + '-n' + str(n)]
+        )
+        for n in range(proxytree.NODES) 
+        for f in range(proxytree.FLOWS) 
+        for sw in range(proxytree.SWITCHES) 
+        if proxytree.adjancy_list[n][sw] == 1
+    ) 
     # Total
     cqm.set_objective(obj3 + obj4)
 
@@ -590,4 +597,222 @@ def path_model(proxytree: fn.Proxytree, cqm: dimod.ConstrainedQuadraticModel,
 
 
 def full_model(proxytree: fn.Proxytree, cqm: dimod.ConstrainedQuadraticModel):
+    '''
+    Creates the full optimization model as a Constrained Quadratic Model
+
+    Args:
+        - proxytree: the tree structure to generate the model
+            type: fn.Proxytree
+        - cqm: the CQM to fill
+            type: dimod.ConstrainedQuadraticModel
     
+    Returns:
+        - null
+    '''
+    
+
+    # Variables
+    server_status = [
+        dimod.Binary("s" + str(i)) 
+        for i in range(proxytree.SERVERS)
+    ]
+    vm_status = [
+        [
+            dimod.Binary("vm" + str(i) + "-s" + str(j)) 
+            for i in range(proxytree.VMS)
+        ] for j in range(proxytree.SERVERS)
+    ] 
+    switch_status = [
+        dimod.Binary("sw" + str(i)) 
+        for i in range(proxytree.SWITCHES)
+    ]
+
+    flow_path = {}
+    for f in range(proxytree.FLOWS):
+        for n1 in range(proxytree.NODES):
+            for n2 in range(proxytree.NODES):
+                if proxytree.adjancy_list[n1][n2]:     # Adjancy Condition (lowers variable number)
+                    flow_path['f' + str(f) + '-n' + str(n1) + '-n' + str(n2)] = dimod.Binary("f" + str(f) + "-n" + str(n1) + "-n" + str(n2))
+
+    on = {}
+    for n1 in range(proxytree.NODES):
+        for n2 in range(n1, proxytree.NODES):
+            if proxytree.adjancy_list[n1][n2]:         # Adjancy Condition (lowers variable number)
+                on["on" + str(n1) + "-" + str(n2)] = dimod.Binary("on" + str(n1) + "-" + str(n2))
+
+
+    # Objective
+    # 1
+    obj1 = dimod.quicksum(
+        server_status[s] 
+        * proxytree.idle_powcons[s+proxytree.SWITCHES] 
+        for s in range(proxytree.SERVERS)
+    )
+    # 2
+    obj2 = dimod.quicksum(
+        proxytree.dyn_powcons[s+proxytree.SWITCHES] 
+        * dimod.quicksum(
+            proxytree.cpu_util[vm] 
+            * vm_status[s][vm] 
+            for vm in range(proxytree.VMS)
+        ) for s in range(proxytree.SERVERS)
+    )
+    # 3
+    obj3 = dimod.quicksum(
+        switch_status[sw] 
+        * proxytree.idle_powcons[sw] 
+        for sw in range(proxytree.SWITCHES)
+    )
+    # 4
+    obj4 = dimod.quicksum(
+        proxytree.dyn_powcons[sw] 
+        * (
+            flow_path['f' + str(f) + '-n' + str(n) + '-n' + str(sw)] 
+            + flow_path['f' + str(f) + '-n' + str(sw) + '-n' + str(n)]
+        )
+        for n in range(proxytree.NODES) 
+        for f in range(proxytree.FLOWS) 
+        for sw in range(proxytree.SWITCHES) 
+        if proxytree.adjancy_list[n][sw] == 1
+    )
+    # Total
+    cqm.set_objective(obj1 + obj2 + obj3 + obj4)
+
+
+    # Constraints
+    # (11)     
+    for s in range(proxytree.SERVERS):
+        cqm.add_constraint(
+            dimod.quicksum(
+                proxytree.cpu_util[vm] 
+                * vm_status[s][vm] 
+                for vm in range(proxytree.VMS)
+            ) 
+            - proxytree.server_capacity[s]
+            * server_status[s] 
+            <= 0, 
+            label="C11-N"+str(s)
+        )
+
+    # (12)
+    for vm in range(proxytree.VMS):
+        cqm.add_constraint(
+            dimod.quicksum(
+                vm_status[s][vm] 
+                for s in range(proxytree.SERVERS)
+            ) 
+            == 1, 
+            label="C12-N"+str(vm)
+        )
+        
+    # Constraints
+    # (13)
+    for f in range(proxytree.FLOWS):
+        for s in range(proxytree.SWITCHES, proxytree.SWITCHES + proxytree.SERVERS):           # Start from switches cause nodes are numerated in order -> all switches -> all servers
+               cqm.add_constraint( 
+                    dimod.quicksum( 
+                        flow_path['f' + str(f) + '-n' + str(s) + '-n' + str(sw)] 
+                        for sw in range(proxytree.SWITCHES) 
+                        if proxytree.adjancy_list[s][sw] == 1
+                    )
+                    - vm[proxytree.src_dst[f][0]][s-proxytree.SWITCHES]
+                    <= 0, 
+                    label="C13-N"+str(f*proxytree.SERVERS+s)
+                )
+
+    # (14) 
+    for f in range(proxytree.FLOWS):
+        for s in range(proxytree.SWITCHES, proxytree.SWITCHES + proxytree.SERVERS):
+                cqm.add_constraint( 
+                    dimod.quicksum( 
+                        flow_path['f' + str(f) + '-n' + str(sw) + '-n' + str(s)] 
+                        for sw in range(proxytree.SWITCHES) 
+                        if proxytree.adjancy_list[sw][s] == 1
+                    ) 
+                    - vm[proxytree.src_dst[f][1]][s-proxytree.SWITCHES]
+                    <= 0, 
+                    label="C14-N"+str(f*proxytree.SERVERS+s)
+                ) 
+
+    # (15)     
+    for f in range(proxytree.FLOWS):
+        for s in range(proxytree.SWITCHES, proxytree.SWITCHES + proxytree.SERVERS):
+            cqm.add_constraint( 
+                vm[proxytree.src_dst[f][0]][s-proxytree.SWITCHES]
+                - vm[proxytree.src_dst[f][1]][s-proxytree.SWITCHES]
+                - ( 
+                    dimod.quicksum( 
+                        flow_path['f' + str(f) + '-n' + str(s) + '-n' + str(sw)] 
+                        for sw in range(proxytree.SWITCHES) 
+                        if proxytree.adjancy_list[s][sw] == 1
+                    ) 
+                    - dimod.quicksum( 
+                        flow_path['f' + str(f) + '-n' + str(sw) + '-n' + str(s)] 
+                        for sw in range(proxytree.SWITCHES) 
+                        if proxytree.adjancy_list[sw][s] == 1
+                    )
+                ) 
+                == 0, 
+                label="C15-N"+str(f*proxytree.SERVERS+s)
+            )
+
+    # (16)
+    for sw in range(proxytree.SWITCHES):
+        for f in range(proxytree.FLOWS):
+            cqm.add_constraint( 
+                dimod.quicksum( 
+                    flow_path['f' + str(f) + '-n' + str(n) + '-n' + str(sw)]  
+                    for n in range(proxytree.NODES) 
+                    if proxytree.adjancy_list[n][sw] == 1
+                ) 
+                - dimod.quicksum( 
+                    flow_path['f' + str(f) + '-n' + str(sw) + '-n' + str(n)] 
+                    for n in range(proxytree.NODES) 
+                    if proxytree.adjancy_list[sw][n] == 1
+                ) 
+                == 0, 
+                label="C16-N"+str(sw*proxytree.FLOWS+f)
+            )
+
+    # (17)      
+    for l in range(proxytree.LINKS):
+        n1,n2 = fn.get_nodes(l, proxytree.link_dict)
+        cqm.add_constraint( 
+            dimod.quicksum( 
+                proxytree.data_rate[f] 
+                * (
+                    flow_path['f' + str(f) + '-n' + str(n1) + '-n' + str(n2)] 
+                    + flow_path['f' + str(f) + '-n' + str(n2) + '-n' + str(n1)]
+                ) for f in range(proxytree.FLOWS)
+            ) 
+            - proxytree.link_capacity[l] 
+            * on["on" + str(n1) + "-" + str(n2)] 
+            <= 0, 
+            label="C17-N"+str(l)
+        )
+
+    # (18)(19)       
+    for l in range(proxytree.LINKS):
+        n1,n2 = fn.get_nodes(l, proxytree.link_dict)
+
+        cqm.add_constraint(
+            on["on" + str(n1) + "-" + str(n2)] 
+            - switch_status[n1] 
+            <= 0, 
+            label="C18-N"+str(l)
+        )
+
+        if n2 < proxytree.SWITCHES:     # If the second node is a switch
+            cqm.add_constraint(
+                on["on" + str(n1) + "-" + str(n2)] 
+                - switch_status[n2] 
+                <= 0,
+                label="C19-N"+str(l)
+            )
+        else:                           # If it's a server
+            cqm.add_constraint(
+                on["on" + str(n1) + "-" + str(n2)] 
+                - server_status[n2-proxytree.SWITCHES] 
+                <= 0,
+                label="C19-N"+str(l)
+            )
