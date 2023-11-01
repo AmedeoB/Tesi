@@ -1,10 +1,7 @@
 '''
 TODO
-    - remove full import from fun_lib and make single imports
-    - academia version for depth 5+
-    - move save function from test lib to funlib
-    - find way to set custom automatic timer and others
-        stoppers
+    
+    - find way to set custom automatic stoppers
     - install python 3.10
 '''
 """--------------------------------- IMPORTS ------------------------------------"""
@@ -12,7 +9,7 @@ TODO
 from docplex.cp.model import CpoModel, minimize
 
 # CUSTOM
-from fun_lib import Proxytree
+from structures import *
 from fun_lib_IBM import *
 
 """------------------------------------------------------------------------------"""
@@ -35,12 +32,12 @@ ITERATIONS = 1
 # VM MODEL #
 #####################################################################################################
 
-# # Create
-# vm_model = CpoModel()
-# vm_cplex_model(vm_model, proxytree)        
+# Create
+vm_model = CpoModel()
+vm_cplex_model(vm_model, proxytree)        
 
-# # Solve
-# for _ in range(ITERATIONS): vm_solution = cplex_solver(vm_model, proxytree.DEPTH, "vm_model", save_solution=True)
+# Solve
+for _ in range(ITERATIONS): vm_solution = cplex_solver(vm_model, proxytree.DEPTH, "vm_model", save_solution=True)
 
 #####################################################################################################
 
@@ -49,12 +46,12 @@ ITERATIONS = 1
 # PATH MODEL #
 #####################################################################################################
 
-# # Create
-# path_model = CpoModel()
-# path_cplex_model(path_model, proxytree, vm_solution)        
+# Create
+path_model = CpoModel()
+path_cplex_model(path_model, proxytree, vm_solution)        
 
-# # Solve
-# for _ in range(ITERATIONS): path_solution = cplex_solver(path_model, proxytree.DEPTH, "path_model", save_solution=True)
+# Solve
+for _ in range(ITERATIONS): path_solution = cplex_solver(path_model, proxytree.DEPTH, "path_model", save_solution=True)
 
 
 

@@ -7,8 +7,7 @@ from docplex.cp.solver.solver_listener import AutoStopListener
 import json
 
 # CUSTOM
-import fun_lib as fn
-from test_functions import *
+from structures import *
 
 
 
@@ -69,7 +68,7 @@ def cplex_solver(model: CpoModel, depth: int, problem_label: str, save_solution 
     return sol_dictionary
 
 
-def vm_cplex_model(model: CpoModel, tree: fn.Proxytree):
+def vm_cplex_model(model: CpoModel, tree: Proxytree):
     
     # Variables
     server_status = [
@@ -123,7 +122,7 @@ def vm_cplex_model(model: CpoModel, tree: fn.Proxytree):
     )    
 
 
-def path_cplex_model(model: CpoModel, tree: fn.Proxytree, vm_solution: dict):
+def path_cplex_model(model: CpoModel, tree: Proxytree, vm_solution: dict):
 
     # Variables
     switch_status = [
@@ -212,7 +211,7 @@ def path_cplex_model(model: CpoModel, tree: fn.Proxytree, vm_solution: dict):
     
     # (17)
     for l in range(tree.LINKS):
-        n1,n2 = fn.get_nodes(l, tree.link_dict)
+        n1,n2 = get_nodes(l, tree.link_dict)
         model.add_constraint( 
             sum( 
                 tree.data_rate[f] * (
@@ -227,7 +226,7 @@ def path_cplex_model(model: CpoModel, tree: fn.Proxytree, vm_solution: dict):
     
     # (18-19)
     for l in range(tree.LINKS):
-        n1,n2 = fn.get_nodes(l, tree.link_dict)
+        n1,n2 = get_nodes(l, tree.link_dict)
 
         model.add_constraint(
             on["on{}-{}".format(n1, n2)] 
@@ -271,7 +270,7 @@ def path_cplex_model(model: CpoModel, tree: fn.Proxytree, vm_solution: dict):
     )
 
 
-def full_cplex_model(model: CpoModel, tree: fn.Proxytree):
+def full_cplex_model(model: CpoModel, tree: Proxytree):
     # Variables
     server_status = [
         model.binary_var(name= "s{}".format(s)) # pylint: disable=no-member
@@ -387,7 +386,7 @@ def full_cplex_model(model: CpoModel, tree: fn.Proxytree):
     
     # (17)
     for l in range(tree.LINKS):
-        n1,n2 = fn.get_nodes(l, tree.link_dict)
+        n1,n2 = get_nodes(l, tree.link_dict)
         model.add_constraint( 
             sum( 
                 tree.data_rate[f] * (
@@ -402,7 +401,7 @@ def full_cplex_model(model: CpoModel, tree: fn.Proxytree):
     
     # (18-19)
     for l in range(tree.LINKS):
-        n1,n2 = fn.get_nodes(l, tree.link_dict)
+        n1,n2 = get_nodes(l, tree.link_dict)
 
         model.add_constraint(
             on["on{}-{}".format(n1, n2)] 

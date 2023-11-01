@@ -2,7 +2,6 @@ DEBUG = False
 
 '''
 TODO
-    - remove full import from fun_lib and make single imports
     - save energy levels
 '''
 
@@ -12,12 +11,8 @@ TODO
 import dimod
 
 # CUSTOM
-import models
-from fun_lib import *
-
-# TESTING
-from test_functions import *
-
+from structures import *
+from fun_lib_DWAVE import *
 """--------------------------------------------------"""
 
 proxytree = Proxytree(
@@ -51,15 +46,12 @@ print_section("VM Model")
 # Create problem
 vm_cqm = dimod.ConstrainedQuadraticModel()
 # Variables & Constraints
-models.vm_model(proxytree, vm_cqm)
+vm_model(proxytree, vm_cqm)
 
 if DEBUG: print_model_structure("vm model", vm_cqm)
 
-
-#######################
-#    Hybrid Solver    #
-#######################
-vm_cqm_solution, vm_cqm_info = models.detailed_cqm_solver(vm_cqm, "vm_model", 
+# Solve
+vm_cqm_solution, vm_cqm_info = detailed_cqm_solver(vm_cqm, "vm_model", 
                     proxytree.DEPTH, save_solution = manager.SAVE_VM_SOL,
                     save_info= manager.SAVE_VM_INFO)
 
@@ -75,17 +67,35 @@ print_section("CQM Path Model")
 # Create problem
 path_cqm = dimod.ConstrainedQuadraticModel()
 # Variables & Constraints
-models.path_model(proxytree, path_cqm, vm_solution = vm_cqm_solution, 
+path_model(proxytree, path_cqm, vm_solution = vm_cqm_solution, 
             load = manager.LOAD_SOL)
 
 if DEBUG: print_model_structure("path model", path_cqm)
 
-
-#######################
-#    Hybrid Solver    #
-#######################
-path_cqm_solution, path_cqm_info = models.detailed_cqm_solver(path_cqm, "path_model", 
+# Solve
+path_cqm_solution, path_cqm_info = detailed_cqm_solver(path_cqm, "path_model", 
                     proxytree.DEPTH, save_solution = manager.SAVE_PATH_SOL,
                     save_info= manager.SAVE_PATH_INFO)
 
 if DEBUG:   print_cqm_extrainfo(path_cqm_solution, path_cqm_info, "path_model")
+
+
+
+# ###################################################################
+# |                       FULL MODEL                                |
+# ###################################################################
+print_section("CQM Path Model")
+
+# Create problem
+full_cqm = dimod.ConstrainedQuadraticModel()
+# Variables & Constraints
+path_model(proxytree, full_cqm)
+
+if DEBUG: print_model_structure("path model", full_cqm)
+
+# Solve
+full_cqm_solution, full_cqm_info = detailed_cqm_solver(full_cqm, "full_model", 
+                    proxytree.DEPTH, save_solution = manager.SAVE_PATH_SOL,
+                    save_info= manager.SAVE_PATH_INFO)
+
+if DEBUG:   print_cqm_extrainfo(full_cqm_solution, full_cqm_info, "full_model")
