@@ -32,12 +32,12 @@ ITERATIONS = 1
 # VM MODEL #
 #####################################################################################################
 
-# Create
-vm_model = CpoModel()
-vm_cplex_model(vm_model, proxytree)        
+# # Create
+# vm_model = CpoModel()
+# vm_cplex_model(vm_model, proxytree)        
 
-# Solve
-for _ in range(ITERATIONS): vm_solution = cplex_solver(vm_model, proxytree.DEPTH, "vm_model", save_solution=True)
+# # Solve
+# for _ in range(ITERATIONS): vm_solution = cplex_solver(vm_model, proxytree.DEPTH, "vm_model", save_solution=True)
 
 #####################################################################################################
 
@@ -46,12 +46,12 @@ for _ in range(ITERATIONS): vm_solution = cplex_solver(vm_model, proxytree.DEPTH
 # PATH MODEL #
 #####################################################################################################
 
-# Create
-path_model = CpoModel()
-path_cplex_model(path_model, proxytree, vm_solution)        
+# # Create
+# path_model = CpoModel()
+# path_cplex_model(path_model, proxytree, vm_solution)        
 
-# Solve
-for _ in range(ITERATIONS): path_solution = cplex_solver(path_model, proxytree.DEPTH, "path_model", save_solution=True)
+# # Solve
+# for _ in range(ITERATIONS): path_solution = cplex_solver(path_model, proxytree.DEPTH, "path_model", save_solution=True)
 
 
 

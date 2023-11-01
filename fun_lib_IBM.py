@@ -26,7 +26,7 @@ def to_dictionary(solution: CpoSolveResult):
 def cplex_solver(model: CpoModel, depth: int, problem_label: str, save_solution = False):
     
     # Params
-    TIME= 600
+    TIME= 10
     SOLS= 10
 
     # model.add_solver_listener(AutoStopListener(qsc_time= 60))
@@ -45,10 +45,14 @@ def cplex_solver(model: CpoModel, depth: int, problem_label: str, save_solution 
     )
 
     print("\n# VARIABLES \n")    
-    sol_dictionary = to_dictionary(solution)
-    for key, val in sol_dictionary.items():
-        if val != 0:
-            print(f"{key}: {val}")
+    if solution.is_solution():
+        sol_dictionary = to_dictionary(solution)
+        for key, val in sol_dictionary.items():
+            if val != 0:
+                print(f"{key}: {val}")
+    else:   
+        sol_dictionary = {}
+        save_solution = False
 
     # Save solution
     if save_solution:

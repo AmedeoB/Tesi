@@ -9,3 +9,4 @@ Feasible	10.05	382
 Feasible	10.01	382	
 Feasible	10.05	382	
 Feasible	10.05	382	
+Feasible	10.006	486	
