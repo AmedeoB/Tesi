@@ -27,10 +27,10 @@ def to_dictionary(solution: CpoSolveResult):
 def cplex_solver(model: CpoModel, depth: int, problem_label: str, save_solution = False):
     
     # Params
-    TIME= 300
+    TIME= 600
     SOLS= 10
 
-    model.add_solver_listener(AutoStopListener(qsc_time= 60))
+    # model.add_solver_listener(AutoStopListener(qsc_time= 60))
 
     print("Solving...")
     solution = model.solve(
@@ -446,8 +446,8 @@ def full_cplex_model(model: CpoModel, tree: fn.Proxytree):
             + sum(
                     (tree.dyn_powcons[sw] 
                     * (
-                        flow_path['f' + str(f) + '-n' + str(n) + '-n' + str(sw)] 
-                        + flow_path['f' + str(f) + '-n' + str(sw) + '-n' + str(n)]
+                        flow_path["f{}-n{}-n{}".format(f, n, sw)] 
+                        + flow_path["f{}-n{}-n{}".format(f, sw, n)]
                     ))
                 for n in range(tree.NODES) 
                 for f in range(tree.FLOWS) 

@@ -389,33 +389,61 @@ def vm_model(proxytree: fn.Proxytree, cqm: dimod.ConstrainedQuadraticModel):
     '''
 
     # Variables
-    server_status = [dimod.Binary("s" + str(i)) for i in range(proxytree.SERVERS)]          # Binary value for each server, 1 ON, 0 OFF
-    vm_status = [[dimod.Binary("vm" + str(i) + "-s" + str(j)) 
-        for i in range(proxytree.VMS)] for j in range(proxytree.SERVERS)] 
+    server_status = [
+        dimod.Binary("s".format(s)) 
+        for s in range(proxytree.SERVERS)
+    ]
+    vm_status = [
+        [
+            dimod.Binary("vm{}-s{}".format(vm,s)) 
+            for vm in range(proxytree.VMS)
+        ] for s in range(proxytree.SERVERS)
+    ] 
 
     # Objective
     # 1 - SUM of server pow cons
-    obj1 = dimod.quicksum(server_status[s] * proxytree.idle_powcons[s+proxytree.SWITCHES] for s in range(proxytree.SERVERS))
+    obj1 = dimod.quicksum(
+        server_status[s] 
+        * proxytree.idle_powcons[s+proxytree.SWITCHES] 
+        for s in range(proxytree.SERVERS)
+    )
     # 2 - SUM of vm dyn pow cons
-    obj2 = dimod.quicksum(proxytree.dyn_powcons[s+proxytree.SWITCHES] * dimod.quicksum(proxytree.cpu_util[vm] * vm_status[s][vm] for vm in range(proxytree.VMS)) for s in range(proxytree.SERVERS))
+    obj2 = dimod.quicksum(
+        proxytree.dyn_powcons[s+proxytree.SWITCHES] 
+        * dimod.quicksum(
+            proxytree.cpu_util[vm] 
+            * vm_status[s][vm] 
+            for vm in range(proxytree.VMS)
+        ) for s in range(proxytree.SERVERS)
+    )
     # Total
     cqm.set_objective(obj1 + obj2)
 
     # Constraints
-    # (11) For each server, the CPU utilization of each VM on that server must be less or equal than server's capacity       
+    # (11) For each server, the CPU utilization of each VM on that server must be less or equal than server's capacity            
     for s in range(proxytree.SERVERS):
         cqm.add_constraint(
             dimod.quicksum(
-                proxytree.cpu_util[vm] * vm_status[s][vm] for vm in range(proxytree.VMS)) 
-            - proxytree.server_capacity[s]*server_status[s] 
-            <= 0, label="C11-N"+str(s))
+                proxytree.cpu_util[vm] 
+                * vm_status[s][vm] 
+                for vm in range(proxytree.VMS)
+            ) 
+            - proxytree.server_capacity[s]
+            * server_status[s] 
+            <= 0, 
+            label="C11-N{}".format(s)
+        )
 
     # (12) For each VM, it must be active on one and only one server
     for vm in range(proxytree.VMS):
         cqm.add_constraint(
             dimod.quicksum(
-                vm_status[s][vm] for s in range(proxytree.SERVERS)) 
-            == 1, label="C12-N"+str(vm))
+                vm_status[s][vm] 
+                for s in range(proxytree.SERVERS)
+            ) 
+            == 1, 
+            label="C12-N{}".format(vm)
+        )
     
 
 
@@ -439,24 +467,24 @@ def path_model(proxytree: fn.Proxytree, cqm: dimod.ConstrainedQuadraticModel,
     Returns:
         - null
     '''
-    switch_status = [dimod.Binary("sw" + str(i)) for i in range(proxytree.SWITCHES)]        # Binary value for each switch, 1 ON, 0 OFF
+    
+    switch_status = [
+        dimod.Binary("sw{}".format(sw)) 
+        for sw in range(proxytree.SWITCHES)
+    ]
 
-    # Initialize flow_path dictionary for each possible combination of flow and adjacent node
-    # flow_path[f, [n1,n2]] = 1 if part of flow f goes from n1 to n2
     flow_path = {}
     for f in range(proxytree.FLOWS):
         for n1 in range(proxytree.NODES):
             for n2 in range(proxytree.NODES):
                 if proxytree.adjancy_list[n1][n2]:     # Adjancy Condition (lowers variable number)
-                    flow_path['f' + str(f) + '-n' + str(n1) + '-n' + str(n2)] = dimod.Binary("f" + str(f) + "-n" + str(n1) + "-n" + str(n2))
+                    flow_path["f{}-n{}-n{}".format(f, n1, n2)] = dimod.Binary("f{}-n{}-n{}".format(f, n1, n2))
 
-    # Initialize dictionary for each adjacent node
-    # on[n1,n2] = 1 if the link between n1 and n2 is ON
     on = {}
     for n1 in range(proxytree.NODES):
         for n2 in range(n1, proxytree.NODES):
             if proxytree.adjancy_list[n1][n2]:         # Adjancy Condition (lowers variable number)
-                on["on" + str(n1) + "-" + str(n2)] = dimod.Binary("on" + str(n1) + "-" + str(n2))
+                on["on{}-{}".format(n1, n2)] = dimod.Binary("on{}-{}".format(n1, n2))
 
 
     # Load best solution from file
@@ -470,102 +498,138 @@ def path_model(proxytree: fn.Proxytree, cqm: dimod.ConstrainedQuadraticModel,
 
     # Objective
     # 3 - SUM of switch idle pow cons
-    obj3 = dimod.quicksum(switch_status[sw] * proxytree.idle_powcons[sw] for sw in range(proxytree.SWITCHES))
+    obj3 = dimod.quicksum(
+        switch_status[sw] 
+        * proxytree.idle_powcons[sw] 
+        for sw in range(proxytree.SWITCHES)
+    )
     # 4 - SUM of flow path
     obj4 = dimod.quicksum(
         proxytree.dyn_powcons[sw] 
         * (
-            flow_path['f' + str(f) + '-n' + str(n) + '-n' + str(sw)] 
-            + flow_path['f' + str(f) + '-n' + str(sw) + '-n' + str(n)]
+            flow_path["f{}-n{}-n{}".format(f, n, sw)] 
+            + flow_path["f{}-n{}-n{}".format(f, sw, n)]
         )
         for n in range(proxytree.NODES) 
         for f in range(proxytree.FLOWS) 
         for sw in range(proxytree.SWITCHES) 
         if proxytree.adjancy_list[n][sw] == 1
-    ) 
+    )
     # Total
     cqm.set_objective(obj3 + obj4)
 
 
     # Constraints
     # (13) For each flow and server, the sum of exiting flow from the server to all adj switch is = than vms part of that flow
-    # This is the splitted version, the combined one should 
-    #   > remove the if condition 
-    #   > change to <= type constraint
-    #   > add the code line "- cqm_solution.get("vm" + str(proxytree.src_dst[f][0]) + "-s" + str(s-proxytree.SWITCHES))"
     for f in range(proxytree.FLOWS):
         for s in range(proxytree.SWITCHES, proxytree.SWITCHES + proxytree.SERVERS):           # Start from switches cause nodes are numerated in order -> all switches -> all servers
-            if vm_solution.get("vm" + str(proxytree.src_dst[f][0]) + "-s" + str(s-proxytree.SWITCHES)) == 0:
-                cqm.add_constraint( 
+            if vm_solution.get("vm{}-s{}".format(proxytree.src_dst[f][0], s-proxytree.SWITCHES)) == 0:
+               cqm.add_constraint( 
                     dimod.quicksum( 
-                        flow_path['f' + str(f) + '-n' + str(s) + '-n' + str(sw)] for sw in range(proxytree.SWITCHES) if proxytree.adjancy_list[s][sw] == 1)
-                    == 0, label="C13-N"+str(f*proxytree.SERVERS+s))
+                        flow_path["f{}-n{}-n{}".format(f, s, sw)] 
+                        for sw in range(proxytree.SWITCHES) 
+                        if proxytree.adjancy_list[s][sw] == 1
+                    )
+                    == 0, 
+                    label="C13-N{}".format(f*proxytree.SERVERS+s)
+                )
 
     # (14) For each flow and server, the sum of entering flow from the server to all adj switch is = than vms part of that flow
-    # This is the splitted version, the combined one should 
-    #   > remove the if condition 
-    #   > change to <= type constraint
-    #   > add the code line "- cqm_solution.get("vm" + str(proxytree.src_dst[f][1]) + "-s" + str(s-proxytree.SWITCHES))"  
     for f in range(proxytree.FLOWS):
         for s in range(proxytree.SWITCHES, proxytree.SWITCHES + proxytree.SERVERS):
-            if vm_solution.get("vm" + str(proxytree.src_dst[f][1]) + "-s" + str(s-proxytree.SWITCHES)) == 0:
+            if vm_solution.get("vm{}-s{}".format(proxytree.src_dst[f][1], s-proxytree.SWITCHES)) == 0:    
                 cqm.add_constraint( 
                     dimod.quicksum( 
-                        flow_path['f' + str(f) + '-n' + str(sw) + '-n' + str(s)] for sw in range(proxytree.SWITCHES) if proxytree.adjancy_list[sw][s] == 1) 
-                    == 0, label="C14-N"+str(f*proxytree.SERVERS+s)) 
+                        flow_path["f{}-n{}-n{}".format(f, sw, s)] 
+                        for sw in range(proxytree.SWITCHES) 
+                        if proxytree.adjancy_list[sw][s] == 1
+                    ) 
+                    == 0, 
+                    label="C14-N{}".format(f*proxytree.SERVERS+s)
+                ) 
 
     # (15) For each flow and server, force allocation of all flows     
     for f in range(proxytree.FLOWS):
         for s in range(proxytree.SWITCHES, proxytree.SWITCHES + proxytree.SERVERS):
             cqm.add_constraint( 
-                vm_solution.get("vm" + str(proxytree.src_dst[f][0]) + "-s" + str(s-proxytree.SWITCHES)) - vm_solution.get("vm" + str(proxytree.src_dst[f][1]) + "-s" + str(s-proxytree.SWITCHES))  
+                vm_solution.get("vm{}-s{}".format(proxytree.src_dst[f][0], s-proxytree.SWITCHES)) 
+                - vm_solution.get("vm{}-s{}".format(proxytree.src_dst[f][1], s-proxytree.SWITCHES))
                 - ( 
                     dimod.quicksum( 
-                        flow_path['f' + str(f) + '-n' + str(s) + '-n' + str(sw)] for sw in range(proxytree.SWITCHES) if proxytree.adjancy_list[s][sw] == 1) 
+                        flow_path["f{}-n{}-n{}".format(f, s, sw)] 
+                        for sw in range(proxytree.SWITCHES) 
+                        if proxytree.adjancy_list[s][sw] == 1
+                    ) 
                     - dimod.quicksum( 
-                        flow_path['f' + str(f) + '-n' + str(sw) + '-n' + str(s)] for sw in range(proxytree.SWITCHES) if proxytree.adjancy_list[sw][s] == 1)) 
-                == 0, label="C15-N"+str(f*proxytree.SERVERS+s))
+                        flow_path["f{}-n{}-n{}".format(f, sw, s)] 
+                        for sw in range(proxytree.SWITCHES) 
+                        if proxytree.adjancy_list[sw][s] == 1
+                    )
+                ) 
+                == 0, 
+                label="C15-N{}".format(f*proxytree.SERVERS+s)
+            )
 
     # (16) For each switch and flow, entering and exiting flow from the switch are equal
     for sw in range(proxytree.SWITCHES):
         for f in range(proxytree.FLOWS):
             cqm.add_constraint( 
                 dimod.quicksum( 
-                    flow_path['f' + str(f) + '-n' + str(n) + '-n' + str(sw)]  for n in range(proxytree.NODES) if proxytree.adjancy_list[n][sw] == 1) 
+                    flow_path["f{}-n{}-n{}".format(f, n, sw)]  
+                    for n in range(proxytree.NODES) 
+                    if proxytree.adjancy_list[n][sw] == 1
+                ) 
                 - dimod.quicksum( 
-                    flow_path['f' + str(f) + '-n' + str(sw) + '-n' + str(n)] for n in range(proxytree.NODES) if proxytree.adjancy_list[sw][n] == 1) 
-                == 0, label="C16-N"+str(sw*proxytree.FLOWS+f))
+                    flow_path["f{}-n{}-n{}".format(f, sw, n)] 
+                    for n in range(proxytree.NODES) 
+                    if proxytree.adjancy_list[sw][n] == 1
+                ) 
+                == 0, 
+                label="C16-N{}".format(sw*proxytree.FLOWS+f)
+            )
 
     # (17) For each link, the data rate on it is less or equal than its capacity      
     for l in range(proxytree.LINKS):
         n1,n2 = fn.get_nodes(l, proxytree.link_dict)
         cqm.add_constraint( 
             dimod.quicksum( 
-                proxytree.data_rate[f] * (
-                    flow_path['f' + str(f) + '-n' + str(n1) + '-n' + str(n2)] 
-                    + flow_path['f' + str(f) + '-n' + str(n2) + '-n' + str(n1)]) for f in range(proxytree.FLOWS)) 
-            - proxytree.link_capacity[l] * on["on" + str(n1) + "-" + str(n2)] 
-            <= 0, label="C17-N"+str(l))
+                proxytree.data_rate[f] 
+                * (
+                    flow_path["f{}-n{}-n{}".format(f, n1, n2)] 
+                    + flow_path["f{}-n{}-n{}".format(f, n2, n1)]
+                ) for f in range(proxytree.FLOWS)
+            ) 
+            - proxytree.link_capacity[l] 
+            * on["on{}-{}".format(n1, n2)] 
+            <= 0, 
+            label="C17-N{}".format(l)
+        )
 
     # (18)(19) For each link, the link is ON only if both nodes are ON       
     for l in range(proxytree.LINKS):
         n1,n2 = fn.get_nodes(l, proxytree.link_dict)
 
         cqm.add_constraint(
-            on["on" + str(n1) + "-" + str(n2)] 
+            on["on{}-{}".format(n1, n2)] 
             - switch_status[n1] 
-            <= 0, label="C18-N"+str(l))
+            <= 0, 
+            label="C18-N{}".format(l)
+        )
 
         if n2 < proxytree.SWITCHES:     # If the second node is a switch
             cqm.add_constraint(
-                on["on" + str(n1) + "-" + str(n2)] 
+                on["on{}-{}".format(n1, n2)] 
                 - switch_status[n2] 
-                <= 0, label="C19-N"+str(l))
+                <= 0,
+                label="C19-N{}".format(l)
+            )
         else:                           # If it's a server
             cqm.add_constraint(
-                on["on" + str(n1) + "-" + str(n2)] 
-                - vm_solution.get("s"+str(n2-proxytree.SWITCHES)) 
-                == 0, label="C19-N"+str(l))
+                on["on{}-{}".format(n1, n2)] 
+                - vm_solution.get("s".format(n2-proxytree.SWITCHES))
+                == 0,
+                label="C19-N{}".format(l)
+            )
 
 
         # -------------------------------------------------
@@ -613,18 +677,18 @@ def full_model(proxytree: fn.Proxytree, cqm: dimod.ConstrainedQuadraticModel):
 
     # Variables
     server_status = [
-        dimod.Binary("s" + str(i)) 
-        for i in range(proxytree.SERVERS)
+        dimod.Binary("s".format(s)) 
+        for s in range(proxytree.SERVERS)
     ]
     vm_status = [
         [
-            dimod.Binary("vm" + str(i) + "-s" + str(j)) 
-            for i in range(proxytree.VMS)
-        ] for j in range(proxytree.SERVERS)
+            dimod.Binary("vm{}-s{}".format(vm,s)) 
+            for vm in range(proxytree.VMS)
+        ] for s in range(proxytree.SERVERS)
     ] 
     switch_status = [
-        dimod.Binary("sw" + str(i)) 
-        for i in range(proxytree.SWITCHES)
+        dimod.Binary("sw{}".format(sw)) 
+        for sw in range(proxytree.SWITCHES)
     ]
 
     flow_path = {}
@@ -632,13 +696,13 @@ def full_model(proxytree: fn.Proxytree, cqm: dimod.ConstrainedQuadraticModel):
         for n1 in range(proxytree.NODES):
             for n2 in range(proxytree.NODES):
                 if proxytree.adjancy_list[n1][n2]:     # Adjancy Condition (lowers variable number)
-                    flow_path['f' + str(f) + '-n' + str(n1) + '-n' + str(n2)] = dimod.Binary("f" + str(f) + "-n" + str(n1) + "-n" + str(n2))
+                    flow_path["f{}-n{}-n{}".format(f, n1, n2)] = dimod.Binary("f{}-n{}-n{}".format(f, n1, n2))
 
     on = {}
     for n1 in range(proxytree.NODES):
         for n2 in range(n1, proxytree.NODES):
             if proxytree.adjancy_list[n1][n2]:         # Adjancy Condition (lowers variable number)
-                on["on" + str(n1) + "-" + str(n2)] = dimod.Binary("on" + str(n1) + "-" + str(n2))
+                on["on{}-{}".format(n1, n2)] = dimod.Binary("on{}-{}".format(n1, n2))
 
 
     # Objective
@@ -667,8 +731,8 @@ def full_model(proxytree: fn.Proxytree, cqm: dimod.ConstrainedQuadraticModel):
     obj4 = dimod.quicksum(
         proxytree.dyn_powcons[sw] 
         * (
-            flow_path['f' + str(f) + '-n' + str(n) + '-n' + str(sw)] 
-            + flow_path['f' + str(f) + '-n' + str(sw) + '-n' + str(n)]
+            flow_path["f{}-n{}-n{}".format(f, n, sw)] 
+            + flow_path["f{}-n{}-n{}".format(f, sw, n)]
         )
         for n in range(proxytree.NODES) 
         for f in range(proxytree.FLOWS) 
@@ -691,7 +755,7 @@ def full_model(proxytree: fn.Proxytree, cqm: dimod.ConstrainedQuadraticModel):
             - proxytree.server_capacity[s]
             * server_status[s] 
             <= 0, 
-            label="C11-N"+str(s)
+            label="C11-N{}".format(s)
         )
 
     # (12)
@@ -702,7 +766,7 @@ def full_model(proxytree: fn.Proxytree, cqm: dimod.ConstrainedQuadraticModel):
                 for s in range(proxytree.SERVERS)
             ) 
             == 1, 
-            label="C12-N"+str(vm)
+            label="C12-N{}".format(vm)
         )
         
     # Constraints
@@ -711,13 +775,13 @@ def full_model(proxytree: fn.Proxytree, cqm: dimod.ConstrainedQuadraticModel):
         for s in range(proxytree.SWITCHES, proxytree.SWITCHES + proxytree.SERVERS):           # Start from switches cause nodes are numerated in order -> all switches -> all servers
                cqm.add_constraint( 
                     dimod.quicksum( 
-                        flow_path['f' + str(f) + '-n' + str(s) + '-n' + str(sw)] 
+                        flow_path["f{}-n{}-n{}".format(f, s, sw)] 
                         for sw in range(proxytree.SWITCHES) 
                         if proxytree.adjancy_list[s][sw] == 1
                     )
                     - vm[proxytree.src_dst[f][0]][s-proxytree.SWITCHES]
                     <= 0, 
-                    label="C13-N"+str(f*proxytree.SERVERS+s)
+                    label="C13-N{}".format(f*proxytree.SERVERS+s)
                 )
 
     # (14) 
@@ -725,13 +789,13 @@ def full_model(proxytree: fn.Proxytree, cqm: dimod.ConstrainedQuadraticModel):
         for s in range(proxytree.SWITCHES, proxytree.SWITCHES + proxytree.SERVERS):
                 cqm.add_constraint( 
                     dimod.quicksum( 
-                        flow_path['f' + str(f) + '-n' + str(sw) + '-n' + str(s)] 
+                        flow_path["f{}-n{}-n{}".format(f, sw, s)] 
                         for sw in range(proxytree.SWITCHES) 
                         if proxytree.adjancy_list[sw][s] == 1
                     ) 
                     - vm[proxytree.src_dst[f][1]][s-proxytree.SWITCHES]
                     <= 0, 
-                    label="C14-N"+str(f*proxytree.SERVERS+s)
+                    label="C14-N{}".format(f*proxytree.SERVERS+s)
                 ) 
 
     # (15)     
@@ -742,18 +806,18 @@ def full_model(proxytree: fn.Proxytree, cqm: dimod.ConstrainedQuadraticModel):
                 - vm[proxytree.src_dst[f][1]][s-proxytree.SWITCHES]
                 - ( 
                     dimod.quicksum( 
-                        flow_path['f' + str(f) + '-n' + str(s) + '-n' + str(sw)] 
+                        flow_path["f{}-n{}-n{}".format(f, s, sw)] 
                         for sw in range(proxytree.SWITCHES) 
                         if proxytree.adjancy_list[s][sw] == 1
                     ) 
                     - dimod.quicksum( 
-                        flow_path['f' + str(f) + '-n' + str(sw) + '-n' + str(s)] 
+                        flow_path["f{}-n{}-n{}".format(f, sw, s)] 
                         for sw in range(proxytree.SWITCHES) 
                         if proxytree.adjancy_list[sw][s] == 1
                     )
                 ) 
                 == 0, 
-                label="C15-N"+str(f*proxytree.SERVERS+s)
+                label="C15-N{}".format(f*proxytree.SERVERS+s)
             )
 
     # (16)
@@ -761,17 +825,17 @@ def full_model(proxytree: fn.Proxytree, cqm: dimod.ConstrainedQuadraticModel):
         for f in range(proxytree.FLOWS):
             cqm.add_constraint( 
                 dimod.quicksum( 
-                    flow_path['f' + str(f) + '-n' + str(n) + '-n' + str(sw)]  
+                    flow_path["f{}-n{}-n{}".format(f, n, sw)]  
                     for n in range(proxytree.NODES) 
                     if proxytree.adjancy_list[n][sw] == 1
                 ) 
                 - dimod.quicksum( 
-                    flow_path['f' + str(f) + '-n' + str(sw) + '-n' + str(n)] 
+                    flow_path["f{}-n{}-n{}".format(f, sw, n)] 
                     for n in range(proxytree.NODES) 
                     if proxytree.adjancy_list[sw][n] == 1
                 ) 
                 == 0, 
-                label="C16-N"+str(sw*proxytree.FLOWS+f)
+                label="C16-N{}".format(sw*proxytree.FLOWS+f)
             )
 
     # (17)      
@@ -781,14 +845,14 @@ def full_model(proxytree: fn.Proxytree, cqm: dimod.ConstrainedQuadraticModel):
             dimod.quicksum( 
                 proxytree.data_rate[f] 
                 * (
-                    flow_path['f' + str(f) + '-n' + str(n1) + '-n' + str(n2)] 
-                    + flow_path['f' + str(f) + '-n' + str(n2) + '-n' + str(n1)]
+                    flow_path["f{}-n{}-n{}".format(f, n1, n2)] 
+                    + flow_path["f{}-n{}-n{}".format(f, n2, n1)]
                 ) for f in range(proxytree.FLOWS)
             ) 
             - proxytree.link_capacity[l] 
-            * on["on" + str(n1) + "-" + str(n2)] 
+            * on["on{}-{}".format(n1, n2)] 
             <= 0, 
-            label="C17-N"+str(l)
+            label="C17-N{}".format(l)
         )
 
     # (18)(19)       
@@ -796,23 +860,23 @@ def full_model(proxytree: fn.Proxytree, cqm: dimod.ConstrainedQuadraticModel):
         n1,n2 = fn.get_nodes(l, proxytree.link_dict)
 
         cqm.add_constraint(
-            on["on" + str(n1) + "-" + str(n2)] 
+            on["on{}-{}".format(n1, n2)] 
             - switch_status[n1] 
             <= 0, 
-            label="C18-N"+str(l)
+            label="C18-N{}".format(l)
         )
 
         if n2 < proxytree.SWITCHES:     # If the second node is a switch
             cqm.add_constraint(
-                on["on" + str(n1) + "-" + str(n2)] 
+                on["on{}-{}".format(n1, n2)] 
                 - switch_status[n2] 
                 <= 0,
-                label="C19-N"+str(l)
+                label="C19-N{}".format(l)
             )
         else:                           # If it's a server
             cqm.add_constraint(
-                on["on" + str(n1) + "-" + str(n2)] 
+                on["on{}-{}".format(n1, n2)] 
                 - server_status[n2-proxytree.SWITCHES] 
                 <= 0,
-                label="C19-N"+str(l)
+                label="C19-N{}".format(l)
             )
