@@ -80,9 +80,14 @@ def print_model_structure(name: str, model: dimod.ConstrainedQuadraticModel,
 
 
 
-def print_cqm_extrainfo(sample: set, infoset: set, problem_label: str, 
-            columns = 10):
+def print_cqm_extrainfo(sample: set, infoset: set, columns = 10):
     '''
+    Simple function to print cqm sample infos.
+
+    Args:
+        sample (set): solution sample
+        infoset (set): extra info set
+        columns (int, optional, default = 10): print columns 
     '''
     zeroprinter = "\n# VARIABLES OFF #\n"
     activeprinter = "\n# VARIABLES ON #\n"
@@ -153,23 +158,21 @@ def detailed_cqm_solver(cqm_problem: dimod.ConstrainedQuadraticModel, problem_la
 
     # Save best solution & info
     if save_solution:
-        with open((f"CQM LOGS/depth_{depth}/{problem_label}_solution.txt"), "w") as fp:
+        with open((f"DWAVE LOGS/depth_{depth}/{problem_label}_solution.txt"), "w") as fp:
             json.dump(best_solution, fp)
             print(f"{problem_label} solution updated!")
     
+    # if save_info:
+    #     with open((f"DWAVE LOGS/depth_{depth}/{problem_label}_info.txt"), "w") as fp:
+    #         json.dump(problem_info, fp)
+    #         print(f"{problem_label} info updated!")
     if save_info:
-        with open((f"CQM LOGS/depth_{depth}/{problem_label}_info.txt"), "w") as fp:
-            json.dump(problem_info, fp)
-            print(f"{problem_label} info updated!")
-
-    # TEST ##############################
-    new_dict = dict(filter(dict_filter, problem_info.items()))
-    for k,v in new_dict.items():
-        new_dict[k] = v / 10**6     # Convert timers to seconds for better readability
-    new_dict["energy"] = energy
-    path = f"CQM LOGS/depth_{depth}/{problem_label}_infotest.txt"
-    info_writer(new_dict, path)
-    #####################################
+        new_dict = dict(filter(dict_filter, problem_info.items()))
+        for k,v in new_dict.items():
+            new_dict[k] = v / 10**6     # Convert timers to seconds for better readability
+        new_dict["energy"] = energy
+        path = f"DWAVE LOGS/depth_{depth}/{problem_label}_info.txt"
+        info_writer(new_dict, path)
 
     # Print
     print(
@@ -196,7 +199,7 @@ def vm_model(tree: Proxytree, cqm: dimod.ConstrainedQuadraticModel):
 
     # Variables
     server_status = [
-        dimod.Binary("s".format(s)) 
+        dimod.Binary("s{}".format(s)) 
         for s in range(tree.SERVERS)
     ]
     vm_status = [
@@ -254,7 +257,7 @@ def vm_model(tree: Proxytree, cqm: dimod.ConstrainedQuadraticModel):
 
 
 def path_model(tree: Proxytree, cqm: dimod.ConstrainedQuadraticModel, 
-            vm_solution = {}, load = False):
+            vm_solution: set, load = False):
     '''
     Creates the path planning model as a Constrained Quadratic Model
     
@@ -289,11 +292,11 @@ def path_model(tree: Proxytree, cqm: dimod.ConstrainedQuadraticModel,
 
     # Load best solution from file
     if load:
-            with open(f"CQM LOGS/depth_{tree.DEPTH}/vm_model_solution.txt") as fp:
-                vm_solution = json.loads(fp.read())
-                print("VM Solution Dictionary loaded!")
-                print(vm_solution)
-                print("\n\n")
+        with open(f"DWAVE LOGS/depth_{tree.DEPTH}/vm_model_solution.txt") as fp:
+            vm_solution = json.loads(fp.read())
+            print("VM Solution Dictionary loaded!")
+            print(vm_solution)
+            print("\n\n")
 
 
     # Objective
@@ -324,7 +327,7 @@ def path_model(tree: Proxytree, cqm: dimod.ConstrainedQuadraticModel,
     for f in range(tree.FLOWS):
         for s in range(tree.SWITCHES, tree.SWITCHES + tree.SERVERS):           # Start from switches cause nodes are numerated in order -> all switches -> all servers
             if vm_solution.get("vm{}-s{}".format(tree.src_dst[f][0], s-tree.SWITCHES)) == 0:
-               cqm.add_constraint( 
+                cqm.add_constraint( 
                     dimod.quicksum( 
                         flow_path["f{}-n{}-n{}".format(f, s, sw)] 
                         for sw in range(tree.SWITCHES) 
@@ -426,7 +429,7 @@ def path_model(tree: Proxytree, cqm: dimod.ConstrainedQuadraticModel,
         else:                           # If it's a server
             cqm.add_constraint(
                 on["on{}-{}".format(n1, n2)] 
-                - vm_solution.get("s".format(n2-tree.SWITCHES))
+                - vm_solution.get("s{}".format(n2-tree.SWITCHES))
                 == 0,
                 label="C19-N{}".format(l)
             )
@@ -476,7 +479,7 @@ def full_model(tree: Proxytree, cqm: dimod.ConstrainedQuadraticModel):
 
     # Variables
     server_status = [
-        dimod.Binary("s".format(s)) 
+        dimod.Binary("s{}".format(s)) 
         for s in range(tree.SERVERS)
     ]
     vm_status = [
@@ -572,30 +575,30 @@ def full_model(tree: Proxytree, cqm: dimod.ConstrainedQuadraticModel):
     # (13)
     for f in range(tree.FLOWS):
         for s in range(tree.SWITCHES, tree.SWITCHES + tree.SERVERS):           # Start from switches cause nodes are numerated in order -> all switches -> all servers
-               cqm.add_constraint( 
-                    dimod.quicksum( 
-                        flow_path["f{}-n{}-n{}".format(f, s, sw)] 
-                        for sw in range(tree.SWITCHES) 
-                        if tree.adjancy_list[s][sw] == 1
-                    )
-                    - vm[tree.src_dst[f][0]][s-tree.SWITCHES]
-                    <= 0, 
-                    label="C13-N{}".format(f*tree.SERVERS+s)
+            cqm.add_constraint( 
+                dimod.quicksum( 
+                    flow_path["f{}-n{}-n{}".format(f, s, sw)] 
+                    for sw in range(tree.SWITCHES) 
+                    if tree.adjancy_list[s][sw] == 1
                 )
+                - vm[tree.src_dst[f][0]][s-tree.SWITCHES]
+                <= 0, 
+                label="C13-N{}".format(f*tree.SERVERS+s)
+            )
 
     # (14) 
     for f in range(tree.FLOWS):
         for s in range(tree.SWITCHES, tree.SWITCHES + tree.SERVERS):
-                cqm.add_constraint( 
-                    dimod.quicksum( 
-                        flow_path["f{}-n{}-n{}".format(f, sw, s)] 
-                        for sw in range(tree.SWITCHES) 
-                        if tree.adjancy_list[sw][s] == 1
-                    ) 
-                    - vm[tree.src_dst[f][1]][s-tree.SWITCHES]
-                    <= 0, 
-                    label="C14-N{}".format(f*tree.SERVERS+s)
+            cqm.add_constraint( 
+                dimod.quicksum( 
+                    flow_path["f{}-n{}-n{}".format(f, sw, s)] 
+                    for sw in range(tree.SWITCHES) 
+                    if tree.adjancy_list[sw][s] == 1
                 ) 
+                - vm[tree.src_dst[f][1]][s-tree.SWITCHES]
+                <= 0, 
+                label="C14-N{}".format(f*tree.SERVERS+s)
+            ) 
 
     # (15)     
     for f in range(tree.FLOWS):

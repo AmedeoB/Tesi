@@ -333,13 +333,18 @@ def print_section(section_name: str):
 
 
 def dict_filter(pair):
+    '''
+    Filters an info dictionary extracting only run_time
+    '''
     key, _ = pair
-    return "time" in key 
+    return "run_time" in key 
 
 
 
 def info_writer(dictionary: dict, path: str):
-   
+    '''
+    Writes DWAVE solution on a file
+    '''
     writeheads = False
     if not exists(path): writeheads = True
     
@@ -348,12 +353,12 @@ def info_writer(dictionary: dict, path: str):
         if writeheads:
             for k in dictionary.keys():
                 file.write(f"{k}\t")
-            file.write(f"\n")
+            file.write("\n")
         
         # Values
         for v in dictionary.values():
             file.write(f"{v}\t")
-        file.write(f"\n")
+        file.write("\n")
 
 
 
