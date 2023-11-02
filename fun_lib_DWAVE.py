@@ -581,7 +581,7 @@ def full_model(tree: Proxytree, cqm: dimod.ConstrainedQuadraticModel):
                     for sw in range(tree.SWITCHES) 
                     if tree.adjancy_list[s][sw] == 1
                 )
-                - vm[tree.src_dst[f][0]][s-tree.SWITCHES]
+                - vm_status[tree.src_dst[f][0]][s-tree.SWITCHES]
                 <= 0, 
                 label="C13-N{}".format(f*tree.SERVERS+s)
             )
@@ -595,7 +595,7 @@ def full_model(tree: Proxytree, cqm: dimod.ConstrainedQuadraticModel):
                     for sw in range(tree.SWITCHES) 
                     if tree.adjancy_list[sw][s] == 1
                 ) 
-                - vm[tree.src_dst[f][1]][s-tree.SWITCHES]
+                - vm_status[tree.src_dst[f][1]][s-tree.SWITCHES]
                 <= 0, 
                 label="C14-N{}".format(f*tree.SERVERS+s)
             ) 
@@ -604,8 +604,8 @@ def full_model(tree: Proxytree, cqm: dimod.ConstrainedQuadraticModel):
     for f in range(tree.FLOWS):
         for s in range(tree.SWITCHES, tree.SWITCHES + tree.SERVERS):
             cqm.add_constraint( 
-                vm[tree.src_dst[f][0]][s-tree.SWITCHES]
-                - vm[tree.src_dst[f][1]][s-tree.SWITCHES]
+                vm_status[tree.src_dst[f][0]][s-tree.SWITCHES]
+                - vm_status[tree.src_dst[f][1]][s-tree.SWITCHES]
                 - ( 
                     dimod.quicksum( 
                         flow_path["f{}-n{}-n{}".format(f, s, sw)] 

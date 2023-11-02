@@ -270,14 +270,21 @@ class CQMmanager():
             path planner solution
         - save_info_path (bool, optional, default=False): save 
             path planner info
+        - save_solution_full (bool, optional, default=False): save 
+            full problem solution
+        - save_info_full (bool, optional, default=False): save 
+            full problem info
     '''
     def __init__(self, save_solution_vm = False, save_info_vm = False, 
-        load_solution = False, save_solution_path = False, save_info_path = False):
+        load_solution = False, save_solution_path = False, save_info_path = False,
+        save_solution_full = False, save_info_full = False):
         self.SAVE_VM_SOL = save_solution_vm
         self.SAVE_VM_INFO = save_info_vm
         self.LOAD_SOL = load_solution
         self.SAVE_PATH_SOL = save_solution_path
         self.SAVE_PATH_INFO = save_info_path
+        self.SAVE_FULL_SOL = save_solution_full
+        self.SAVE_FULL_INFO = save_info_full
     
     def print_manager(self):
         print(
@@ -287,6 +294,8 @@ class CQMmanager():
             f"\nLoad VM Solution:   {self.LOAD_SOL}"
             f"\nSave PATH Solution: {self.SAVE_PATH_SOL}"
             f"\nSave PATH Info:     {self.SAVE_PATH_INFO}"
+            f"\nSave FULL Solution: {self.SAVE_FULL_SOL}"
+            f"\nSave FULL Info:     {self.SAVE_FULL_INFO}"
         )
         
 
@@ -337,7 +346,7 @@ def dict_filter(pair):
     Filters an info dictionary extracting only run_time
     '''
     key, _ = pair
-    return "run_time" in key 
+    return "time" in key 
 
 
 

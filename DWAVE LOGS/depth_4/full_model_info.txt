@@ -1,0 +1,2 @@
+run_time	energy	
+4.982284	1058.0	

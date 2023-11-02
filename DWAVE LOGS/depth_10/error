@@ -1,0 +1,1 @@
+ValueError: constrained quadratic model must have 500000 or fewer variables; given model has 1049600. Contact D-Wave at sales@dwavesys.com if your application requires scale or performance that exceeds the currently advertised capabilities of this hybrid solver.

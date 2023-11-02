@@ -2,7 +2,7 @@ DEBUG = False
 
 '''
 TODO
-    - save energy levels
+    - run tests
 '''
 
 
@@ -16,7 +16,7 @@ from fun_lib_DWAVE import *
 """--------------------------------------------------"""
 
 proxytree = Proxytree(
-                depth = 3, 
+                depth = 10, 
                 server_c = 10, 
                 link_c = 5, 
                 idle_pc = 10, 
@@ -30,14 +30,17 @@ manager = CQMmanager(
                 save_info_vm = True, 
                 # load_solution = True, 
                 save_solution_path = True, 
-                save_info_path = True
+                save_info_path = True,
+                save_solution_full = True,
+                save_info_full = True
             )
 
 ITERATIONS = 1
 
-# Print Tree Structure
-proxytree.print_tree()
-if DEBUG:   manager.print_manager()
+
+if DEBUG:   
+    proxytree.print_tree()
+    manager.print_manager()
 
 
 # ###################################################################
@@ -100,7 +103,7 @@ if DEBUG: print_model_structure("path model", full_cqm)
 # Solve
 for _ in range(ITERATIONS):
     full_cqm_solution, full_cqm_info = detailed_cqm_solver(full_cqm, "full_model", 
-                    proxytree.DEPTH, save_solution = manager.SAVE_PATH_SOL,
-                    save_info= manager.SAVE_PATH_INFO)
+                    proxytree.DEPTH, save_solution = manager.SAVE_FULL_SOL,
+                    save_info= manager.SAVE_FULL_INFO)
 
 if DEBUG:   print_cqm_extrainfo(full_cqm_solution, full_cqm_info)
