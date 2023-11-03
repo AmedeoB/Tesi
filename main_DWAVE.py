@@ -16,7 +16,7 @@ from fun_lib_DWAVE import *
 """--------------------------------------------------"""
 
 proxytree = Proxytree(
-                depth = 10, 
+                depth = 6, 
                 server_c = 10, 
                 link_c = 5, 
                 idle_pc = 10, 

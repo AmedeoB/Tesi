@@ -1,2 +1,2 @@
-run_time	energy	
-5.00308	1760.0	
+qpu_access_time	charge_time	run_time	energy	
+0.016052	5.0	5.209812	1760.0	
