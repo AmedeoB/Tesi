@@ -19,3 +19,13 @@ Feasible	30.067	4224
 Feasible	30.033	4224	
 Feasible	30.039	4224	
 Feasible	30.033	4224	
+Feasible	59.891	4224	
+Feasible	59.903	4224	
+Feasible	59.897	4224	
+Feasible	59.885	4224	
+Feasible	59.908	4224	
+Feasible	59.906	4224	
+Feasible	59.878	4224	
+Feasible	59.899	4224	
+Feasible	59.902	4224	
+Feasible	59.894	4224	

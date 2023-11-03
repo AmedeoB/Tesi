@@ -1,3 +1,13 @@
 status	time	energy		
 Feasible	4.956	952	
 Feasible	10.016	984	
+Feasible	15.959	984	
+Feasible	15.963	984	
+Feasible	15.961	984	
+Feasible	15.956	984	
+Feasible	15.962	984	
+Feasible	15.96	984	
+Feasible	15.96	984	
+Feasible	15.963	984	
+Feasible	15.942	984	
+Feasible	15.968	984	

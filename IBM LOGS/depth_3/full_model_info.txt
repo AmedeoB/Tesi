@@ -1,2 +1,12 @@
 status	time	energy	
 Optimal	3.815	364	
+Optimal	3.613	376	
+Optimal	3.766	376	
+Optimal	3.862	376	
+Optimal	4.297	376	
+Optimal	4.401	376	
+Optimal	4.553	376	
+Optimal	4.248	376	
+Optimal	4.248	376	
+Optimal	4.144	376	
+Optimal	3.99	376	

@@ -9,3 +9,14 @@ Feasible	10.016	1760
 Feasible	10.015	1760	
 Feasible	10.005	1760	
 Feasible	10.013	1760	
+Feasible	31.988	1760	
+Feasible	31.975	1760	
+Feasible	31.972	1760	
+Feasible	31.979	1760	
+Feasible	31.988	1760	
+Feasible	31.98	1760	
+Feasible	31.987	1760	
+Feasible	31.982	1760	
+Feasible	31.975	1760	
+Feasible	31.981	1760	
+Feasible	31.986	1760	

@@ -352,7 +352,7 @@ def dict_filter(pair):
 
 def info_writer(dictionary: dict, path: str):
     '''
-    Writes DWAVE solution on a file
+    Writes solution on a file
     '''
     writeheads = False
     if not exists(path): writeheads = True

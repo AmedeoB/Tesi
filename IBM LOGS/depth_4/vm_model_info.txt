@@ -10,3 +10,13 @@ Feasible	10.04	704
 Feasible	10	704	
 Feasible	10.03	704	
 Feasible	10.009	704	
+Feasible	16.001	704	
+Feasible	16.003	704	
+Feasible	15.995	704	
+Feasible	16.004	704	
+Feasible	16.009	704	
+Feasible	16.003	704	
+Feasible	15.998	704	
+Feasible	16.012	704	
+Feasible	15.999	704	
+Feasible	16.006	704	

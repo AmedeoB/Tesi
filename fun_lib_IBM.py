@@ -26,15 +26,16 @@ def to_dictionary(solution: CpoSolveResult):
 def cplex_solver(model: CpoModel, depth: int, problem_label: str, save_solution = False):
     
     # Params
-    TIME= 10
-    SOLS= 10
+    TIME= 1000
 
-    # model.add_solver_listener(AutoStopListener(qsc_time= 60))
+    model.add_solver_listener(AutoStopListener(
+                                qsc_time= min(2**depth, TIME//10),
+                            )
+                        )
 
     print("Solving...")
     solution = model.solve(
                     TimeLimit= TIME,
-                    # SolutionLimit= SOLS,
                 )
 
     print(

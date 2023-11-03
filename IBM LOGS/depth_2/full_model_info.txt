@@ -1,0 +1,11 @@
+status	time	energy	
+Optimal	0.018	130	
+Optimal	0.017	130	
+Optimal	0.017	130	
+Optimal	0.017	130	
+Optimal	0.017	130	
+Optimal	0.017	130	
+Optimal	0.016	130	
+Optimal	0.017	130	
+Optimal	0.017	130	
+Optimal	0.017	130	

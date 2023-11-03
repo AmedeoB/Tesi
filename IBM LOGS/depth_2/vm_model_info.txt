@@ -9,3 +9,13 @@ Optimal	0.05	88
 Optimal	0.06	88	
 Optimal	0.06	88	
 Optimal	0.05	88	
+Optimal	0.016	88	
+Optimal	0.014	88	
+Optimal	0.013	88	
+Optimal	0.014	88	
+Optimal	0.014	88	
+Optimal	0.014	88	
+Optimal	0.013	88	
+Optimal	0.013	88	
+Optimal	0.013	88	
+Optimal	0.013	88	
