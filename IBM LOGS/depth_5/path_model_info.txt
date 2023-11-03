@@ -20,3 +20,13 @@ Feasible	31.75	1071
 Feasible	31.737	1071	
 Feasible	31.769	1071	
 Feasible	31.741	1071	
+Feasible	10.099	1158	
+Feasible	10.026	1158	
+Feasible	10.098	1158	
+Feasible	10.097	1158	
+Feasible	10.094	1158	
+Feasible	10.099	1158	
+Feasible	10.097	1158	
+Feasible	10.031	1158	
+Feasible	10.097	1158	
+Feasible	10.02	1158	

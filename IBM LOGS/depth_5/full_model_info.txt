@@ -12,3 +12,13 @@ Feasible	31.694	4336
 Feasible	31.688	4336	
 Feasible	31.684	4336	
 Feasible	31.74	4336	
+Feasible	10.087	8025	
+Feasible	10.036	8025	
+Feasible	10.12	8025	
+Feasible	10.095	8025	
+Feasible	10.023	8025	
+Feasible	10.123	8025	
+Feasible	10.121	8025	
+Feasible	10.071	8025	
+Feasible	10.111	8025	
+Feasible	10.123	8025	

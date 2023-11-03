@@ -26,12 +26,12 @@ def to_dictionary(solution: CpoSolveResult):
 def cplex_solver(model: CpoModel, depth: int, problem_label: str, save_solution = False):
     
     # Params
-    TIME= 1000
+    TIME= 10
 
-    model.add_solver_listener(AutoStopListener(
-                                qsc_time= min(2**depth, TIME//10),
-                            )
-                        )
+    # model.add_solver_listener(AutoStopListener(
+    #                             qsc_time= min(2**depth, TIME//10),
+    #                         )
+    #                     )
 
     print("Solving...")
     solution = model.solve(

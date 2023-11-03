@@ -11,3 +11,13 @@ Feasible	15.96	984
 Feasible	15.963	984	
 Feasible	15.942	984	
 Feasible	15.968	984	
+Feasible	5.013	1080	
+Feasible	5.004	1080	
+Feasible	5.021	1080	
+Feasible	5.017	1080	
+Feasible	5.004	1080	
+Feasible	5.014	1080	
+Feasible	5.017	1080	
+Feasible	5.016	1080	
+Feasible	5.026	1080	
+Feasible	5.01	1080	

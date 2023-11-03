@@ -20,3 +20,13 @@ Feasible	15.998	704
 Feasible	16.012	704	
 Feasible	15.999	704	
 Feasible	16.006	704	
+Feasible	5.007	704	
+Feasible	5.007	704	
+Feasible	5.008	704	
+Feasible	5.008	704	
+Feasible	5.006	704	
+Feasible	5.001	704	
+Feasible	5.002	704	
+Feasible	5.005	704	
+Feasible	5.004	704	
+Feasible	5.002	704	
