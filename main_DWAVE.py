@@ -61,30 +61,29 @@ for _ in range(ITERATIONS):
                         proxytree.DEPTH, save_solution = manager.SAVE_VM_SOL,
                         save_info= manager.SAVE_VM_INFO)
 
-if DEBUG:   print_cqm_extrainfo(vm_cqm_solution, vm_cqm_info)
+    if DEBUG:   print_cqm_extrainfo(vm_cqm_solution, vm_cqm_info)
 
 
 
-# ###################################################################
-# |                       PATH MODEL                                |
-# ###################################################################
-print_section("CQM Path Model")
+    # ###################################################################
+    # |                       PATH MODEL                                |
+    # ###################################################################
+    print_section("CQM Path Model")
 
-# Create problem
-path_cqm = dimod.ConstrainedQuadraticModel()
-# Variables & Constraints
-path_model(proxytree, path_cqm, vm_solution = vm_cqm_solution, 
+    # Create problem
+    path_cqm = dimod.ConstrainedQuadraticModel()
+    # Variables & Constraints
+    path_model(proxytree, path_cqm, vm_solution = vm_cqm_solution, 
             load = manager.LOAD_SOL)
 
-if DEBUG: print_model_structure("path model", path_cqm)
+    if DEBUG: print_model_structure("path model", path_cqm)
 
-# Solve
-for _ in range(ITERATIONS):
+    # Solve
     path_cqm_solution, path_cqm_info = detailed_cqm_solver(path_cqm, "path_model", 
                     proxytree.DEPTH, save_solution = manager.SAVE_PATH_SOL,
                     save_info= manager.SAVE_PATH_INFO)
 
-if DEBUG:   print_cqm_extrainfo(path_cqm_solution, path_cqm_info)
+    if DEBUG:   print_cqm_extrainfo(path_cqm_solution, path_cqm_info)
 
 
 
