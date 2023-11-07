@@ -19,3 +19,13 @@ Optimal	1.513	264
 Optimal	1.603	264	
 Optimal	1.538	264	
 Optimal	1.524	264	
+Optimal	1.608	264	
+Optimal	1.551	264	
+Optimal	1.484	264	
+Optimal	1.522	264	
+Optimal	1.595	264	
+Optimal	1.498	264	
+Optimal	1.541	264	
+Optimal	1.521	264	
+Optimal	1.525	264	
+Optimal	1.535	264	
