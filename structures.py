@@ -33,14 +33,14 @@ class Proxytree():
         self.DATAR_AVG = datar_avg               # Average data rate per flow
 
         self.SERVERS = pow(2, self.DEPTH)                                 # Server number
-        self.SWITCHES = sum(pow(2,i) for i in range(self.DEPTH))          # Switch number
+        self.SWITCHES = sum(pow(2,lvl) for lvl in range(self.DEPTH))          # Switch number
         self.VMS = self.SERVERS                                           # VM number per server
         self.FLOWS = self.VMS//2 if self.VMS%2==0 else self.VMS//2+1                # Flow number
         self.NODES = self.SERVERS + self.SWITCHES                              # Total Nodes
         self.LINKS = 0
         self.__init_links()
 
-        self.server_capacity = [self.SERVER_C for i in range(self.SERVERS)]           # Capacity of each server
+        self.server_capacity = [self.SERVER_C for _ in range(self.SERVERS)]           # Capacity of each server
         self.link_capacity = []
         self.idle_powcons = []           # Idle power consumption of each node
         self.dyn_powcons = []            # Dynamic power of each node
@@ -54,10 +54,10 @@ class Proxytree():
             self.data_rate = [datar_avg for _ in range(self.FLOWS)]      # Data rate of flow f on link l 
         
         self.link_dict = {}
-        self.adjancy_list = [[0 for j in range(self.NODES)] for i in range(self.NODES)] 
+        self.adjancy_list = [[0 for _ in range(self.NODES)] for _ in range(self.NODES)] 
         self.__init_link_dict_adj_list()
 
-        self.src_dst = [[0 for j in range(2)] for i in range(self.FLOWS)]
+        self.src_dst = [[0 for _ in range(2)] for _ in range(self.FLOWS)]
         self.__init_src_dst(random_tree)
 
 
