@@ -25,8 +25,8 @@ proxytree = Proxytree(
             )
 ITERATIONS = 15
 VMTIME = 5
-PATHTIME = 15
-FULLTIME = 15
+PATHTIME = 20
+FULLTIME = 20
 
 
 
