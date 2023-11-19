@@ -15,7 +15,7 @@ from fun_lib_IBM import *
 """------------------------------------------------------------------------------"""
 
 proxytree = Proxytree(
-                depth = 3, 
+                depth = 6, 
                 server_c = 10, 
                 link_c = 5, 
                 idle_pc = 10, 
@@ -23,7 +23,10 @@ proxytree = Proxytree(
                 datar_avg = 4,
                 # random_tree = True
             )
-ITERATIONS = 10
+ITERATIONS = 15
+VMTIME = 5
+PATHTIME = 15
+FULLTIME = 15
 
 
 
@@ -38,7 +41,7 @@ vm_cplex_model(vm_model, proxytree)
 
 # Solve
 for _ in range(ITERATIONS): 
-    vm_solution = cplex_solver(vm_model, proxytree.DEPTH, "vm_model", save_solution=True)
+    vm_solution = cplex_solver(vm_model, proxytree.DEPTH, "vm_model", VMTIME, save_solution=True)
 
     #####################################################################################################
 
@@ -52,7 +55,7 @@ for _ in range(ITERATIONS):
     path_cplex_model(path_model, proxytree, vm_solution)        
 
     # Solve
-    path_solution = cplex_solver(path_model, proxytree.DEPTH, "path_model", save_solution=True)
+    path_solution = cplex_solver(path_model, proxytree.DEPTH, "path_model", PATHTIME, save_solution=True)
 
 
 
@@ -65,6 +68,6 @@ full_model = CpoModel()
 full_cplex_model(full_model, proxytree)        
 
 # Solve
-for _ in range(ITERATIONS): full_solution = cplex_solver(full_model, proxytree.DEPTH, "full_model", save_solution=True)
+for _ in range(ITERATIONS): full_solution = cplex_solver(full_model, proxytree.DEPTH, "full_model", FULLTIME, save_solution=True)
 
 #####################################################################################################

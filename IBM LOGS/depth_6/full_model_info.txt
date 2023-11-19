@@ -1,13 +1,1 @@
 status	time	energy	
-Unknown	11.699	None	
-Unknown	11.687	None	
-Unknown	57.815	None	
-Unknown	57.738	None	
-Unknown	57.717	None	
-Unknown	57.726	None	
-Unknown	57.741	None	
-Unknown	57.739	None	
-Unknown	58.071	None	
-Unknown	57.681	None	
-Unknown	57.565	None	
-Unknown	58.072	None	

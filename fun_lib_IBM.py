@@ -23,19 +23,21 @@ def to_dictionary(solution: CpoSolveResult):
     return sorted_dictionary
 
 
-def cplex_solver(model: CpoModel, depth: int, problem_label: str, save_solution = False):
-    
-    # Params
-    TIME= 10
+def cplex_solver(model: CpoModel, depth: int, problem_label: str,
+                 exec_time: int, save_solution = False):
 
     # model.add_solver_listener(AutoStopListener(
-    #                             qsc_time= min(2**depth, TIME//10),
+    #                             # qsc_time= min(2**depth, exec_time//10),
+    #                             # qsc_time= exec_time,
+    #                             # min_sols= 1,
+    #                             max_sols=2,
     #                         )
     #                     )
 
     print("Solving...")
     solution = model.solve(
-                    TimeLimit= TIME,
+                    TimeLimit= exec_time*100,
+                    SolutionLimit= 1,
                 )
 
     print(
