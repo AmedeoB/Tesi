@@ -152,20 +152,20 @@ def detailed_cqm_solver(cqm_problem: dimod.ConstrainedQuadraticModel, problem_la
     # Extract feasible solution
     feasible_sampleset = sampleset.filter(lambda sample: sample.is_feasible)
 
-    # Extract best solution and energy
-    best_solution = feasible_sampleset.first[0]
-    energy = feasible_sampleset.first[1]
+    if len(feasible_sampleset) != 0:
+        # Extract best solution and energy
+        best_solution = feasible_sampleset.first[0]
+        energy = feasible_sampleset.first[1]
 
-    # Save best solution & info
-    if save_solution:
-        with open((f"DWAVE LOGS/depth_{depth}/{problem_label}_solution.txt"), "w") as fp:
-            json.dump(best_solution, fp)
-            print(f"{problem_label} solution updated!")
-    
-    # if save_info:
-    #     with open((f"DWAVE LOGS/depth_{depth}/{problem_label}_info.txt"), "w") as fp:
-    #         json.dump(problem_info, fp)
-    #         print(f"{problem_label} info updated!")
+        # Save best solution & info
+        if save_solution:
+            with open((f"DWAVE LOGS/depth_{depth}/{problem_label}_solution.txt"), "w") as fp:
+                json.dump(best_solution, fp)
+                print(f"{problem_label} solution updated!")
+    else:
+        best_solution = {}
+        energy = 0.0
+        
     if save_info:
         new_dict = dict(filter(dict_filter, problem_info.items()))
         for k,v in new_dict.items():
@@ -179,7 +179,7 @@ def detailed_cqm_solver(cqm_problem: dimod.ConstrainedQuadraticModel, problem_la
         f"\n# CQM SOLUTION #"
         f"\nCQM EXEC TIME:  {exec_time} micros"
         f"\nCQM ENERGY:     {energy}"
-    )    
+    )
 
     return (best_solution, problem_info)
 
