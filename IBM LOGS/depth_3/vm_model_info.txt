@@ -59,3 +59,13 @@ Optimal	1.541	264
 Optimal	1.529	264	
 Optimal	1.491	264	
 Optimal	1.485	264	
+Feasible	0.033	264	
+Feasible	0.035	264	
+Feasible	0.039	264	
+Feasible	0.038	264	
+Feasible	0.036	264	
+Feasible	0.037	264	
+Feasible	0.033	264	
+Feasible	0.03	264	
+Feasible	0.032	264	
+Feasible	0.037	264	

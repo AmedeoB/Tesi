@@ -40,3 +40,13 @@ Optimal	3.688	376
 Optimal	3.603	376	
 Optimal	3.821	376	
 Optimal	3.838	376	
+Feasible	0.042	473	
+Feasible	0.046	473	
+Feasible	0.046	473	
+Feasible	0.045	473	
+Feasible	0.045	473	
+Feasible	0.043	473	
+Feasible	0.042	473	
+Feasible	0.043	473	
+Feasible	0.045	473	
+Feasible	0.05	473	

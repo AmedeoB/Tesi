@@ -59,3 +59,13 @@ Optimal	0.021	191
 Optimal	0.022	191	
 Optimal	0.022	191	
 Optimal	0.022	191	
+Feasible	0.022	216	
+Feasible	0.023	216	
+Feasible	0.022	216	
+Feasible	0.022	216	
+Feasible	0.023	216	
+Feasible	0.022	216	
+Feasible	0.022	216	
+Feasible	0.024	216	
+Feasible	0.023	216	
+Feasible	0.024	216	

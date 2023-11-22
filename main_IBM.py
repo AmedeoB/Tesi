@@ -15,7 +15,7 @@ from fun_lib_IBM import *
 """------------------------------------------------------------------------------"""
 
 proxytree = Proxytree(
-                depth = 6, 
+                depth = 3, 
                 server_c = 10, 
                 link_c = 5, 
                 idle_pc = 10, 
@@ -23,7 +23,7 @@ proxytree = Proxytree(
                 datar_avg = 4,
                 # random_tree = True
             )
-ITERATIONS = 15
+ITERATIONS = 10
 VMTIME = 5
 PATHTIME = 20
 FULLTIME = 20

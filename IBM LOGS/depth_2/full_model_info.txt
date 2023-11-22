@@ -54,3 +54,13 @@ Optimal	0.018	130
 Optimal	0.017	130	
 Optimal	0.018	130	
 Optimal	0.017	130	
+Feasible	0.016	178	
+Feasible	0.017	178	
+Feasible	0.017	178	
+Feasible	0.016	178	
+Feasible	0.017	178	
+Feasible	0.017	178	
+Feasible	0.017	178	
+Feasible	0.017	178	
+Feasible	0.017	178	
+Feasible	0.017	178	

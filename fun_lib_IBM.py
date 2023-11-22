@@ -37,7 +37,7 @@ def cplex_solver(model: CpoModel, depth: int, problem_label: str,
     print("Solving...")
     solution = model.solve(
                     TimeLimit= exec_time,
-                    # SolutionLimit= 1,
+                    SolutionLimit= 1,
                 )
 
     print(

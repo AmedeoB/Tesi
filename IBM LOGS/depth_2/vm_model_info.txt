@@ -64,3 +64,13 @@ Optimal	0.013	88
 Optimal	0.013	88	
 Optimal	0.013	88	
 Optimal	0.013	88	
+Feasible	0.017	88	
+Feasible	0.014	88	
+Feasible	0.014	88	
+Feasible	0.013	88	
+Feasible	0.013	88	
+Feasible	0.013	88	
+Feasible	0.013	88	
+Feasible	0.013	88	
+Feasible	0.013	88	
+Feasible	0.013	88	
